@@ -15,6 +15,7 @@ const schema = z.object({
   status: z.enum(["draft","active","on_hold","completed","archived"]),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  githubRepo: z.string().optional(),
   memberIds: z.array(z.string().uuid()).default([]),
 });
 type FormValues = z.infer<typeof schema>;
@@ -29,7 +30,7 @@ export default function ProjectFormPage() {
 
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "", status: "draft", memberIds: [] },
+    defaultValues: { name: "", description: "", status: "draft", githubRepo: "", memberIds: [] },
   });
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function ProjectFormPage() {
       status: existing.status,
       startDate: existing.startDate?.slice(0,10),
       endDate: existing.endDate?.slice(0,10),
+      githubRepo: existing.githubRepo ?? "",
       memberIds: existing.members?.map(m => m.userId) ?? [],
     });
   }, [existing, reset]);
@@ -63,6 +65,7 @@ export default function ProjectFormPage() {
         <div />
         <TextField label="Start date" type="date" {...register("startDate")} />
         <TextField label="End date" type="date" {...register("endDate")} />
+        <TextField label="GitHub Repository (owner/repo)" placeholder="e.g. Qubartech/business-erp" className="sm:col-span-2" {...register("githubRepo")} error={errors.githubRepo?.message} />
         <div className="sm:col-span-2">
           <label className="label">Members</label>
           <Controller control={control} name="memberIds" render={({ field }) => (

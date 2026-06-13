@@ -1,5 +1,5 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
-import type { Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry } from "@/types";
+import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry } from "@/types";
 
 export type ListTasksQuery = {
   projectId?: string; status?: TaskStatus; priority?: TaskPriority;
@@ -58,8 +58,17 @@ export const settingsApi = {
   remove: (key: string) => unwrap<{ key: string }>(api.delete<ApiEnvelope<{ key: string }>>(`/settings/${encodeURIComponent(key)}`)),
 };
 
+export type DashboardSummary = {
+  totalProjects: number;
+  activeProjects: number;
+  totalTasks: number;
+  completedTasks: number;
+  teamMembers: number;
+  projectsByStatus: Record<string, number>;
+  totalMinutes: number;
+  latestCommits: Commit[];
+};
+
 export const dashboardApi = {
-  summary: () => unwrap<{
-    totalProjects: number; activeProjects: number; totalTasks: number; completedTasks: number; teamMembers: number;
-  }>(api.get<ApiEnvelope<{ totalProjects: number; activeProjects: number; totalTasks: number; completedTasks: number; teamMembers: number }>>("/dashboard/summary")),
+  summary: () => unwrap<DashboardSummary>(api.get<ApiEnvelope<DashboardSummary>>("/dashboard/summary")),
 };

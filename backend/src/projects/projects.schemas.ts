@@ -13,6 +13,7 @@ export const createProjectSchema = z.object({
   status: projectStatusEnum.default("draft"),
   startDate: dateish.optional(),
   endDate: dateish.optional(),
+  githubRepo: z.preprocess((v) => (v === "" ? null : v), z.string().max(200).nullable()).optional(),
   memberIds: z.array(z.string().uuid()).default([]),
 });
 

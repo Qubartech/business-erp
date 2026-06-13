@@ -8,13 +8,50 @@ dashboardRouter.use(requireAuth);
 
 dashboardRouter.get("/summary", async (_req, res, next) => {
   try {
-    const [totalProjects, activeProjects, totalTasks, completedTasks, teamMembers] = await Promise.all([
+    const [
+      totalProjects,
+      activeProjects,
+      totalTasks,
+      completedTasks,
+      teamMembers,
+      statusCounts,
+      totalTimeResult,
+      latestCommits
+    ] = await Promise.all([
       prisma.project.count(),
       prisma.project.count({ where: { status: "active" } }),
       prisma.task.count(),
       prisma.task.count({ where: { status: "done" } }),
       prisma.user.count({ where: { isActive: true } }),
+      prisma.project.groupBy({
+        by: ["status"],
+        _count: { id: true },
+      }),
+      prisma.timeEntry.aggregate({
+        _sum: { durationMinutes: true },
+      }),
+      prisma.commit.findMany({
+        orderBy: { committedAt: "desc" },
+        take: 5,
+        include: { project: { select: { id: true, name: true } } },
+      }),
     ]);
-    ok(res, { totalProjects, activeProjects, totalTasks, completedTasks, teamMembers });
+
+    const projectsByStatus = statusCounts.reduce((acc, curr) => {
+      acc[curr.status] = curr._count.id;
+      return acc;
+    }, {} as Record<string, number>);
+
+    ok(res, {
+      totalProjects,
+      activeProjects,
+      totalTasks,
+      completedTasks,
+      teamMembers,
+      projectsByStatus,
+      totalMinutes: totalTimeResult._sum.durationMinutes ?? 0,
+      latestCommits,
+    });
   } catch (e) { next(e); }
 });
+

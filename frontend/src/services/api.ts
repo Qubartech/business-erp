@@ -4,7 +4,7 @@ import type { Paged, Project, ProjectStatus, User } from "@/types";
 export type ListProjectsQuery = { search?: string; status?: ProjectStatus; page?: number; pageSize?: number };
 export type ProjectInput = {
   name: string; description?: string; status: ProjectStatus;
-  startDate?: string; endDate?: string; memberIds: string[];
+  startDate?: string; endDate?: string; githubRepo?: string | null; memberIds: string[];
 };
 
 export const projectsApi = {

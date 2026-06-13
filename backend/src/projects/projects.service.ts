@@ -42,6 +42,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
           data: {
             name: input.name, description: input.description ?? null,
             status: input.status, startDate: input.startDate ?? null, endDate: input.endDate ?? null,
+            githubRepo: input.githubRepo ?? null,
             createdBy,
           },
         });
@@ -64,6 +65,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
           data: {
             name: input.name, description: input.description,
             status: input.status, startDate: input.startDate, endDate: input.endDate,
+            githubRepo: input.githubRepo,
           },
         });
         if (input.memberIds) {

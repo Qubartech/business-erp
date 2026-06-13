@@ -13,11 +13,18 @@ export type ProjectMember = { id: string; userId: string; user: Pick<User, "id" 
 
 export type Project = {
   id: string; name: string; description: string | null; status: ProjectStatus;
-  startDate: string | null; endDate: string | null;
+  startDate: string | null; endDate: string | null; githubRepo: string | null;
   createdAt: string; updatedAt: string;
   creator?: Pick<User, "id" | "name" | "email">;
   members?: ProjectMember[];
   _count?: { tasks: number };
+};
+
+export type Commit = {
+  id: string; projectId: string; sha: string; message: string;
+  authorName: string; authorEmail: string; url: string;
+  committedAt: string; createdAt: string;
+  project?: Pick<Project, "id" | "name">;
 };
 
 export type Task = {
