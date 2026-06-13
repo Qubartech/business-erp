@@ -27,9 +27,14 @@ Internal ERP built per the included `ERP_System_Development_Plan.pdf` spec.
    docker compose exec frontend npm install
    ```
 4. Apply database schema and seed the initial admin user:
+   
+   > [!NOTE]
+   > If your `DATABASE_URL` uses a connection pooler (e.g. port `6543` with `?pgbouncer=true`), Prisma migrations will hang. You must override `DATABASE_URL` to connect directly via port `5432` without `pgbouncer=true`:
+   
    ```bash
-   docker compose exec backend npx prisma migrate deploy
-   docker compose exec backend npm run seed
+   # Replace with your direct connection URL (port 5432)
+   docker compose exec -e DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>" backend npx prisma migrate deploy
+   docker compose exec -e DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>" backend npm run seed
    ```
 5. Open <http://localhost:8080>. Default admin: `admin@example.com` / `admin1234` (change it immediately).
 
