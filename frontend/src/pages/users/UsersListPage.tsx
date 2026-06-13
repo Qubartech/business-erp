@@ -1,0 +1,54 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { PageHeader } from "@/components/PageHeader";
+import { DataTable, type Column } from "@/components/DataTable";
+import { usersApi } from "@/services/api";
+import type { User } from "@/types";
+import { formatDate } from "@/lib/format";
+
+export default function UsersListPage() {
+  const nav = useNavigate();
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const { data, isLoading } = useQuery({
+    queryKey: ["users", search],
+    queryFn: () => usersApi.list({ search: search || undefined, pageSize: 50 }),
+  });
+  const toggle = useMutation({
+    mutationFn: (u: User) => usersApi.setActive(u.id, !u.isActive),
+    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["users"] }); },
+  });
+
+  const cols: Column<User>[] = [
+    { key: "name", header: "Name", render: (u) => <span className="font-medium text-slate-900">{u.name}</span> },
+    { key: "email", header: "Email", render: (u) => u.email },
+    { key: "role", header: "Role", render: (u) => <span className="badge bg-slate-50 text-slate-700 ring-slate-200">{u.role}</span> },
+    { key: "active", header: "Status", render: (u) => (
+      <span className={u.isActive ? "badge bg-emerald-50 text-emerald-700 ring-emerald-200" : "badge bg-slate-100 text-slate-500 ring-slate-200"}>
+        {u.isActive ? "active" : "inactive"}
+      </span>
+    )},
+    { key: "created", header: "Created", render: (u) => formatDate(u.createdAt) },
+    { key: "actions", header: "", render: (u) => (
+      <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+        <button className="btn-secondary" onClick={() => nav(`/users/${u.id}`)}>Edit</button>
+        <button className="btn-secondary" onClick={() => toggle.mutate(u)}>
+          {u.isActive ? "Deactivate" : "Activate"}
+        </button>
+      </div>
+    ), className: "text-right" },
+  ];
+
+  return (
+    <>
+      <PageHeader title="Users" description="Manage team members and roles"
+        actions={<button className="btn-primary" onClick={() => nav("/users/new")}>New user</button>} />
+      <div className="mb-3">
+        <input className="input max-w-sm" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+      <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(u) => u.id} onRowClick={(u) => nav(`/users/${u.id}`)} />
+    </>
+  );
+}
