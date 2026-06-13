@@ -10,7 +10,7 @@ import { createUsersService } from "./users.service.js";
 export const usersRouter = Router();
 const service = createUsersService(container);
 
-usersRouter.use(requireAuth, requireRole("admin"));
+usersRouter.use(requireAuth);
 
 usersRouter.get("/", validate(listUsersQuerySchema, "query"), async (req, res, next) => {
   try { ok(res, await service.list(req.query as never)); } catch (e) { next(e); }
@@ -20,15 +20,15 @@ usersRouter.get("/:id", async (req, res, next) => {
   try { ok(res, await service.get(req.params.id)); } catch (e) { next(e); }
 });
 
-usersRouter.post("/", validate(createUserSchema), async (req, res, next) => {
+usersRouter.post("/", requireRole("admin"), validate(createUserSchema), async (req, res, next) => {
   try { created(res, await service.create(req.body), "User created"); } catch (e) { next(e); }
 });
 
-usersRouter.patch("/:id", validate(updateUserSchema), async (req, res, next) => {
+usersRouter.patch("/:id", requireRole("admin"), validate(updateUserSchema), async (req, res, next) => {
   try { ok(res, await service.update(req.params.id, req.body), "User updated"); } catch (e) { next(e); }
 });
 
 const setActiveSchema = z.object({ isActive: z.boolean() });
-usersRouter.post("/:id/active", validate(setActiveSchema), async (req, res, next) => {
+usersRouter.post("/:id/active", requireRole("admin"), validate(setActiveSchema), async (req, res, next) => {
   try { ok(res, await service.setActive(req.params.id, req.body.isActive), "Updated"); } catch (e) { next(e); }
 });

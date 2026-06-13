@@ -17,7 +17,7 @@ export default function TimePage() {
 
   const { data: current } = useQuery({ queryKey: ["time","current"], queryFn: timeApi.current });
   const { data: list, isLoading } = useQuery({ queryKey: ["time","list"], queryFn: () => timeApi.list({ pageSize: 100 }) });
-  const { data: tasks } = useQuery({ queryKey: ["tasks","all"], queryFn: () => tasksApi.list({ pageSize: 200 }) });
+  const { data: tasks } = useQuery({ queryKey: ["tasks","all"], queryFn: () => tasksApi.list({ pageSize: 100 }) });
 
   const stop = useMutation({
     mutationFn: (id: string) => timeApi.stop(id),

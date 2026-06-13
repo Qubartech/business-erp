@@ -79,14 +79,48 @@ api.interceptors.response.use(
     }
     const data = err.response?.data;
     if (data && data.success === false && err.response?.status !== 401) {
-      toast.error(data.message ?? "Request failed");
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        const detailMsg = Object.entries(data.errors as Record<string, string[]>)
+          .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
+          .join(" | ");
+        toast.error(`${data.message}: ${detailMsg}`);
+      } else {
+        toast.error(data.message ?? "Request failed");
+      }
     }
     return Promise.reject(err);
   },
 );
 
 export async function unwrap<T>(p: Promise<{ data: ApiEnvelope<T> }>): Promise<T> {
-  const res = await p;
-  if (!res.data.success) throw new Error(res.data.message);
-  return res.data.data;
+  try {
+    const res = await p;
+    if (!res.data.success) {
+      const data = res.data;
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        const detailMsg = Object.entries(data.errors as Record<string, string[]>)
+          .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
+          .join(" | ");
+        throw new Error(`${data.message}: ${detailMsg}`);
+      }
+      throw new Error(data.message);
+    }
+    return res.data.data;
+  } catch (err: any) {
+    if (err.response?.data) {
+      const data = err.response.data;
+      if (data.success === false) {
+        if (data.errors && Object.keys(data.errors).length > 0) {
+          const detailMsg = Object.entries(data.errors as Record<string, string[]>)
+            .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
+            .join(" | ");
+          throw new Error(`${data.message}: ${detailMsg}`);
+        }
+        if (data.message) {
+          throw new Error(data.message);
+        }
+      }
+    }
+    throw err;
+  }
 }

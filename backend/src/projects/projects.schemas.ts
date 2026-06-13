@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export const projectStatusEnum = z.enum(["draft", "active", "on_hold", "completed", "archived"]);
 
-const dateish = z.union([z.string().datetime(), z.string().date(), z.coerce.date()]).transform((v) => new Date(v as never));
+const dateish = z.preprocess(
+  (val) => (val === "" || val === undefined ? undefined : val),
+  z.union([z.string().datetime(), z.string().date(), z.coerce.date()]).transform((v) => new Date(v as never))
+);
 
 export const createProjectSchema = z.object({
   name: z.string().min(1).max(160),

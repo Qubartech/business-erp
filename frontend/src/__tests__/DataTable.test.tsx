@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { DataTable, type Column } from "../src/components/DataTable";
+import { DataTable, type Column } from "../components/DataTable";
 
 type Row = { id: string; name: string };
 const cols: Column<Row>[] = [

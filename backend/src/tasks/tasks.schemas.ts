@@ -3,7 +3,10 @@ import { z } from "zod";
 export const taskStatusEnum = z.enum(["todo", "in_progress", "review", "done"]);
 export const taskPriorityEnum = z.enum(["low", "medium", "high", "critical"]);
 
-const dateish = z.union([z.string().datetime(), z.string().date(), z.coerce.date()]).transform((v) => new Date(v as never));
+const dateish = z.preprocess(
+  (val) => (val === "" || val === undefined ? undefined : val),
+  z.union([z.string().datetime(), z.string().date(), z.coerce.date()]).transform((v) => new Date(v as never))
+);
 
 export const createTaskSchema = z.object({
   projectId: z.string().uuid(),
