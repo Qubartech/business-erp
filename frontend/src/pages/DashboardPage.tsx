@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
@@ -39,6 +40,49 @@ function formatRelativeTime(dateStr: string) {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   return `${diffDays}d ago`;
+}
+
+function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: any[]; isLoading: boolean }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-sm text-slate-400 py-4 flex items-center justify-center">Loading status...</div>;
+  }
+
+  if (!activeAttendance || activeAttendance.length === 0) {
+    return <div className="text-sm text-slate-400 py-4 italic text-center">Nobody is checked in right now.</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {activeAttendance.map((entry) => {
+        const checkInTime = new Date(entry.checkIn).getTime();
+        const elapsedMs = now - checkInTime;
+        const mins = Math.max(0, Math.round(elapsedMs / 60000));
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        const durationStr = `${h > 0 ? `${h}h ` : ""}${m}m`;
+
+        return (
+          <div key={entry.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
+            <div className="min-w-0 pr-2">
+              <div className="font-semibold text-slate-700 text-xs truncate">{entry.user?.name}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Checked in at {new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+            </div>
+            <span className="text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 select-none">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {durationStr}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -117,9 +161,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Commits Timeline */}
-        <div className="lg:col-span-1">
-          <div className="card p-6 border border-slate-100 flex flex-col h-full">
+        {/* Right Column */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Who is checked in */}
+          <div className="card p-6 border border-slate-100 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                <Users className="w-5 h-5 text-emerald-600" />
+                Who's in the Office
+              </h3>
+              <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full select-none">Active</span>
+            </div>
+            <ActiveUsersList activeAttendance={data?.activeAttendance || []} isLoading={isLoading} />
+          </div>
+
+          {/* Commits timeline card */}
+          <div className="card p-6 border border-slate-100 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                 <GitCommit className="w-5 h-5 text-blue-600" />

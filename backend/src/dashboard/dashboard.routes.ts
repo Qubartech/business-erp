@@ -16,7 +16,8 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
       teamMembers,
       statusCounts,
       totalTimeResult,
-      latestCommits
+      latestCommits,
+      activeAttendance
     ] = await Promise.all([
       prisma.project.count(),
       prisma.project.count({ where: { status: "active" } }),
@@ -35,6 +36,11 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
         take: 5,
         include: { project: { select: { id: true, name: true } } },
       }),
+      prisma.attendance.findMany({
+        where: { checkOut: null },
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { checkIn: "asc" },
+      }),
     ]);
 
     const projectsByStatus = statusCounts.reduce((acc, curr) => {
@@ -51,6 +57,7 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
       projectsByStatus,
       totalMinutes: totalTimeResult._sum.durationMinutes ?? 0,
       latestCommits,
+      activeAttendance,
     });
   } catch (e) { next(e); }
 });

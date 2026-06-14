@@ -69,6 +69,7 @@ export type DashboardSummary = {
   projectsByStatus: Record<string, number>;
   totalMinutes: number;
   latestCommits: Commit[];
+  activeAttendance: AttendanceEntry[];
 };
 
 export const dashboardApi = {
