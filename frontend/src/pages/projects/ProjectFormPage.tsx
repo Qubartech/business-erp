@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { SelectField, TextField, TextareaField } from "@/components/fields";
 import { projectsApi, usersApi } from "@/services/api";
+import { Loader2 } from "lucide-react";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -57,7 +58,11 @@ export default function ProjectFormPage() {
   return (
     <>
       <PageHeader title={editing ? "Edit project" : "New project"} />
-      <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit((v) => save.mutate(v))}>
+      <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit(async (v) => {
+        try {
+          await save.mutateAsync(v);
+        } catch {}
+      })}>
         <TextField label="Name" className="sm:col-span-2" {...register("name")} error={errors.name?.message} />
         <TextareaField label="Description" className="sm:col-span-2" {...register("description")} />
         <SelectField label="Status" {...register("status")}
@@ -76,8 +81,11 @@ export default function ProjectFormPage() {
           )} />
         </div>
         <div className="sm:col-span-2 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => nav(-1)}>Cancel</button>
-          <button className="btn-primary" disabled={isSubmitting}>{editing ? "Save" : "Create"}</button>
+          <button type="button" className="btn-secondary" disabled={save.isPending || isSubmitting} onClick={() => nav(-1)}>Cancel</button>
+          <button className="btn-primary" disabled={save.isPending || isSubmitting}>
+            {(save.isPending || isSubmitting) && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            {editing ? "Save" : "Create"}
+          </button>
         </div>
       </form>
     </>

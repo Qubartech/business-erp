@@ -8,6 +8,7 @@ import { documentsApi } from "@/services/featureApis";
 import { projectsApi } from "@/services/api";
 import type { Document } from "@/types";
 import { formatDate } from "@/lib/format";
+import { Loader2 } from "lucide-react";
 
 export default function DocumentsPage() {
   const qc = useQueryClient();
@@ -17,6 +18,7 @@ export default function DocumentsPage() {
   const [projectId, setProjectId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [filterProj, setFilterProj] = useState("");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data: projects } = useQuery({ queryKey: ["projects","all"], queryFn: () => projectsApi.list({ pageSize: 100 }) });
   const { data, isLoading } = useQuery({
@@ -41,10 +43,12 @@ export default function DocumentsPage() {
   });
 
   async function download(d: Document) {
+    setDownloadingId(d.id);
     try {
       const res = await documentsApi.download(d.id);
       window.open(res.url, "_blank", "noopener");
     } catch (e) { toast.error((e as Error).message); }
+    finally { setDownloadingId(null); }
   }
   const remove = useMutation({
     mutationFn: (id: string) => documentsApi.remove(id),
@@ -57,12 +61,30 @@ export default function DocumentsPage() {
     { key: "c", header: "Category", render: (d) => d.category ?? "—" },
     { key: "u", header: "Uploader", render: (d) => d.uploader?.name ?? "—" },
     { key: "d", header: "Uploaded", render: (d) => formatDate(d.createdAt) },
-    { key: "a", header: "", render: (d) => (
-      <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-        <button className="btn-secondary" onClick={() => download(d)}>Download</button>
-        <button className="btn-danger" onClick={() => remove.mutate(d.id)}>Delete</button>
-      </div>
-    ), className: "text-right" },
+    { key: "a", header: "", render: (d) => {
+      const isPendingDelete = remove.isPending && remove.variables === d.id;
+      const isPendingDownload = downloadingId === d.id;
+      return (
+        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="btn-secondary"
+            disabled={isPendingDownload || isPendingDelete}
+            onClick={() => download(d)}
+          >
+            {isPendingDownload && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            Download
+          </button>
+          <button
+            className="btn-danger"
+            disabled={isPendingDownload || isPendingDelete}
+            onClick={() => remove.mutate(d.id)}
+          >
+            {isPendingDelete && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            Delete
+          </button>
+        </div>
+      );
+    }, className: "text-right" },
   ];
 
   return (
@@ -78,8 +100,11 @@ export default function DocumentsPage() {
 
       <Modal open={open} onClose={() => setOpen(false)} title="Upload document"
         footer={<>
-          <button className="btn-secondary" onClick={() => setOpen(false)}>Cancel</button>
-          <button className="btn-primary" disabled={!title || !file || upload.isPending} onClick={() => upload.mutate()}>Upload</button>
+          <button className="btn-secondary" disabled={upload.isPending} onClick={() => setOpen(false)}>Cancel</button>
+          <button className="btn-primary" disabled={!title || !file || upload.isPending} onClick={() => upload.mutate()}>
+            {upload.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            Upload
+          </button>
         </>}>
         <div className="space-y-3">
           <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />

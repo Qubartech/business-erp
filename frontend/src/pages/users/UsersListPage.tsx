@@ -7,6 +7,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { usersApi } from "@/services/api";
 import type { User } from "@/types";
 import { formatDate } from "@/lib/format";
+import { Loader2 } from "lucide-react";
 
 export default function UsersListPage() {
   const nav = useNavigate();
@@ -31,14 +32,18 @@ export default function UsersListPage() {
       </span>
     )},
     { key: "created", header: "Created", render: (u) => formatDate(u.createdAt) },
-    { key: "actions", header: "", render: (u) => (
-      <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-        <button className="btn-secondary" onClick={() => nav(`/users/${u.id}`)}>Edit</button>
-        <button className="btn-secondary" onClick={() => toggle.mutate(u)}>
-          {u.isActive ? "Deactivate" : "Activate"}
-        </button>
-      </div>
-    ), className: "text-right" },
+    { key: "actions", header: "", render: (u) => {
+      const isPendingThisUser = toggle.isPending && toggle.variables?.id === u.id;
+      return (
+        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <button className="btn-secondary" disabled={isPendingThisUser} onClick={() => nav(`/users/${u.id}`)}>Edit</button>
+          <button className="btn-secondary" disabled={isPendingThisUser} onClick={() => toggle.mutate(u)}>
+            {isPendingThisUser && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            {u.isActive ? "Deactivate" : "Activate"}
+          </button>
+        </div>
+      );
+    }, className: "text-right" },
   ];
 
   return (

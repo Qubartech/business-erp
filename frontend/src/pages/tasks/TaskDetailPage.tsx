@@ -8,6 +8,7 @@ import { tasksApi, timeApi } from "@/services/featureApis";
 import type { TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { Loader2 } from "lucide-react";
 
 export default function TaskDetailPage() {
   const { id } = useParams();
@@ -38,8 +39,24 @@ export default function TaskDetailPage() {
       <PageHeader title={task.title} description={task.project?.name}
         actions={
           <>
-            <button className="btn-secondary" onClick={() => startTimer.mutate()}>Start timer</button>
-            {canManage && <button className="btn-danger" onClick={() => remove.mutate()}>Delete</button>}
+            <button
+              className="btn-secondary"
+              disabled={startTimer.isPending || remove.isPending}
+              onClick={() => startTimer.mutate()}
+            >
+              {startTimer.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+              Start timer
+            </button>
+            {canManage && (
+              <button
+                className="btn-danger"
+                disabled={startTimer.isPending || remove.isPending}
+                onClick={() => remove.mutate()}
+              >
+                {remove.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+                Delete
+              </button>
+            )}
           </>
         }
       />
@@ -48,7 +65,7 @@ export default function TaskDetailPage() {
           <div className="text-xs text-slate-500 mb-1">Status</div>
           <StatusBadge kind="task" status={task.status} />
           <div className="mt-3">
-            <SelectField value={task.status} onChange={(e) => update.mutate({ status: e.target.value as TaskStatus })}
+            <SelectField value={task.status} disabled={update.isPending} onChange={(e) => update.mutate({ status: e.target.value as TaskStatus })}
               options={[{value:"todo",label:"Todo"},{value:"in_progress",label:"In Progress"},{value:"review",label:"Review"},{value:"done",label:"Done"}]} />
           </div>
         </div>
@@ -56,7 +73,7 @@ export default function TaskDetailPage() {
           <div className="text-xs text-slate-500 mb-1">Priority</div>
           <PriorityBadge priority={task.priority} />
           <div className="mt-3">
-            <SelectField value={task.priority} onChange={(e) => update.mutate({ priority: e.target.value as TaskPriority })}
+            <SelectField value={task.priority} disabled={update.isPending} onChange={(e) => update.mutate({ priority: e.target.value as TaskPriority })}
               options={[{value:"low",label:"Low"},{value:"medium",label:"Medium"},{value:"high",label:"High"},{value:"critical",label:"Critical"}]} />
           </div>
         </div>

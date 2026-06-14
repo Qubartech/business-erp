@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
-  Clock, FileText, Settings as Cog, LogOut, Menu, Square
+  Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -26,9 +26,10 @@ const items: NavItem[] = [
 
 export function AppLayout() {
   const { user, logout } = useAuth();
-  const { currentTimer, stopTimer, sprintRemaining } = useTimeTracker();
+  const { currentTimer, stopTimer, sprintRemaining, isTimerActionPending } = useTimeTracker();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const visible = items.filter((i) => !i.roles || (user && i.roles.includes(user.role)));
   const qc = useQueryClient();
 
@@ -123,10 +124,15 @@ export function AppLayout() {
                 </span>
                 <button
                   onClick={stopTimer}
-                  className="p-1 hover:bg-amber-200 rounded-full text-amber-700 transition-colors"
+                  disabled={isTimerActionPending}
+                  className="p-1 hover:bg-amber-200 rounded-full text-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   title="Stop timer"
                 >
-                  <Square className="h-3 w-3 fill-amber-700" />
+                  {isTimerActionPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-amber-700" />
+                  ) : (
+                    <Square className="h-3 w-3 fill-amber-700" />
+                  )}
                 </button>
               </div>
             )}
@@ -137,14 +143,19 @@ export function AppLayout() {
                   <span className="text-xs text-slate-400">Loading attendance...</span>
                 ) : attendance?.status === "checked-in" ? (
                   <button
+                    disabled={checkOut.isPending || loggingOut}
                     onClick={() => checkOut.mutate()}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    Check Out
+                    {checkOut.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-rose-700" />
+                    ) : (
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </span>
+                    )}
+                    {checkOut.isPending ? "Checking Out..." : "Check Out"}
                   </button>
                 ) : attendance?.status === "checked-out" ? (
                   <span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-semibold flex items-center gap-1 select-none">
@@ -152,10 +163,14 @@ export function AppLayout() {
                   </span>
                 ) : (
                   <button
+                    disabled={checkIn.isPending || loggingOut}
                     onClick={() => checkIn.mutate()}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 active:bg-emerald-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 active:bg-emerald-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Check In
+                    {checkIn.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />
+                    ) : null}
+                    {checkIn.isPending ? "Checking In..." : "Check In"}
                   </button>
                 )}
               </div>
@@ -163,10 +178,22 @@ export function AppLayout() {
           </div>
 
           <button
-            className="btn-secondary"
-            onClick={async () => { await logout(); nav("/login"); }}
+            className="btn-secondary flex items-center gap-2"
+            disabled={loggingOut || checkIn.isPending || checkOut.isPending}
+            onClick={async () => {
+              setLoggingOut(true);
+              try {
+                await logout();
+                nav("/login");
+              } catch (e) {
+                toast.error("Logout failed");
+              } finally {
+                setLoggingOut(false);
+              }
+            }}
           >
-            <LogOut className="h-4 w-4" /> Logout
+            {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+            Logout
           </button>
         </header>
         <main className="flex-1 overflow-auto p-6">

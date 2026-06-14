@@ -1,4 +1,5 @@
 import { Modal } from "./Modal";
+import { Loader2 } from "lucide-react";
 
 export function ConfirmDialog({
   open, title = "Are you sure?", description, confirmLabel = "Confirm", danger,
@@ -13,10 +14,13 @@ export function ConfirmDialog({
         <>
           <button className="btn-secondary" onClick={onCancel} disabled={loading}>Cancel</button>
           <button
-            className={danger ? "btn-danger" : "btn-primary"}
+            className={danger ? "btn-danger flex items-center justify-center gap-1.5" : "btn-primary flex items-center justify-center gap-1.5"}
             onClick={onConfirm}
             disabled={loading}
-          >{loading ? "Working…" : confirmLabel}</button>
+          >
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-current" />}
+            {loading ? "Working…" : confirmLabel}
+          </button>
         </>
       }
     >

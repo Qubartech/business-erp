@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -38,7 +39,10 @@ export default function LoginPage() {
           <label className="label">Password</label>
           <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
-        <button className="btn-primary w-full" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+        <button className="btn-primary w-full flex items-center justify-center gap-2" disabled={busy}>
+          {busy && <Loader2 className="h-4 w-4 animate-spin text-white" />}
+          {busy ? "Signing in…" : "Sign in"}
+        </button>
       </form>
     </div>
   );

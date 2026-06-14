@@ -9,6 +9,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import type { Task } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { Loader2 } from "lucide-react";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -41,7 +42,10 @@ export default function ProjectDetailPage() {
         actions={canEdit ? (
           <>
             <button className="btn-secondary" onClick={() => nav(`/projects/${project.id}/edit`)}>Edit</button>
-            <button className="btn-secondary" onClick={() => archive.mutate()} disabled={project.status === "archived"}>Archive</button>
+            <button className="btn-secondary" onClick={() => archive.mutate()} disabled={project.status === "archived" || archive.isPending}>
+              {archive.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+              Archive
+            </button>
           </>
         ) : null}
       />

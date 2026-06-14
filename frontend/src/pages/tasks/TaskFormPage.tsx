@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SelectField, TextField, TextareaField } from "@/components/fields";
 import { tasksApi } from "@/services/featureApis";
 import { projectsApi, usersApi } from "@/services/api";
+import { Loader2 } from "lucide-react";
 
 const schema = z.object({
   projectId: z.string().uuid("Pick a project"),
@@ -44,7 +45,11 @@ export default function TaskFormPage() {
   return (
     <>
       <PageHeader title="New task" />
-      <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit((v) => create.mutate(v))}>
+      <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit(async (v) => {
+        try {
+          await create.mutateAsync(v);
+        } catch {}
+      })}>
         <SelectField label="Project" {...register("projectId")} error={errors.projectId?.message}
           options={[{ value: "", label: "— pick —" }, ...(projects?.items.map(p => ({ value: p.id, label: p.name })) ?? [])]} />
         <SelectField label="Assignee" {...register("assignedTo")}
@@ -57,8 +62,11 @@ export default function TaskFormPage() {
           options={[{value:"low",label:"Low"},{value:"medium",label:"Medium"},{value:"high",label:"High"},{value:"critical",label:"Critical"}]} />
         <TextField label="Due date" type="date" {...register("dueDate")} />
         <div className="sm:col-span-2 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => nav(-1)}>Cancel</button>
-          <button className="btn-primary" disabled={isSubmitting}>Create</button>
+          <button type="button" className="btn-secondary" disabled={create.isPending || isSubmitting} onClick={() => nav(-1)}>Cancel</button>
+          <button className="btn-primary" disabled={create.isPending || isSubmitting}>
+            {(create.isPending || isSubmitting) && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            Create
+          </button>
         </div>
       </form>
     </>

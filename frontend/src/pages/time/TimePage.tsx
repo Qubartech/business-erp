@@ -8,7 +8,7 @@ import { timeApi, tasksApi, attendanceApi } from "@/services/featureApis";
 import type { TimeEntry, Task, AttendanceEntry } from "@/types";
 import { formatDateTime, formatMinutes } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square } from "lucide-react";
+import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square, Loader2 } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
 
 export default function TimePage() {
@@ -236,8 +236,13 @@ export default function TimePage() {
             <div className="font-semibold text-slate-800 text-lg mt-1">{current.task?.title}</div>
             <div className="text-xs text-slate-500 mt-0.5">Started at {formatDateTime(current.startTime)}</div>
           </div>
-          <button className="btn-danger flex items-center gap-2" onClick={() => stop.mutate(current.id)}>
-            <Square className="h-4 w-4 fill-white" /> Stop Sprint
+          <button className="btn-danger flex items-center gap-2" onClick={() => stop.mutate(current.id)} disabled={stop.isPending}>
+            {stop.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
+            ) : (
+              <Square className="h-4 w-4 fill-white" />
+            )}
+            {stop.isPending ? "Stopping..." : "Stop Sprint"}
           </button>
         </div>
       ) : (
@@ -456,14 +461,15 @@ export default function TimePage() {
         title="Manual Time Log"
         footer={
           <>
-            <button className="btn-secondary" onClick={() => setManualOpen(false)}>
+            <button className="btn-secondary" onClick={() => setManualOpen(false)} disabled={addManual.isPending}>
               Cancel
             </button>
             <button
               className="btn-primary"
               onClick={() => addManual.mutate()}
-              disabled={!manualTaskId || !manualStartTime || !manualEndTime}
+              disabled={!manualTaskId || !manualStartTime || !manualEndTime || addManual.isPending}
             >
+              {addManual.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
               Save Entry
             </button>
           </>
@@ -515,19 +521,34 @@ export default function TimePage() {
           <div className="flex items-center justify-between w-full">
             <button
               className="btn-danger flex items-center gap-1.5 !px-3"
+              disabled={removeEntry.isPending || updateEntry.isPending}
               onClick={() => {
                 if (editingEntry && window.confirm("Are you sure you want to delete this log?")) {
                   removeEntry.mutate(editingEntry.id);
                 }
               }}
             >
-              <Trash2 className="h-4 w-4" /> Delete
+              {removeEntry.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              Delete
             </button>
             <div className="flex gap-2">
-              <button className="btn-secondary" onClick={() => setEditingEntry(null)}>
+              <button
+                className="btn-secondary"
+                disabled={removeEntry.isPending || updateEntry.isPending}
+                onClick={() => setEditingEntry(null)}
+              >
                 Cancel
               </button>
-              <button className="btn-primary" onClick={handleSaveEdit}>
+              <button
+                className="btn-primary"
+                disabled={removeEntry.isPending || updateEntry.isPending}
+                onClick={handleSaveEdit}
+              >
+                {updateEntry.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
                 Save Changes
               </button>
             </div>

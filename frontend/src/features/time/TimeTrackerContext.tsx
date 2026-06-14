@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 type TimeTrackerState = {
   currentTimer: TimeEntry | null;
   isLoading: boolean;
+  isTimerActionPending: boolean;
   startTimer: (taskId: string) => void;
   stopTimer: () => void;
   sprintRemaining: number; // in seconds
@@ -51,6 +52,8 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     },
     onError: (e: Error) => toast.error(e.message || "Failed to stop timer"),
   });
+
+  const isTimerActionPending = startMut.isPending || stopMut.isPending;
 
   const startTimer = (taskId: string) => startMut.mutate(taskId);
   const stopTimer = () => {
@@ -118,6 +121,7 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
       value={{
         currentTimer: currentTimer || null,
         isLoading,
+        isTimerActionPending,
         startTimer,
         stopTimer,
         sprintRemaining,

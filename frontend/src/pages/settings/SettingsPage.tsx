@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { DataTable, type Column } from "@/components/DataTable";
 import { settingsApi } from "@/services/featureApis";
 import type { Setting } from "@/types";
-import { GitBranch } from "lucide-react";
+import { GitBranch, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -26,12 +26,22 @@ export default function SettingsPage() {
   const cols: Column<Setting>[] = [
     { key: "k", header: "Key", render: (s) => <code className="text-xs">{s.key}</code> },
     { key: "v", header: "Value", render: (s) => <span className="text-sm truncate inline-block max-w-md align-middle">{s.value}</span> },
-    { key: "a", header: "", render: (s) => (
-      <div className="flex justify-end gap-2">
-        <button className="btn-secondary" onClick={() => { setKey(s.key); setValue(s.value); }}>Edit</button>
-        <button className="btn-danger" onClick={() => remove.mutate(s.key)}>Delete</button>
-      </div>
-    ), className: "text-right" },
+    { key: "a", header: "", render: (s) => {
+      const isPendingDelete = remove.isPending && remove.variables === s.key;
+      return (
+        <div className="flex justify-end gap-2">
+          <button className="btn-secondary" disabled={isPendingDelete} onClick={() => { setKey(s.key); setValue(s.value); }}>Edit</button>
+          <button
+            className="btn-danger"
+            disabled={isPendingDelete}
+            onClick={() => remove.mutate(s.key)}
+          >
+            {isPendingDelete && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            Delete
+          </button>
+        </div>
+      );
+    }, className: "text-right" },
   ];
 
   return (
@@ -40,7 +50,14 @@ export default function SettingsPage() {
       <div className="card p-4 mb-4 grid grid-cols-1 sm:grid-cols-[200px,1fr,auto] gap-2 items-end">
         <div><label className="label">Key</label><input className="input" value={key} onChange={(e) => setKey(e.target.value)} placeholder="company.name" /></div>
         <div><label className="label">Value</label><input className="input" value={value} onChange={(e) => setValue(e.target.value)} /></div>
-        <button className="btn-primary" disabled={!key || !value} onClick={() => save.mutate()}>Save</button>
+        <button
+          className="btn-primary"
+          disabled={!key || !value || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          {save.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+          Save
+        </button>
       </div>
       <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(s) => s.id} empty="No settings yet" />
 
