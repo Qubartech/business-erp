@@ -77,6 +77,7 @@ model Project {
   name        String
   description String?
   status      ProjectStatus @default(draft)
+  category    String        @default("client")
   startDate   DateTime?     @map("start_date")
   endDate     DateTime?     @map("end_date")
   createdBy   String        @map("created_by") @db.Uuid

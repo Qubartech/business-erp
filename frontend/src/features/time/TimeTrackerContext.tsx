@@ -72,6 +72,11 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Keep a stable ref to stopMut so the interval effect doesn't re-run when
+  // mutation state changes (isPending toggling creates new object references)
+  const stopMutRef = useRef(stopMut);
+  useEffect(() => { stopMutRef.current = stopMut; }, [stopMut]);
+
   // Interval check (every second) for Pomodoro sprint limit
   useEffect(() => {
     if (!user || !currentTimer) {
@@ -80,6 +85,8 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     }
 
     const timerStartTime = new Date(currentTimer.startTime).getTime();
+    // Guard: only fire the sprint-complete action once per interval lifecycle
+    let hasFired = false;
 
     const interval = setInterval(() => {
       const now = Date.now();
@@ -87,25 +94,28 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
 
       // Pomodoro Sprint limit check (60 minutes)
       if (elapsed >= SPRINT_LIMIT) {
+        if (hasFired) return; // already handled — wait for clearInterval
+        hasFired = true;
+        clearInterval(interval);
+
         const stopTime = new Date(timerStartTime + SPRINT_LIMIT).toISOString();
-        
+
         // Auto-pause timer on server
-        stopMut.mutate({ id: currentTimer.id, endTime: stopTime });
-        
+        stopMutRef.current.mutate({ id: currentTimer.id, endTime: stopTime });
+
         // Save sprint info to prompt user
         setCompletedSprintTask({
           taskId: currentTimer.taskId,
           title: currentTimer.task?.title || "Unknown Task",
         });
 
-        // Trigger native notification
+        // Trigger native notification — only once
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("Sprint Completed!", {
             body: `Your 60-minute sprint has ended on: ${currentTimer.task?.title ?? "Task"}. Are you still working?`,
             requireInteraction: true,
           });
         }
-        clearInterval(interval);
         return;
       }
 
@@ -115,7 +125,8 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [user, currentTimer, stopMut, SPRINT_LIMIT]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentTimer, SPRINT_LIMIT]); // ← stopMut intentionally excluded; using stopMutRef instead
 
   return (
     <TimeTrackerCtx.Provider

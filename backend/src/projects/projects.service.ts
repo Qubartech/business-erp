@@ -18,6 +18,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
     async list(q: ListQuery) {
       const where = {
         ...(q.status ? { status: q.status } : {}),
+        ...(q.category ? { category: q.category } : {}),
         ...(q.search ? { name: { contains: q.search, mode: "insensitive" as const } } : {}),
       };
       const [items, total] = await Promise.all([
@@ -43,6 +44,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
             name: input.name, description: input.description ?? null,
             status: input.status, startDate: input.startDate ?? null, endDate: input.endDate ?? null,
             githubRepo: input.githubRepo ?? null,
+            category: input.category,
             createdBy,
           },
         });
@@ -66,6 +68,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
             name: input.name, description: input.description,
             status: input.status, startDate: input.startDate, endDate: input.endDate,
             githubRepo: input.githubRepo,
+            category: input.category,
           },
         });
         if (input.memberIds) {

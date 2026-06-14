@@ -17,7 +17,7 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         where: { userId, checkOut: null },
       });
       if (active) {
-        throw new BadRequest("You are already checked in");
+        throw BadRequest("You are already checked in");
       }
 
       return prisma.attendance.create({
@@ -35,7 +35,7 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         where: { userId, checkOut: null },
       });
       if (!active) {
-        throw new NotFound("No active check-in found");
+        throw NotFound("No active check-in found");
       }
 
       return prisma.attendance.update({

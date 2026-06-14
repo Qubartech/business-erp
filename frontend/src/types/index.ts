@@ -13,6 +13,7 @@ export type ProjectMember = { id: string; userId: string; user: Pick<User, "id" 
 
 export type Project = {
   id: string; name: string; description: string | null; status: ProjectStatus;
+  category: "client" | "non_client";
   startDate: string | null; endDate: string | null; githubRepo: string | null;
   createdAt: string; updatedAt: string;
   creator?: Pick<User, "id" | "name" | "email">;

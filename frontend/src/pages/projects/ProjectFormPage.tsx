@@ -14,6 +14,7 @@ const schema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   status: z.enum(["draft","active","on_hold","completed","archived"]),
+  category: z.enum(["client", "non_client"]),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   githubRepo: z.string().optional(),
@@ -31,13 +32,14 @@ export default function ProjectFormPage() {
 
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "", status: "draft", githubRepo: "", memberIds: [] },
+    defaultValues: { name: "", description: "", status: "draft", category: "client", githubRepo: "", memberIds: [] },
   });
 
   useEffect(() => {
     if (existing) reset({
       name: existing.name, description: existing.description ?? "",
       status: existing.status,
+      category: existing.category,
       startDate: existing.startDate?.slice(0,10),
       endDate: existing.endDate?.slice(0,10),
       githubRepo: existing.githubRepo ?? "",
@@ -46,7 +48,17 @@ export default function ProjectFormPage() {
   }, [existing, reset]);
 
   const save = useMutation({
-    mutationFn: (v: FormValues) => editing ? projectsApi.update(id!, v) : projectsApi.create(v),
+    mutationFn: (v: FormValues) => {
+      // Strip empty strings so optional fields are omitted rather than sent as ""
+      const clean = {
+        ...v,
+        description: v.description || undefined,
+        startDate: v.startDate || undefined,
+        endDate: v.endDate || undefined,
+        githubRepo: v.githubRepo || null,
+      };
+      return editing ? projectsApi.update(id!, clean) : projectsApi.create(clean as typeof v);
+    },
     onSuccess: (p) => {
       toast.success(editing ? "Project updated" : "Project created");
       qc.invalidateQueries({ queryKey: ["projects"] });
@@ -67,7 +79,8 @@ export default function ProjectFormPage() {
         <TextareaField label="Description" className="sm:col-span-2" {...register("description")} />
         <SelectField label="Status" {...register("status")}
           options={[{value:"draft",label:"Draft"},{value:"active",label:"Active"},{value:"on_hold",label:"On Hold"},{value:"completed",label:"Completed"},{value:"archived",label:"Archived"}]} />
-        <div />
+        <SelectField label="Category" {...register("category")} error={errors.category?.message}
+          options={[{ value: "client", label: "Client Project" }, { value: "non_client", label: "Non-Client (Company/Personal)" }]} />
         <TextField label="Start date" type="date" {...register("startDate")} />
         <TextField label="End date" type="date" {...register("endDate")} />
         <TextField label="GitHub Repository (owner/repo)" placeholder="e.g. Qubartech/business-erp" className="sm:col-span-2" {...register("githubRepo")} error={errors.githubRepo?.message} />

@@ -168,8 +168,16 @@ export default function ProjectDetailPage() {
           </>
         ) : null}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="card p-4"><div className="text-xs text-slate-500">Status</div><div className="mt-2"><StatusBadge kind="project" status={project.status} /></div></div>
+        <div className="card p-4">
+          <div className="text-xs text-slate-500">Category</div>
+          <div className="mt-2">
+            <span className={project.category === "client" ? "badge bg-blue-50 text-blue-700 ring-blue-100" : "badge bg-purple-50 text-purple-700 ring-purple-100"}>
+              {project.category === "client" ? "Client Project" : "Internal Project"}
+            </span>
+          </div>
+        </div>
         <div className="card p-4"><div className="text-xs text-slate-500">Start / End</div><div className="mt-2 text-sm">{formatDate(project.startDate)} → {formatDate(project.endDate)}</div></div>
         <div className="card p-4"><div className="text-xs text-slate-500">Members</div><div className="mt-2 text-sm">{project.members?.map(m => m.user.name).join(", ") || "—"}</div></div>
       </div>

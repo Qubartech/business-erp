@@ -1,9 +1,10 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
 import type { Paged, Project, ProjectStatus, User } from "@/types";
 
-export type ListProjectsQuery = { search?: string; status?: ProjectStatus; page?: number; pageSize?: number };
+export type ListProjectsQuery = { search?: string; status?: ProjectStatus; category?: "client" | "non_client"; page?: number; pageSize?: number };
 export type ProjectInput = {
   name: string; description?: string; status: ProjectStatus;
+  category: "client" | "non_client";
   startDate?: string; endDate?: string; githubRepo?: string | null; memberIds: string[];
 };
 
