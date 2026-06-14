@@ -1,4 +1,5 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,32 +23,63 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function TaskFormPage() {
+  const { id } = useParams();
+  const editing = Boolean(id);
   const nav = useNavigate();
   const qc = useQueryClient();
   const [sp] = useSearchParams();
   const { data: projects } = useQuery({ queryKey: ["projects","all"], queryFn: () => projectsApi.list({ pageSize: 100 }) });
   const { data: users } = useQuery({ queryKey: ["users","all"], queryFn: () => usersApi.list({ pageSize: 100 }) });
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { data: existing, isLoading: existingLoading } = useQuery({
+    queryKey: ["tasks", id],
+    queryFn: () => tasksApi.get(id!),
+    enabled: editing,
+  });
+
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { projectId: sp.get("projectId") ?? "", title: "", status: "todo", priority: "medium" },
   });
 
-  const create = useMutation({
-    mutationFn: (v: FormValues) => tasksApi.create({
-      ...v,
-      assignedTo: v.assignedTo || null,
-      dueDate: v.dueDate || null,
-    }),
-    onSuccess: (t) => { toast.success("Task created"); qc.invalidateQueries({ queryKey: ["tasks"] }); nav(`/tasks/${t.id}`); },
+  useEffect(() => {
+    if (existing) {
+      reset({
+        projectId: existing.projectId,
+        title: existing.title,
+        description: existing.description ?? "",
+        status: existing.status,
+        priority: existing.priority,
+        assignedTo: existing.assignedTo || "",
+        dueDate: existing.dueDate?.slice(0, 10) ?? "",
+      });
+    }
+  }, [existing, reset]);
+
+  const save = useMutation({
+    mutationFn: (v: FormValues) => {
+      const payload = {
+        ...v,
+        assignedTo: v.assignedTo || null,
+        dueDate: v.dueDate || null,
+      };
+      return editing ? tasksApi.update(id!, payload) : tasksApi.create(payload);
+    },
+    onSuccess: (t) => {
+      toast.success(editing ? "Task updated" : "Task created");
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      nav(`/tasks/${t.id}`);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  if (editing && existingLoading) return <div className="text-sm text-slate-500">Loading…</div>;
+
   return (
     <>
-      <PageHeader title="New task" />
+      <PageHeader title={editing ? "Edit task" : "New task"} />
       <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit(async (v) => {
         try {
-          await create.mutateAsync(v);
+          await save.mutateAsync(v);
         } catch {}
       })}>
         <SelectField label="Project" {...register("projectId")} error={errors.projectId?.message}
@@ -62,10 +94,10 @@ export default function TaskFormPage() {
           options={[{value:"low",label:"Low"},{value:"medium",label:"Medium"},{value:"high",label:"High"},{value:"critical",label:"Critical"}]} />
         <TextField label="Due date" type="date" {...register("dueDate")} />
         <div className="sm:col-span-2 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" disabled={create.isPending || isSubmitting} onClick={() => nav(-1)}>Cancel</button>
-          <button className="btn-primary" disabled={create.isPending || isSubmitting}>
-            {(create.isPending || isSubmitting) && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
-            Create
+          <button type="button" className="btn-secondary" disabled={save.isPending || isSubmitting} onClick={() => nav(-1)}>Cancel</button>
+          <button className="btn-primary" disabled={save.isPending || isSubmitting}>
+            {(save.isPending || isSubmitting) && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+            {editing ? "Save" : "Create"}
           </button>
         </div>
       </form>

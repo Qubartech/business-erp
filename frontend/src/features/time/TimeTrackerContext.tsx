@@ -15,6 +15,7 @@ type TimeTrackerState = {
   sprintRemaining: number; // in seconds
   completedSprintTask: { taskId: string; title: string } | null;
   setCompletedSprintTask: (task: { taskId: string; title: string } | null) => void;
+  startTimerVariables: string | undefined;
 };
 
 const TimeTrackerCtx = createContext<TimeTrackerState | null>(null);
@@ -127,6 +128,7 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
         sprintRemaining,
         completedSprintTask,
         setCompletedSprintTask,
+        startTimerVariables: startMut.variables,
       }}
     >
       {children}

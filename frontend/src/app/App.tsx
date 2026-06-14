@@ -44,6 +44,7 @@ export function App() {
           <Route path="tasks" element={<TasksListPage />} />
           <Route path="tasks/new" element={<ProtectedRoute roles={["admin","manager"]}><TaskFormPage /></ProtectedRoute>} />
           <Route path="tasks/:id" element={<TaskDetailPage />} />
+          <Route path="tasks/:id/edit" element={<ProtectedRoute roles={["admin","manager"]}><TaskFormPage /></ProtectedRoute>} />
 
           <Route path="notes" element={<NotesPage />} />
           <Route path="time" element={<TimePage />} />
