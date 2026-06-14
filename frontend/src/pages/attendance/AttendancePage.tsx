@@ -149,7 +149,7 @@ export default function AttendancePage() {
               const m = mins % 60;
               return (
                 <div key={entry.id} className="text-xs font-bold font-mono text-slate-600 bg-slate-50 border border-slate-150 px-1.5 py-0.5 rounded w-fit">
-                  {h > 0 ? `${h}h ` : ""}${m}m
+                  {h > 0 ? `${h}h ` : ""}{m}m
                 </div>
               );
             })}
