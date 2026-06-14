@@ -19,8 +19,16 @@
       "dest": "backend/src/server.ts"
     },
     {
-      "src": "/(.*)",
+      "src": "/assets/(.*)",
+      "dest": "frontend/assets/$1"
+    },
+    {
+      "src": "/(vite.svg|favicon.ico)",
       "dest": "frontend/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/index.html"
     }
   ]
 }
