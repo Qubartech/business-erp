@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export type Column<T> = {
   key: string;
-  header: string;
+  header: ReactNode;
   render: (row: T) => ReactNode;
   className?: string;
 };
@@ -15,12 +15,14 @@ type Props<T> = {
   empty?: string;
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
+  className?: string;
+  tableClassName?: string;
 };
 
-export function DataTable<T>({ columns, rows, loading, empty = "No records", rowKey, onRowClick }: Props<T>) {
+export function DataTable<T>({ columns, rows, loading, empty = "No records", rowKey, onRowClick, className, tableClassName }: Props<T>) {
   return (
-    <div className="card overflow-hidden">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
+    <div className={clsx("card", className || "overflow-hidden")}>
+      <table className={clsx("min-w-full divide-y divide-slate-200 text-sm", tableClassName)}>
         <thead className="bg-slate-50 text-slate-600">
           <tr>
             {columns.map((c) => (

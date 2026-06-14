@@ -5,7 +5,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { usersApi } from "@/services/api";
 import { attendanceApi } from "@/services/featureApis";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDate } from "@/lib/format";
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle } from "lucide-react";
 import type { User as UserType, AttendanceEntry } from "@/types";
 
@@ -56,6 +56,11 @@ export default function AttendancePage() {
     const [y, m] = selectedMonth.split("-").map(Number);
     const d = new Date(y, m - 1 + amount, 1);
     setSelectedMonth(d.toLocaleDateString("en-CA").slice(0, 7));
+  };
+
+  const getDayName = (dateStr: string) => {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", { weekday: "long" });
   };
 
   // Days calculations for selected month
@@ -266,24 +271,32 @@ export default function AttendancePage() {
         );
       },
     },
-    ...daysArray.map((dayNum) => ({
-      key: `day-${dayNum}`,
-      header: `${dayNum}`,
-      headerClassName: "text-center min-w-[55px] text-[10px] font-bold p-1 bg-slate-50/50",
-      className: "text-center font-mono min-w-[55px] border-l border-slate-100/80 p-1 text-[11px]",
-      render: (r: UserAttendanceRow) => {
-        const dayEntries = r.entries.filter((entry) => {
-          const entryDate = new Date(entry.checkIn);
-          return entryDate.getDate() === dayNum;
-        });
+    ...daysArray.map((dayNum) => {
+      const dateObj = new Date(year, month - 1, dayNum);
+      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+      return {
+        key: `day-${dayNum}`,
+        header: (
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold text-slate-800 leading-none">{dayNum}</span>
+            <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-tight mt-0.5">{dayName}</span>
+          </div>
+        ),
+        headerClassName: "text-center min-w-[55px] p-1 bg-slate-50/50",
+        className: "text-center font-mono min-w-[55px] border-l border-slate-100/80 p-1 text-[11px]",
+        render: (r: UserAttendanceRow) => {
+          const dayEntries = r.entries.filter((entry) => {
+            const entryDate = new Date(entry.checkIn);
+            return entryDate.getDate() === dayNum;
+          });
 
-        const dayOfWeek = new Date(year, month - 1, dayNum).getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          const dayOfWeek = dateObj.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-        const targetDate = new Date(year, month - 1, dayNum);
-        const todayAtMidnight = new Date();
-        todayAtMidnight.setHours(0, 0, 0, 0);
-        const isFuture = targetDate > todayAtMidnight;
+          const targetDate = dateObj;
+          const todayAtMidnight = new Date();
+          todayAtMidnight.setHours(0, 0, 0, 0);
+          const isFuture = targetDate > todayAtMidnight;
 
         if (dayEntries.length === 0) {
           if (isFuture) {
@@ -336,7 +349,8 @@ export default function AttendancePage() {
           </span>
         );
       },
-    })),
+    };
+  }),
   ];
 
   const isLoading = usersLoading || (viewMode === "daily" ? attendanceLoading : monthlyLoading);
@@ -394,7 +408,7 @@ export default function AttendancePage() {
               </button>
             </div>
             <div className="text-sm text-slate-500 font-medium">
-              Showing logs for <span className="font-bold text-slate-700">{selectedDate}</span>
+              Showing logs for <span className="font-bold text-slate-700">{getDayName(selectedDate)}, {formatDate(selectedDate)}</span>
             </div>
           </div>
         ) : (
@@ -422,14 +436,14 @@ export default function AttendancePage() {
           </div>
         )}
 
-        <div className={viewMode === "monthly" ? "overflow-x-auto border border-slate-200/60 rounded-xl bg-white shadow-xs max-w-full" : ""}>
-          <DataTable
-            rows={rows}
-            loading={isLoading}
-            columns={viewMode === "daily" ? dailyCols : monthlyCols}
-            rowKey={(r) => r.user.id}
-          />
-        </div>
+        <DataTable
+          rows={rows}
+          loading={isLoading}
+          columns={viewMode === "daily" ? dailyCols : monthlyCols}
+          rowKey={(r) => r.user.id}
+          className={viewMode === "monthly" ? "overflow-x-auto max-w-full" : ""}
+          tableClassName={viewMode === "monthly" ? "min-w-[1600px] sm:min-w-[1800px]" : ""}
+        />
       </div>
     </>
   );
