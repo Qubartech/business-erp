@@ -34,9 +34,11 @@ export const timeApi = {
     unwrap<Paged<TimeEntry>>(api.get<ApiEnvelope<Paged<TimeEntry>>>("/time-entries", { params: q })),
   current: () => unwrap<TimeEntry | null>(api.get<ApiEnvelope<TimeEntry | null>>("/time-entries/current")),
   start: (taskId: string) => unwrap<TimeEntry>(api.post<ApiEnvelope<TimeEntry>>("/time-entries/start", { taskId })),
-  stop: (entryId: string) => unwrap<TimeEntry>(api.post<ApiEnvelope<TimeEntry>>("/time-entries/stop", { entryId })),
+  stop: (entryId: string, endTime?: string) => unwrap<TimeEntry>(api.post<ApiEnvelope<TimeEntry>>("/time-entries/stop", { entryId, endTime })),
   manual: (data: { taskId: string; startTime: string; endTime: string }) =>
     unwrap<TimeEntry>(api.post<ApiEnvelope<TimeEntry>>("/time-entries/manual", data)),
+  update: (id: string, data: { startTime: string; endTime: string; taskId?: string }) =>
+    unwrap<TimeEntry>(api.patch<ApiEnvelope<TimeEntry>>(`/time-entries/${id}`, data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/time-entries/${id}`)),
 };
 

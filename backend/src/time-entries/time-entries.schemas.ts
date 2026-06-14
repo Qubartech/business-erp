@@ -1,7 +1,16 @@
 import { z } from "zod";
 
 export const startTimerSchema = z.object({ taskId: z.string().uuid() });
-export const stopTimerSchema = z.object({ entryId: z.string().uuid() });
+export const stopTimerSchema = z.object({
+  entryId: z.string().uuid(),
+  endTime: z.coerce.date().optional(),
+});
+
+export const updateEntrySchema = z.object({
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  taskId: z.string().uuid().optional(),
+}).refine((v) => v.endTime > v.startTime, { message: "endTime must be after startTime", path: ["endTime"] });
 
 export const manualEntrySchema = z.object({
   taskId: z.string().uuid(),

@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
-  Clock, FileText, Settings as Cog, LogOut, Menu,
+  Clock, FileText, Settings as Cog, LogOut, Menu, Square
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { clsx } from "clsx";
 import type { Role } from "@/types";
 
@@ -22,9 +23,16 @@ const items: NavItem[] = [
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { currentTimer, stopTimer, sprintRemaining } = useTimeTracker();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const visible = items.filter((i) => !i.roles || (user && i.roles.includes(user.role)));
+
+  const formatSeconds = (totalSecs: number) => {
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className="flex h-full">
@@ -65,10 +73,35 @@ export function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 flex items-center justify-between px-4 border-b border-slate-200 bg-white">
-          <button className="md:hidden btn-secondary !p-2" onClick={() => setOpen((v) => !v)}>
-            <Menu className="h-4 w-4" />
-          </button>
-          <div className="text-sm text-slate-500">Internal ERP</div>
+          <div className="flex items-center gap-3">
+            <button className="md:hidden btn-secondary !p-2" onClick={() => setOpen((v) => !v)}>
+              <Menu className="h-4 w-4" />
+            </button>
+            <div className="text-sm text-slate-500 font-medium hidden sm:block">Internal ERP</div>
+          </div>
+
+          {currentTimer && (
+            <div className="flex items-center gap-3 px-3 py-1 bg-amber-50/80 border border-amber-200 rounded-full shadow-xs text-xs font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+              <span className="text-slate-600 truncate max-w-[120px] md:max-w-[200px]">
+                {currentTimer.task?.title}
+              </span>
+              <span className="font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">
+                {formatSeconds(sprintRemaining)}
+              </span>
+              <button
+                onClick={stopTimer}
+                className="p-1 hover:bg-amber-200 rounded-full text-amber-700 transition-colors"
+                title="Stop timer"
+              >
+                <Square className="h-3 w-3 fill-amber-700" />
+              </button>
+            </div>
+          )}
+
           <button
             className="btn-secondary"
             onClick={async () => { await logout(); nav("/login"); }}

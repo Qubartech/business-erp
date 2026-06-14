@@ -34,12 +34,15 @@ export function createTimeEntriesService({ prisma }: Pick<Container, "prisma">) 
       return prisma.timeEntry.create({ data: { taskId, userId, startTime: new Date() }, include });
     },
 
-    async stopTimer(userId: string, entryId: string) {
+    async stopTimer(userId: string, entryId: string, customEndTime?: Date) {
       const entry = await prisma.timeEntry.findUnique({ where: { id: entryId } });
       if (!entry) throw NotFound("Timer not found");
       if (entry.userId !== userId) throw Forbidden("Not your timer");
       if (entry.endTime) throw BadRequest("Timer already stopped");
-      const end = new Date();
+      let end = customEndTime || new Date();
+      if (end < entry.startTime) {
+        end = entry.startTime;
+      }
       return prisma.timeEntry.update({
         where: { id: entryId },
         data: { endTime: end, durationMinutes: diffMinutes(entry.startTime, end) },
@@ -61,6 +64,23 @@ export function createTimeEntriesService({ prisma }: Pick<Container, "prisma">) 
           startTime: input.startTime,
           endTime: input.endTime,
           durationMinutes: diffMinutes(input.startTime, input.endTime),
+        },
+        include,
+      });
+    },
+
+    async update(userId: string, role: string, id: string, input: { startTime: Date; endTime: Date; taskId?: string }) {
+      const entry = await prisma.timeEntry.findUnique({ where: { id } });
+      if (!entry) throw NotFound("Entry not found");
+      if (entry.userId !== userId && role !== "admin") throw Forbidden("Not authorized");
+      if (input.endTime <= input.startTime) throw BadRequest("endTime must be after startTime");
+      return prisma.timeEntry.update({
+        where: { id },
+        data: {
+          startTime: input.startTime,
+          endTime: input.endTime,
+          durationMinutes: diffMinutes(input.startTime, input.endTime),
+          ...(input.taskId ? { taskId: input.taskId } : {}),
         },
         include,
       });
