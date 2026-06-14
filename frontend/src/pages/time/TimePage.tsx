@@ -699,12 +699,12 @@ export default function TimePage() {
           ) : (
             groupedUserTasks.map((group) => (
               <div key={group.taskId} className="border border-slate-200/80 rounded-xl p-4 bg-white shadow-xs space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-slate-800 text-sm">{group.taskTitle}</h4>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-slate-800 text-sm break-words">{group.taskTitle}</h4>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full">
-                    <Clock className="h-3 w-3 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                    <Clock className="h-3 w-3 text-slate-400 shrink-0" />
                     Total: {formatMinutesDuration(group.totalMinutes)}
                   </span>
                 </div>
