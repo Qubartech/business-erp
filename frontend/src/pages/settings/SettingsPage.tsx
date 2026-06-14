@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { DataTable, type Column } from "@/components/DataTable";
 import { settingsApi } from "@/services/featureApis";
 import type { Setting } from "@/types";
+import { GitBranch } from "lucide-react";
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -42,6 +43,46 @@ export default function SettingsPage() {
         <button className="btn-primary" disabled={!key || !value} onClick={() => save.mutate()}>Save</button>
       </div>
       <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(s) => s.id} empty="No settings yet" />
+
+      {/* GitHub Webhook Info Section */}
+      <div className="card p-6 border border-slate-100 mt-6 bg-slate-50/50">
+        <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-2">
+          <GitBranch className="w-5 h-5 text-blue-600" />
+          GitHub Webhook Integration
+        </h3>
+        <p className="text-xs text-slate-500 mb-4 max-w-2xl leading-relaxed">
+          Configure a webhook in your GitHub repository settings to push commit events to your ERP dashboard. This allows the team to see live code changes in real-time.
+        </p>
+        <div className="space-y-4">
+          <div>
+            <label className="label font-semibold text-xs text-slate-600 block mb-1">Payload URL</label>
+            <div className="flex gap-2 max-w-xl">
+              <input
+                className="input font-mono text-[11px] bg-white border-slate-200 select-all flex-1 py-1.5 px-2.5 rounded-lg"
+                readOnly
+                value={`${window.location.origin}/api/webhooks/github`}
+              />
+              <button
+                className="btn-secondary text-xs shrink-0 flex items-center gap-1.5"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/github`);
+                  toast.success("Copied to clipboard");
+                }}
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 space-y-1.5 pl-4 list-decimal font-normal">
+            <h4 className="font-bold text-slate-700 -ml-4 mb-1">Configuration Steps:</h4>
+            <li>Go to your repository <strong>Settings</strong> &rarr; <strong>Webhooks</strong>.</li>
+            <li>Click <strong>Add webhook</strong>.</li>
+            <li>Paste the Payload URL from above.</li>
+            <li>Set Content type to <strong>application/json</strong>.</li>
+            <li>Select <strong>Just the push event</strong> or select individual events.</li>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

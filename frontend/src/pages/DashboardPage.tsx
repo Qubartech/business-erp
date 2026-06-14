@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
 import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play } from "lucide-react";
+import { Modal } from "@/components/Modal";
+import { toast } from "sonner";
 
 interface CardProps {
   label: string;
@@ -100,6 +102,7 @@ function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: an
 
 export default function DashboardPage() {
   const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: dashboardApi.summary });
+  const [webhookModalOpen, setWebhookModalOpen] = useState(false);
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     active: { bg: "bg-emerald-50/50", text: "text-emerald-700", border: "border-emerald-100" },
@@ -195,7 +198,12 @@ export default function DashboardPage() {
                 <GitCommit className="w-5 h-5 text-blue-600" />
                 Latest Commits
               </h3>
-              <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">Webhooks</span>
+              <button
+                onClick={() => setWebhookModalOpen(true)}
+                className="text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors select-none"
+              >
+                Webhooks
+              </button>
             </div>
 
             {isLoading ? (
@@ -239,6 +247,51 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* GitHub Webhook Info Modal */}
+      <Modal
+        open={webhookModalOpen}
+        onClose={() => setWebhookModalOpen(false)}
+        title="GitHub Webhook Setup"
+        footer={
+          <button className="btn-primary" onClick={() => setWebhookModalOpen(false)}>
+            Close
+          </button>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500 leading-relaxed font-normal">
+            Pushed commits are automatically shown on this timeline in real-time. Configure a webhook in your GitHub repository to POST events to this ERP instance.
+          </p>
+          <div>
+            <label className="label font-semibold text-slate-700 text-xs mb-1 block">Payload URL</label>
+            <div className="flex gap-2">
+              <input
+                className="input font-mono text-[11px] bg-slate-50 border-slate-200 select-all flex-1 py-1.5 px-2.5 rounded-lg"
+                readOnly
+                value={`${window.location.origin}/api/webhooks/github`}
+              />
+              <button
+                className="btn-secondary text-xs shrink-0 flex items-center gap-1.5"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/github`);
+                  toast.success("Copied to clipboard");
+                }}
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 space-y-1.5 pl-4 list-decimal mt-4 border-t border-slate-100 pt-4 font-normal">
+            <h4 className="font-bold text-slate-700 -ml-4 mb-1">Configuration Steps:</h4>
+            <li>Go to your repository <strong>Settings</strong> &rarr; <strong>Webhooks</strong>.</li>
+            <li>Click <strong>Add webhook</strong>.</li>
+            <li>Use the payload URL above.</li>
+            <li>Set Content type to <strong>application/json</strong>.</li>
+            <li>Trigger on <strong>push</strong> events.</li>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }
