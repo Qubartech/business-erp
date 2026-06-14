@@ -69,5 +69,9 @@ export type AttendanceEntry = {
   checkOut: string | null;
   createdAt: string;
   updatedAt: string;
-  user?: Pick<User, "id" | "name" | "email">;
+  user?: Pick<User, "id" | "name" | "email"> & {
+    timeEntries?: Array<Pick<TimeEntry, "id" | "taskId" | "startTime" | "endTime"> & {
+      task?: Pick<Task, "id" | "title" | "projectId">;
+    }>;
+  };
 };

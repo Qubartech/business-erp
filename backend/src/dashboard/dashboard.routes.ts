@@ -38,7 +38,26 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
       }),
       prisma.attendance.findMany({
         where: { checkOut: null },
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              timeEntries: {
+                where: { endTime: null },
+                include: {
+                  task: {
+                    select: {
+                      id: true,
+                      title: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         orderBy: { checkIn: "asc" },
       }),
     ]);

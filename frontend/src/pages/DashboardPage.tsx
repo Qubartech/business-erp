@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
-import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch } from "lucide-react";
+import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play } from "lucide-react";
 
 interface CardProps {
   label: string;
@@ -68,16 +68,29 @@ function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: an
         const m = mins % 60;
         const durationStr = `${h > 0 ? `${h}h ` : ""}${m}m`;
 
+        const activeTimer = entry.user?.timeEntries?.[0];
+        const activeTask = activeTimer?.task;
+
         return (
-          <div key={entry.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
-            <div className="min-w-0 pr-2">
-              <div className="font-semibold text-slate-700 text-xs truncate">{entry.user?.name}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Checked in at {new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+          <div key={entry.id} className="flex flex-col p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0 pr-2">
+                <div className="font-semibold text-slate-700 text-xs truncate">{entry.user?.name}</div>
+                <div className="text-[10px] text-slate-400 mt-0.5">Checked in at {new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+              </div>
+              <span className="text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 select-none">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                {durationStr}
+              </span>
             </div>
-            <span className="text-[10px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              {durationStr}
-            </span>
+            {activeTask && (
+              <div className="mt-2 text-[10px] text-slate-500 bg-amber-50/70 border border-amber-100/60 rounded-lg p-1.5 flex items-center gap-1.5 min-w-0">
+                <Play className="h-3 w-3 text-amber-600 fill-amber-600 shrink-0" />
+                <span className="truncate">
+                  Working on: <span className="font-semibold text-slate-700">{activeTask.title}</span>
+                </span>
+              </div>
+            )}
           </div>
         );
       })}
