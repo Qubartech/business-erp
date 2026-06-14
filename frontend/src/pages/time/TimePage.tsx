@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Modal } from "@/components/Modal";
-import { timeApi, tasksApi, attendanceApi } from "@/services/featureApis";
-import type { TimeEntry, Task, AttendanceEntry } from "@/types";
+import { timeApi, tasksApi } from "@/services/featureApis";
+import type { TimeEntry, Task } from "@/types";
 import { formatDateTime, formatMinutes } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square, Loader2 } from "lucide-react";
@@ -14,7 +14,7 @@ import * as Slider from "@radix-ui/react-slider";
 export default function TimePage() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"log" | "review" | "attendance">("review");
+  const [activeTab, setActiveTab] = useState<"log" | "review">("review");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toLocaleDateString("en-CA") // YYYY-MM-DD local
   );
@@ -45,11 +45,6 @@ export default function TimePage() {
   const { data: tasks } = useQuery({
     queryKey: ["tasks", "all"],
     queryFn: () => tasksApi.list({ pageSize: 100 }),
-  });
-  const { data: attendanceList, isLoading: attendanceListLoading } = useQuery({
-    queryKey: ["attendance", "list", selectedDate],
-    queryFn: () => attendanceApi.list({ date: selectedDate }),
-    enabled: activeTab === "attendance",
   });
 
   // Mutators
@@ -226,23 +221,7 @@ export default function TimePage() {
     return `${h > 0 ? `${h}h ` : ""}${m}m`;
   };
 
-  const attendanceCols: Column<AttendanceEntry>[] = [
-    { key: "user", header: "Team Member", render: (e) => e.user?.name ?? "—" },
-    { key: "in", header: "Check In", render: (e) => formatDateTime(e.checkIn) },
-    { key: "out", header: "Check Out", render: (e) => e.checkOut ? formatDateTime(e.checkOut) : "Active Check-In" },
-    {
-      key: "dur",
-      header: "Duration",
-      render: (e) => {
-        if (!e.checkOut) return "—";
-        const diffMs = new Date(e.checkOut).getTime() - new Date(e.checkIn).getTime();
-        const mins = Math.max(0, Math.round(diffMs / 60000));
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        return `${h > 0 ? `${h}h ` : ""}${m}m`;
-      },
-    },
-  ];
+
 
   const cols: Column<TimeEntry>[] = [
     { key: "t", header: "Task", render: (e) => e.task?.title ?? "—" },
@@ -327,48 +306,10 @@ export default function TimePage() {
         >
           All Time Logs
         </button>
-        <button
-          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
-            activeTab === "attendance"
-              ? "border-brand-600 text-brand-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-          onClick={() => setActiveTab("attendance")}
-        >
-          Attendance Log
-        </button>
       </div>
 
       {activeTab === "log" ? (
         <DataTable rows={list?.items} loading={isLoading} columns={cols} rowKey={(e) => e.id} />
-      ) : activeTab === "attendance" ? (
-        <div className="space-y-6">
-          {/* Shared Date Picker bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-xs border border-slate-200/80">
-            <div className="flex items-center gap-2">
-              <button className="btn-secondary !p-2" onClick={() => shiftDay(-1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="relative">
-                <input
-                  type="date"
-                  className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg border-slate-200"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                />
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-              </div>
-              <button className="btn-secondary !p-2" onClick={() => shiftDay(1)}>
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="text-sm text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{attendanceList?.items.length ?? 0} check-ins</span> for this day
-            </div>
-          </div>
-
-          <DataTable rows={attendanceList?.items} loading={attendanceListLoading} columns={attendanceCols} rowKey={(e) => e.id} />
-        </div>
       ) : (
         <div className="space-y-6">
           {/* Timeline Date Picker bar */}

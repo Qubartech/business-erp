@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
-  Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2
+  Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -19,6 +19,7 @@ const items: NavItem[] = [
   { to: "/tasks", label: "Tasks", icon: ListChecks },
   { to: "/notes", label: "Notes", icon: StickyNote },
   { to: "/time", label: "Time", icon: Clock },
+  { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/users", label: "Users", icon: Users, roles: ["admin"] },
   { to: "/settings", label: "Settings", icon: Cog, roles: ["admin"] },
