@@ -83,6 +83,6 @@ export const attendanceApi = {
     ),
   checkIn: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-in")),
   checkOut: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-out")),
-  list: (q?: { userId?: string; date?: string; page?: number; pageSize?: number }) =>
+  list: (q?: { userId?: string; date?: string; month?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<AttendanceEntry>>(api.get<ApiEnvelope<Paged<AttendanceEntry>>>("/attendance", { params: q })),
 };

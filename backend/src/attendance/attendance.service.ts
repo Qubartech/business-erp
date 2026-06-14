@@ -93,6 +93,14 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
           gte: startOfDay,
           lte: endOfDay,
         };
+      } else if (q.month) {
+        const [year, month] = q.month.split("-").map(Number);
+        const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+        where.checkIn = {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        };
       }
 
       const [items, total] = await Promise.all([

@@ -3,7 +3,7 @@ export function formatDate(d: string | Date | null | undefined): string {
   const date = new Date(d);
   if (isNaN(date.getTime())) return "—";
   return date.toLocaleDateString("en-US", {
-    month: "long",
+    month: "short",
     day: "numeric",
     year: "numeric"
   });
@@ -15,7 +15,7 @@ export function formatDateTime(d: string | Date | null | undefined): string {
   if (isNaN(date.getTime())) return "—";
   
   const dateStr = date.toLocaleDateString("en-US", {
-    month: "long",
+    month: "short",
     day: "numeric",
     year: "numeric"
   });
