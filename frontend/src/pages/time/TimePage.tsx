@@ -31,6 +31,8 @@ export default function TimePage() {
   const [editEndMinutes, setEditEndMinutes] = useState<number>(600); // 10:00 AM
   const [editTaskId, setEditTaskId] = useState<string>("");
 
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   // Refs
   const timelineContainerRef = useRef<HTMLDivElement>(null);
 
@@ -145,17 +147,68 @@ export default function TimePage() {
 
   // Group by user for daily session log summary
   const dailyUsersLog = (() => {
-    const groups: Record<string, { name: string; sessions: number; minutes: number }> = {};
+    const groups: Record<string, { id: string; name: string; sessions: number; minutes: number }> = {};
     filteredEntries.forEach((e) => {
       const uId = e.user?.id || "unknown";
       const uName = e.user?.name || "Unknown User";
       if (!groups[uId]) {
-        groups[uId] = { name: uName, sessions: 0, minutes: 0 };
+        groups[uId] = { id: uId, name: uName, sessions: 0, minutes: 0 };
       }
       groups[uId].sessions += 1;
       groups[uId].minutes += e.durationMinutes ?? 0;
     });
     return Object.values(groups);
+  })();
+
+  // Group selected user's entries by task for the detail modal
+  const groupedUserTasks = (() => {
+    if (!selectedUserId) return [];
+    
+    const groups: Record<string, {
+      taskId: string;
+      taskTitle: string;
+      totalMinutes: number;
+      sprints: {
+        id: string;
+        startTime: string;
+        endTime: string | null;
+        durationMinutes: number | null;
+      }[];
+    }> = {};
+
+    filteredEntries.forEach((e) => {
+      const uId = e.user?.id || "unknown";
+      if (uId !== selectedUserId) return;
+      
+      const tId = e.taskId || "unknown-task";
+      const tTitle = e.task?.title || "Unknown Task";
+      
+      if (!groups[tId]) {
+        groups[tId] = {
+          taskId: tId,
+          taskTitle: tTitle,
+          totalMinutes: 0,
+          sprints: []
+        };
+      }
+      
+      groups[tId].totalMinutes += e.durationMinutes ?? 0;
+      groups[tId].sprints.push({
+        id: e.id,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        durationMinutes: e.durationMinutes
+      });
+    });
+
+    // Sort tasks by total minutes descending, and sprints chronologically
+    const result = Object.values(groups);
+    result.forEach((group) => {
+      group.sprints.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    });
+    result.sort((a, b) => b.totalMinutes - a.totalMinutes);
+
+    return result;
   })();
 
   // Formatting helpers for slider
@@ -356,7 +409,8 @@ export default function TimePage() {
                 {dailyUsersLog.map((log, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between hover:border-slate-200 transition-colors"
+                    onClick={() => setSelectedUserId(log.id)}
+                    className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between hover:border-brand-300 hover:bg-slate-50/80 active:scale-[0.99] cursor-pointer transition-all shadow-xs"
                   >
                     <div className="font-medium text-slate-800 text-sm truncate">{log.name}</div>
                     <div className="flex items-center justify-between mt-3">
@@ -626,6 +680,63 @@ export default function TimePage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* User Session Detail Modal */}
+      <Modal
+        open={selectedUserId !== null}
+        onClose={() => setSelectedUserId(null)}
+        title={`${dailyUsersLog.find(u => u.id === selectedUserId)?.name || "User"}'s Daily Sessions`}
+        footer={
+          <button className="btn-secondary" onClick={() => setSelectedUserId(null)}>
+            Close
+          </button>
+        }
+      >
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          {groupedUserTasks.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">No entries found for this user.</p>
+          ) : (
+            groupedUserTasks.map((group) => (
+              <div key={group.taskId} className="border border-slate-200/80 rounded-xl p-4 bg-white shadow-xs space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm">{group.taskTitle}</h4>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <Clock className="h-3 w-3 text-slate-400" />
+                    Total: {formatMinutesDuration(group.totalMinutes)}
+                  </span>
+                </div>
+                
+                <div className="border-t border-slate-100 pt-2.5 space-y-2">
+                  {group.sprints.map((sprint, sIdx) => {
+                    const start = new Date(sprint.startTime);
+                    const end = sprint.endTime ? new Date(sprint.endTime) : new Date();
+                    const startMin = start.getHours() * 60 + start.getMinutes();
+                    const endMin = end.getHours() * 60 + end.getMinutes();
+
+                    return (
+                      <div key={sprint.id} className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 hover:bg-slate-100/70 p-2 rounded-lg transition-colors">
+                        <span className="font-semibold text-slate-500 font-mono">
+                          Sprint #{sIdx + 1}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-slate-600">
+                            {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
+                          </span>
+                          <span className="bg-brand-50 text-brand-700 font-semibold px-1.5 py-0.5 rounded text-[10px]">
+                            {formatMinutesDuration((sprint.durationMinutes ?? (endMin - startMin)))}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </Modal>
     </>
   );
