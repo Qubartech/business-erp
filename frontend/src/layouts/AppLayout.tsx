@@ -6,6 +6,9 @@ import {
 import { useState } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { attendanceApi } from "@/services/featureApis";
+import { toast } from "sonner";
 import { clsx } from "clsx";
 import type { Role } from "@/types";
 
@@ -27,6 +30,31 @@ export function AppLayout() {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const visible = items.filter((i) => !i.roles || (user && i.roles.includes(user.role)));
+  const qc = useQueryClient();
+
+  const { data: attendance, isLoading: attendanceLoading } = useQuery({
+    queryKey: ["attendance", "today"],
+    queryFn: attendanceApi.status,
+    enabled: !!user,
+  });
+
+  const checkIn = useMutation({
+    mutationFn: attendanceApi.checkIn,
+    onSuccess: () => {
+      toast.success("Checked in successfully");
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Check in failed"),
+  });
+
+  const checkOut = useMutation({
+    mutationFn: attendanceApi.checkOut,
+    onSuccess: () => {
+      toast.success("Checked out successfully");
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Check out failed"),
+  });
 
   const formatSeconds = (totalSecs: number) => {
     const m = Math.floor(totalSecs / 60);
@@ -80,27 +108,59 @@ export function AppLayout() {
             <div className="text-sm text-slate-500 font-medium hidden sm:block">Internal ERP</div>
           </div>
 
-          {currentTimer && (
-            <div className="flex items-center gap-3 px-3 py-1 bg-amber-50/80 border border-amber-200 rounded-full shadow-xs text-xs font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-              <span className="text-slate-600 truncate max-w-[120px] md:max-w-[200px]">
-                {currentTimer.task?.title}
-              </span>
-              <span className="font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">
-                {formatSeconds(sprintRemaining)}
-              </span>
-              <button
-                onClick={stopTimer}
-                className="p-1 hover:bg-amber-200 rounded-full text-amber-700 transition-colors"
-                title="Stop timer"
-              >
-                <Square className="h-3 w-3 fill-amber-700" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {currentTimer && (
+              <div className="flex items-center gap-3 px-3 py-1 bg-amber-50/80 border border-amber-200 rounded-full shadow-xs text-xs font-medium">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+                <span className="text-slate-600 truncate max-w-[120px] md:max-w-[200px]">
+                  {currentTimer.task?.title}
+                </span>
+                <span className="font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">
+                  {formatSeconds(sprintRemaining)}
+                </span>
+                <button
+                  onClick={stopTimer}
+                  className="p-1 hover:bg-amber-200 rounded-full text-amber-700 transition-colors"
+                  title="Stop timer"
+                >
+                  <Square className="h-3 w-3 fill-amber-700" />
+                </button>
+              </div>
+            )}
+
+            {user && (
+              <div className="flex items-center gap-2">
+                {attendanceLoading ? (
+                  <span className="text-xs text-slate-400">Loading attendance...</span>
+                ) : attendance?.status === "checked-in" ? (
+                  <button
+                    onClick={() => checkOut.mutate()}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    Check Out
+                  </button>
+                ) : attendance?.status === "checked-out" ? (
+                  <span className="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-semibold flex items-center gap-1 select-none">
+                    Checked Out
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => checkIn.mutate()}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 active:bg-emerald-200 rounded-full text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+                  >
+                    Check In
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             className="btn-secondary"

@@ -61,3 +61,13 @@ export type Document = {
 export type Setting = { id: string; key: string; value: string; updatedAt: string };
 
 export type Paged<T> = { items: T[]; total: number; page: number; pageSize: number };
+
+export type AttendanceEntry = {
+  id: string;
+  userId: string;
+  checkIn: string;
+  checkOut: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: Pick<User, "id" | "name" | "email">;
+};

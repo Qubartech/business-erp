@@ -53,6 +53,7 @@ model User {
   notes           Note[]
   timeEntries     TimeEntry[]
   documents       Document[]
+  attendanceEntries Attendance[]
 
   @@map("users")
 }
@@ -206,5 +207,19 @@ model Commit {
   @@index([projectId])
   @@index([committedAt])
   @@map("commits")
+}
+
+model Attendance {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  checkIn   DateTime  @map("check_in")
+  checkOut  DateTime? @map("check_out")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("attendance")
 }
 

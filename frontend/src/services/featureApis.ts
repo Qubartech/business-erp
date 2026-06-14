@@ -1,5 +1,5 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
-import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry } from "@/types";
+import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry } from "@/types";
 
 export type ListTasksQuery = {
   projectId?: string; status?: TaskStatus; priority?: TaskPriority;
@@ -73,4 +73,15 @@ export type DashboardSummary = {
 
 export const dashboardApi = {
   summary: () => unwrap<DashboardSummary>(api.get<ApiEnvelope<DashboardSummary>>("/dashboard/summary")),
+};
+
+export const attendanceApi = {
+  status: () =>
+    unwrap<{ status: "checked-in" | "checked-out" | "none"; activeEntry: AttendanceEntry | null }>(
+      api.get<ApiEnvelope<{ status: "checked-in" | "checked-out" | "none"; activeEntry: AttendanceEntry | null }>>("/attendance/today")
+    ),
+  checkIn: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-in")),
+  checkOut: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-out")),
+  list: (q?: { userId?: string; date?: string; page?: number; pageSize?: number }) =>
+    unwrap<Paged<AttendanceEntry>>(api.get<ApiEnvelope<Paged<AttendanceEntry>>>("/attendance", { params: q })),
 };

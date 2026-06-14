@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createUserSchema, listUsersQuerySchema } from "../src/users/users.schemas.js";
 import { createTaskSchema } from "../src/tasks/tasks.schemas.js";
 import { updateEntrySchema } from "../src/time-entries/time-entries.schemas.js";
+import { listAttendanceQuerySchema } from "../src/attendance/attendance.schemas.js";
 
 describe("validators", () => {
   it("rejects short passwords", () => {
@@ -39,5 +40,12 @@ describe("validators", () => {
       expect(r.data.startTime instanceof Date).toBe(true);
       expect(r.data.endTime instanceof Date).toBe(true);
     }
+  });
+  it("attendance validator accepts valid filters", () => {
+    const r = listAttendanceQuerySchema.safeParse({
+      userId: "12345678-1234-1234-1234-123456789012",
+      date: "2026-06-14",
+    });
+    expect(r.success).toBe(true);
   });
 });

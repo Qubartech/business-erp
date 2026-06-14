@@ -9,6 +9,7 @@ import { timeEntriesRouter } from "../time-entries/time-entries.routes.js";
 import { documentsRouter } from "../documents/documents.routes.js";
 import { settingsRouter } from "../settings/settings.routes.js";
 import { githubWebhooksRouter } from "../webhooks/github.routes.js";
+import { attendanceRouter } from "../attendance/attendance.routes.js";
 
 export const router = Router();
 
@@ -22,4 +23,5 @@ router.use("/time-entries", timeEntriesRouter);
 router.use("/documents", documentsRouter);
 router.use("/settings", settingsRouter);
 router.use("/webhooks/github", githubWebhooksRouter);
+router.use("/attendance", attendanceRouter);
 
