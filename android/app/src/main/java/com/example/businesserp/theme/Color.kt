@@ -2,9 +2,9 @@ package com.example.businesserp.theme
 
 import androidx.compose.ui.graphics.Color
 
-val HrOrange = Color(0xFFFA5A15)
-val HrOrangeDark = Color(0xFFD34200)
-val HrOrangeLight = Color(0xFFFFEFEB)
+val HrPrimary = Color(0xFF2563EB)
+val HrPrimaryDark = Color(0xFF1D4ED8)
+val HrPrimaryLight = Color(0xFFEFF6FF)
 val HrSlateDark = Color(0xFF0F172A)
 val HrSlateMedium = Color(0xFF334155)
 val HrSlateLight = Color(0xFF64748B)

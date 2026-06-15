@@ -30,7 +30,7 @@ import com.example.businesserp.features.projects.presentation.ProjectsRootScreen
 import com.example.businesserp.features.attendance.presentation.AttendanceHistoryRootScreen
 import com.example.businesserp.features.tasks.presentation.TasksRootScreen
 import com.example.businesserp.features.timer.presentation.TimerRootScreen
-import com.example.businesserp.theme.HrOrange
+import com.example.businesserp.theme.HrPrimary
 import com.example.businesserp.theme.HrSlateLight
 
 private enum class MainTab(val label: String, val icon: ImageVector) {
@@ -73,7 +73,7 @@ fun MainScreen(
                     ) {
                         MainTab.entries.forEach { tab ->
                             val isSelected = selectedTab == tab
-                            val activeColor = HrOrange
+                            val activeColor = HrPrimary
                             val inactiveColor = HrSlateLight
                             
                             val scale by animateFloatAsState(

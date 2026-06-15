@@ -62,7 +62,7 @@ fun NotesScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onEvent(NotesEvent.SelectNoteForEditing(null, "", "")) },
-                containerColor = HrOrange,
+                containerColor = HrPrimary,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -89,7 +89,7 @@ fun NotesScreen(
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = HrOrange,
+                        focusedBorderColor = HrPrimary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
@@ -276,7 +276,7 @@ fun EditNoteDialog(
                         .weight(1f),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = HrOrange,
+                        focusedBorderColor = HrPrimary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface

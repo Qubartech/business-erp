@@ -38,7 +38,7 @@ fun AuthScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        HrOrangeLight.copy(alpha = 0.7f),
+                        HrPrimaryLight.copy(alpha = 0.7f),
                         MaterialTheme.colorScheme.background
                     )
                 )
@@ -59,7 +59,7 @@ fun AuthScreen(
                 text = "Business ERP",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = HrOrangeDark,
+                color = HrPrimaryDark,
                 letterSpacing = 0.5.sp
             )
             Text(
@@ -96,7 +96,7 @@ fun AuthScreen(
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = "Email Icon",
-                                tint = HrOrange
+                                tint = HrPrimary
                             )
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -112,7 +112,7 @@ fun AuthScreen(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Password Icon",
-                                tint = HrOrange
+                                tint = HrPrimary
                             )
                         },
                         visualTransformation = PasswordVisualTransformation(),

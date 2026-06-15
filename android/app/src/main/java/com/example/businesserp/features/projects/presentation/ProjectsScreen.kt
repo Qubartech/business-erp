@@ -75,7 +75,7 @@ fun ProjectsScreen(
                         if (state.filterCategory.ordinal < tabPositions.size) {
                             TabRowDefaults.SecondaryIndicator(
                                 Modifier.tabIndicatorOffset(tabPositions[state.filterCategory.ordinal]),
-                                color = HrOrange
+                                color = HrPrimary
                             )
                         }
                     }
@@ -94,7 +94,7 @@ fun ProjectsScreen(
                                     },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = if (isSelected) HrOrange else HrSlateMedium
+                                    color = if (isSelected) HrPrimary else HrSlateMedium
                                 )
                             }
                         )
@@ -228,7 +228,7 @@ fun ProjectCard(project: Project) {
                         text = "🐙 ${project.githubRepo}",
                         fontSize = 11.sp,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        color = HrOrange,
+                        color = HrPrimary,
                         fontWeight = FontWeight.Bold
                     )
                 }

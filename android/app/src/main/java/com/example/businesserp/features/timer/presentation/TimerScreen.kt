@@ -25,8 +25,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -339,11 +342,42 @@ fun DashboardHeader(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(HrOrange,HrOrangeDark)
+                    .drawBehind {
+                        // 1. Draw linear gradient background (blue gradient matching the user's reference)
+                        val darkBlueGradient = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF0A2540), // Dark space navy
+                                Color(0xFF0066FF)  // Rich bright royal blue
+                            ),
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, 0f)
                         )
-                    )
+                        drawRect(brush = darkBlueGradient)
+
+                        // 2. Draw Concentric circles in the top-right
+                        val rightCenter = Offset(size.width * 0.95f, size.height * -0.2f)
+                        val rightRadiusStep = 8.dp.toPx()
+                        for (i in 6..22) {
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.03f + (i % 4) * 0.01f),
+                                radius = i * rightRadiusStep,
+                                center = rightCenter,
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                        }
+
+                        // 3. Draw Concentric circles in the bottom-left
+                        val leftCenter = Offset(size.width * -0.1f, size.height * 1.2f)
+                        val leftRadiusStep = 12.dp.toPx()
+                        for (i in 5..16) {
+                            drawCircle(
+                                color = Color.White.copy(alpha = 0.03f + (i % 3) * 0.01f),
+                                radius = i * leftRadiusStep,
+                                center = leftCenter,
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                        }
+                    }
                     .padding(20.dp)
             ) {
                 Column {
@@ -732,8 +766,8 @@ fun ActiveTimerSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = HrOrangeLight),
-        border = BorderStroke(1.dp, HrOrange.copy(alpha = 0.4f))
+        colors = CardDefaults.cardColors(containerColor = HrPrimaryLight),
+        border = BorderStroke(1.dp, HrPrimary.copy(alpha = 0.4f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -749,7 +783,7 @@ fun ActiveTimerSection(
                         text = "ACTIVE TIMER",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = HrOrangeDark.copy(alpha = 0.8f)
+                        color = HrPrimaryDark.copy(alpha = 0.8f)
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -765,7 +799,7 @@ fun ActiveTimerSection(
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp,
-                    color = HrOrange
+                    color = HrPrimary
                 )
             }
 
@@ -775,7 +809,7 @@ fun ActiveTimerSection(
                 text = timeString,
                 fontSize = 42.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = HrOrangeDark,
+                color = HrPrimaryDark,
                 letterSpacing = 1.sp
             )
 
@@ -858,10 +892,10 @@ fun CommitRow(commit: com.example.businesserp.features.timer.domain.model.Commit
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(HrOrangeLight),
+                    .background(HrPrimaryLight),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Git", fontWeight = FontWeight.Bold, color = HrOrange, fontSize = 12.sp)
+                Text("Git", fontWeight = FontWeight.Bold, color = HrPrimary, fontSize = 12.sp)
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -874,7 +908,7 @@ fun CommitRow(commit: com.example.businesserp.features.timer.domain.model.Commit
                         text = commit.projectName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
-                        color = HrOrange
+                        color = HrPrimary
                     )
                     Text(
                         text = commit.sha.take(7),

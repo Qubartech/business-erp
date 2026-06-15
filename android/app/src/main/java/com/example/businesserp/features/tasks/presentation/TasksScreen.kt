@@ -171,7 +171,7 @@ fun ProjectFilterChips(
             label = { Text("All Projects", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
             shape = RoundedCornerShape(12.dp),
             colors = FilterChipDefaults.filterChipColors(
-                selectedContainerColor = HrOrange,
+                selectedContainerColor = HrPrimary,
                 selectedLabelColor = Color.White,
                 containerColor = MaterialTheme.colorScheme.surface,
                 labelColor = HrSlateMedium
@@ -180,7 +180,7 @@ fun ProjectFilterChips(
                 enabled = true,
                 selected = selectedProjectId == null,
                 borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                selectedBorderColor = HrOrange,
+                selectedBorderColor = HrPrimary,
                 borderWidth = 1.dp
             )
         )
@@ -191,7 +191,7 @@ fun ProjectFilterChips(
                 label = { Text(project.name, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                 shape = RoundedCornerShape(12.dp),
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = HrOrange,
+                    selectedContainerColor = HrPrimary,
                     selectedLabelColor = Color.White,
                     containerColor = MaterialTheme.colorScheme.surface,
                     labelColor = HrSlateMedium
@@ -200,7 +200,7 @@ fun ProjectFilterChips(
                     enabled = true,
                     selected = selectedProjectId == project.id,
                     borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                    selectedBorderColor = HrOrange,
+                    selectedBorderColor = HrPrimary,
                     borderWidth = 1.dp
                 )
             )

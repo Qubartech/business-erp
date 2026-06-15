@@ -12,10 +12,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = HrOrange,
+    primary = HrPrimary,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFF2C160B),
-    onPrimaryContainer = Color(0xFFFFD1BD),
+    primaryContainer = Color(0xFF1E3A8A),
+    onPrimaryContainer = Color(0xFFDBEAFE),
     secondary = HrSlateLight,
     onSecondary = Color.White,
     background = Color(0xFF0F172A),
@@ -28,10 +28,10 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = HrOrange,
+    primary = HrPrimary,
     onPrimary = Color.White,
-    primaryContainer = HrOrangeLight,
-    onPrimaryContainer = HrOrangeDark,
+    primaryContainer = HrPrimaryLight,
+    onPrimaryContainer = HrPrimaryDark,
     secondary = HrSlateMedium,
     onSecondary = Color.White,
     background = HrBgOffWhite,

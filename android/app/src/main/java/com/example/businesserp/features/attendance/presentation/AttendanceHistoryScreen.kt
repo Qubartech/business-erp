@@ -74,11 +74,11 @@ fun AttendanceHistoryScreen(
                 TabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = HrOrange,
+                    contentColor = HrPrimary,
                     indicator = { tabPositions ->
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = HrOrange
+                            color = HrPrimary
                         )
                     }
                 ) {
@@ -86,14 +86,14 @@ fun AttendanceHistoryScreen(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         text = { Text("My Attendance", fontWeight = FontWeight.Bold) },
-                        selectedContentColor = HrOrange,
+                        selectedContentColor = HrPrimary,
                         unselectedContentColor = HrSlateLight
                     )
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         text = { Text("Team Tracker", fontWeight = FontWeight.Bold) },
-                        selectedContentColor = HrOrange,
+                        selectedContentColor = HrPrimary,
                         unselectedContentColor = HrSlateLight
                     )
                 }
@@ -171,7 +171,7 @@ fun AttendanceHistoryScreen(
                                         ErpButton(
                                             text = "Check In Today",
                                             onClick = { onEvent(AttendanceHistoryEvent.CheckIn) },
-                                            containerColor = HrOrange
+                                            containerColor = HrPrimary
                                         )
                                     } else {
                                         ErpButton(
@@ -312,12 +312,12 @@ fun TeamMemberActiveCard(member: ActiveTeamMember) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(HrOrangeLight),
+                    .background(HrPrimaryLight),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = member.userName.take(2).uppercase(),
-                    color = HrOrange,
+                    color = HrPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -362,7 +362,7 @@ fun TeamMemberActiveCard(member: ActiveTeamMember) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(HrOrangeLight)
+                        .background(HrPrimaryLight)
                         .padding(horizontal = 8.dp, vertical = 6.dp)
                         .widthIn(max = 120.dp)
                 ) {
@@ -371,7 +371,7 @@ fun TeamMemberActiveCard(member: ActiveTeamMember) {
                             text = "WORKING ON",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 8.sp,
-                            color = HrOrange
+                            color = HrPrimary
                         )
                         Text(
                             text = member.activeTaskTitle,
@@ -441,7 +441,7 @@ fun AttendanceHistoryRow(record: Attendance) {
                     text = DateUtils.formatDuration(durationMinutes),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
-                    color = HrOrange
+                    color = HrPrimary
                 )
             } else {
                 Box(
