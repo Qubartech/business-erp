@@ -397,9 +397,9 @@ fun DashboardHeader(
 
 @Composable
 fun StatsSection(
-    totalProjects: Int,
-    totalTasks: Int,
-    teamMembers: Int,
+    totalProjects: Int?,
+    totalTasks: Int?,
+    teamMembers: Int?,
     onNavigateToTabName: (String) -> Unit
 ) {
     Column {
@@ -416,34 +416,37 @@ fun StatsSection(
         ) {
             // Projects Metric Card
             MetricCard(
-                count = if (totalProjects > 0) String.format("%02d", totalProjects) else "05",
+                count = totalProjects?.let { String.format("%02d", it) } ?: "--",
                 label = "Projects",
                 icon = Icons.Default.Folder,
                 bgColor = Color(0xFFEBF8FF),
                 contentColor = Color(0xFF2B6CB0),
                 onClick = { onNavigateToTabName("Projects") },
+                loading = totalProjects == null,
                 modifier = Modifier.weight(1f)
             )
 
             // Tasks Metric Card
             MetricCard(
-                count = if (totalTasks > 0) String.format("%02d", totalTasks) else "12",
+                count = totalTasks?.let { String.format("%02d", it) } ?: "--",
                 label = "Tasks",
                 icon = Icons.Default.List,
                 bgColor = HrOrangeLight,
                 contentColor = HrOrange,
                 onClick = { onNavigateToTabName("Tasks") },
+                loading = totalTasks == null,
                 modifier = Modifier.weight(1f)
             )
 
             // People Metric Card
             MetricCard(
-                count = if (teamMembers > 0) String.format("%02d", teamMembers) else "08",
+                count = teamMembers?.let { String.format("%02d", it) } ?: "--",
                 label = "In Office",
                 icon = Icons.Default.Check,
                 bgColor = HrGreenPresentBg,
                 contentColor = HrGreenPresent,
                 onClick = { onNavigateToTabName("Attendance") },
+                loading = teamMembers == null,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -458,11 +461,12 @@ fun MetricCard(
     bgColor: Color,
     contentColor: Color,
     onClick: () -> Unit,
+    loading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
-            .clickable { onClick() },
+            .clickable(enabled = !loading) { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor),
         border = BorderStroke(1.dp, contentColor.copy(alpha = 0.2f))
@@ -480,12 +484,20 @@ fun MetricCard(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = count,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = contentColor
-            )
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = contentColor
+                )
+            } else {
+                Text(
+                    text = count,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = contentColor
+                )
+            }
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,

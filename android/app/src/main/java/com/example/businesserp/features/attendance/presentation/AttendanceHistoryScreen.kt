@@ -11,12 +11,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,7 +40,9 @@ fun AttendanceHistoryScreen(
     val isCheckedIn = state.activeAttendance != null
     val statusText = if (isCheckedIn) "Checked In" else "Checked Out"
     val statusColor = if (isCheckedIn) HrGreenPresent else HrRedLeave
-    val statusBgColor = if (isCheckedIn) HrGreenPresentBg else HrRedLeaveBg
+
+    var selectedTab by remember { mutableStateOf(0) }
+    val isAdmin = state.userRole == "admin"
 
     Scaffold(
         topBar = {
@@ -59,138 +63,339 @@ fun AttendanceHistoryScreen(
         },
         modifier = modifier
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
-            ) {
-                if (state.errorMessage != null) {
-                    item {
-                        ErpErrorView(
-                            message = state.errorMessage,
-                            onDismiss = { onEvent(AttendanceHistoryEvent.DismissError) }
+            if (isAdmin) {
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = HrOrange,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = HrOrange
                         )
                     }
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text("My Attendance", fontWeight = FontWeight.Bold) },
+                        selectedContentColor = HrOrange,
+                        unselectedContentColor = HrSlateLight
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text("Team Tracker", fontWeight = FontWeight.Bold) },
+                        selectedContentColor = HrOrange,
+                        unselectedContentColor = HrSlateLight
+                    )
                 }
+            }
 
-                // Banner Status Card
-                item {
-                    ErpCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "TODAY'S STATUS",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = HrSlateLight,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = statusText,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = statusColor
-                                    )
-                                }
-                                
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(statusColor)
-                                )
-                            }
-
-                            if (isCheckedIn && state.activeAttendance != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Checked In at ${DateUtils.formatTime(state.activeAttendance.checkIn)}",
-                                    fontSize = 14.sp,
-                                    color = HrSlateMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            if (!isCheckedIn) {
-                                ErpButton(
-                                    text = "Check In Today",
-                                    onClick = { onEvent(AttendanceHistoryEvent.CheckIn) },
-                                    containerColor = HrOrange
-                                )
-                            } else {
-                                ErpButton(
-                                    text = "Check Out Now",
-                                    onClick = { onEvent(AttendanceHistoryEvent.CheckOut) },
-                                    containerColor = HrRedLeave,
-                                    contentColor = Color.White
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+            ) {
+                if (selectedTab == 0 || !isAdmin) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
+                    ) {
+                        if (state.errorMessage != null) {
+                            item {
+                                ErpErrorView(
+                                    message = state.errorMessage,
+                                    onDismiss = { onEvent(AttendanceHistoryEvent.DismissError) }
                                 )
                             }
                         }
-                    }
-                }
 
-                // History Title
-                item {
-                    Text(
-                        text = "Recent Attendance Logs",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HrSlateDark,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
+                        // Banner Status Card
+                        item {
+                            ErpCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = "TODAY'S STATUS",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = HrSlateLight,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = statusText,
+                                                fontSize = 24.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = statusColor
+                                            )
+                                        }
+                                        
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(statusColor)
+                                        )
+                                    }
 
-                // History List
-                if (state.attendanceHistory.isEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(24.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "No history recorded.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 14.sp
-                                )
+                                    if (state.activeAttendance != null) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Checked In at ${DateUtils.formatTime(state.activeAttendance.checkIn)}",
+                                            fontSize = 14.sp,
+                                            color = HrSlateMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    if (!isCheckedIn) {
+                                        ErpButton(
+                                            text = "Check In Today",
+                                            onClick = { onEvent(AttendanceHistoryEvent.CheckIn) },
+                                            containerColor = HrOrange
+                                        )
+                                    } else {
+                                        ErpButton(
+                                            text = "Check Out Now",
+                                            onClick = { onEvent(AttendanceHistoryEvent.CheckOut) },
+                                            containerColor = HrRedLeave,
+                                            contentColor = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // History Title
+                        item {
+                            Text(
+                                text = "Recent Attendance Logs",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = HrSlateDark,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        // History List
+                        if (state.attendanceHistory.isEmpty()) {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "No history recorded.",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            items(state.attendanceHistory) { record ->
+                                AttendanceHistoryRow(record = record)
                             }
                         }
                     }
                 } else {
-                    items(state.attendanceHistory) { record ->
-                        AttendanceHistoryRow(record = record)
+                    // Team Tracker Tab
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
+                    ) {
+                        if (state.errorMessage != null) {
+                            item {
+                                ErpErrorView(
+                                    message = state.errorMessage,
+                                    onDismiss = { onEvent(AttendanceHistoryEvent.DismissError) }
+                                )
+                            }
+                        }
+
+                        item {
+                            Text(
+                                text = "Checked-in Team Members",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = HrSlateDark,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        if (state.activeTeamMembers.isEmpty()) {
+                            item {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "No team members are currently checked in.",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            items(state.activeTeamMembers) { member ->
+                                TeamMemberActiveCard(member = member)
+                            }
+                        }
                     }
+                }
+
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TeamMemberActiveCard(member: ActiveTeamMember) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(HrOrangeLight),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = member.userName.take(2).uppercase(),
+                    color = HrOrange,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = member.userName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = HrSlateDark
+                )
+                Text(
+                    text = member.userEmail,
+                    fontSize = 12.sp,
+                    color = HrSlateLight
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(HrGreenPresent)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "In: ${DateUtils.formatTime(member.checkInTime)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HrGreenPresent
+                    )
                 }
             }
 
-            if (state.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
-                )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            if (member.activeTaskTitle != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(HrOrangeLight)
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                        .widthIn(max = 120.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "WORKING ON",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 8.sp,
+                            color = HrOrange
+                        )
+                        Text(
+                            text = member.activeTaskTitle,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            color = HrSlateDark,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(HrSlateLight.copy(alpha = 0.1f))
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "IDLE",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        color = HrSlateLight
+                    )
+                }
             }
         }
     }

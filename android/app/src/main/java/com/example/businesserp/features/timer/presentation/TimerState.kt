@@ -9,9 +9,9 @@ data class TimerState(
     val timeEntries: List<TimeEntry> = emptyList(),
     val attendanceHistory: List<Attendance> = emptyList(),
     val commits: List<com.example.businesserp.features.timer.domain.model.Commit> = emptyList(),
-    val totalProjects: Int = 0,
-    val totalTasks: Int = 0,
-    val teamMembers: Int = 0,
+    val totalProjects: Int? = null,
+    val totalTasks: Int? = null,
+    val teamMembers: Int? = null,
     val userName: String = "Employee",
     val isLoading: Boolean = false,
     val errorMessage: String? = null

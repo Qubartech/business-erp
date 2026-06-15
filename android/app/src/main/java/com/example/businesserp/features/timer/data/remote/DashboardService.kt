@@ -24,6 +24,34 @@ data class CommitDto(
 )
 
 @Serializable
+data class UserTaskDto(
+    val id: String,
+    val title: String
+)
+
+@Serializable
+data class UserTimeEntryDto(
+    val id: String,
+    val task: UserTaskDto? = null
+)
+
+@Serializable
+data class UserDto(
+    val id: String,
+    val name: String,
+    val email: String,
+    val timeEntries: List<UserTimeEntryDto> = emptyList()
+)
+
+@Serializable
+data class ActiveAttendanceDto(
+    val id: String,
+    val userId: String,
+    val checkIn: String,
+    val user: UserDto
+)
+
+@Serializable
 data class DashboardSummaryDto(
     val totalProjects: Int,
     val activeProjects: Int,
@@ -31,7 +59,8 @@ data class DashboardSummaryDto(
     val completedTasks: Int,
     val teamMembers: Int,
     val totalMinutes: Int,
-    val latestCommits: List<CommitDto> = emptyList()
+    val latestCommits: List<CommitDto> = emptyList(),
+    val activeAttendance: List<ActiveAttendanceDto> = emptyList()
 )
 
 interface DashboardService {

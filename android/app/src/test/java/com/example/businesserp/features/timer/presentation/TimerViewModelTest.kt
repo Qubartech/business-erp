@@ -37,6 +37,7 @@ class TimerViewModelTest {
 
     private lateinit var fakeDashboardService: FakeDashboardService
     private lateinit var fakeCommitDao: FakeCommitDao
+    private lateinit var sessionManager: com.example.businesserp.core.security.SessionManager
 
     private lateinit var viewModel: TimerViewModel
 
@@ -47,6 +48,10 @@ class TimerViewModelTest {
         fakeAttendanceRepo = FakeAttendanceRepository()
         fakeDashboardService = FakeDashboardService()
         fakeCommitDao = FakeCommitDao()
+
+        sessionManager = org.mockito.kotlin.mock()
+        org.mockito.kotlin.whenever(sessionManager.getUserName()).thenReturn("Test User")
+        org.mockito.kotlin.whenever(sessionManager.getUserId()).thenReturn("user1")
 
         startTimerUseCase = StartTimerUseCase(fakeTimeRepo)
         stopTimerUseCase = StopTimerUseCase(fakeTimeRepo)
@@ -65,7 +70,8 @@ class TimerViewModelTest {
             fakeTimeRepo,
             fakeAttendanceRepo,
             fakeDashboardService,
-            fakeCommitDao
+            fakeCommitDao,
+            sessionManager
         )
     }
 

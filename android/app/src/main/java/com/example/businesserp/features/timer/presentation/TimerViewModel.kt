@@ -44,27 +44,37 @@ class TimerViewModel @Inject constructor(
     }
 
     private fun observeLocalDatabase() {
+        val currentUserId = sessionManager.getUserId()
+
         viewModelScope.launch {
             timeEntryRepository.getAllTimeEntriesFlow().collect { entries ->
-                _state.update { it.copy(timeEntries = entries) }
+                _state.update { it.copy(timeEntries = entries.filter { it.userId == currentUserId }) }
             }
         }
 
         viewModelScope.launch {
             timeEntryRepository.getRunningTimerFlow().collect { active ->
-                _state.update { it.copy(activeTimer = active) }
+                if (active != null && active.userId == currentUserId) {
+                    _state.update { it.copy(activeTimer = active) }
+                } else {
+                    _state.update { it.copy(activeTimer = null) }
+                }
             }
         }
 
         viewModelScope.launch {
             attendanceRepository.getAllAttendanceFlow().collect { history ->
-                _state.update { it.copy(attendanceHistory = history) }
+                _state.update { it.copy(attendanceHistory = history.filter { it.userId == currentUserId }) }
             }
         }
 
         viewModelScope.launch {
             attendanceRepository.getActiveAttendanceFlow().collect { active ->
-                _state.update { it.copy(activeAttendance = active) }
+                if (active != null && active.userId == currentUserId) {
+                    _state.update { it.copy(activeAttendance = active) }
+                } else {
+                    _state.update { it.copy(activeAttendance = null) }
+                }
             }
         }
 

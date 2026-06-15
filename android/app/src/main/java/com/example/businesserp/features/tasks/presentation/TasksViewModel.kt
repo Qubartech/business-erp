@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.businesserp.core.security.SessionManager
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,7 +28,8 @@ class TasksViewModel @Inject constructor(
     private val stopTimerUseCase: StopTimerUseCase,
     private val timeEntryRepository: TimeEntryRepository,
     private val projectRepository: ProjectRepository,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TasksState())
@@ -39,6 +41,8 @@ class TasksViewModel @Inject constructor(
     }
 
     private fun observeLocalDatabase() {
+        val currentUserId = sessionManager.getUserId()
+
         viewModelScope.launch {
             projectRepository.getAllProjectsFlow().collect { projects ->
                 _state.update { it.copy(projects = projects) }
@@ -53,7 +57,11 @@ class TasksViewModel @Inject constructor(
 
         viewModelScope.launch {
             timeEntryRepository.getRunningTimerFlow().collect { active ->
-                _state.update { it.copy(activeTimer = active) }
+                if (active != null && active.userId == currentUserId) {
+                    _state.update { it.copy(activeTimer = active) }
+                } else {
+                    _state.update { it.copy(activeTimer = null) }
+                }
             }
         }
     }
