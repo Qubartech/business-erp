@@ -414,66 +414,57 @@ fun StatsSection(
             color = HrSlateDark,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        Column(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Projects Metric Card
-                MetricCard(
-                    count = totalProjects?.let { String.format("%02d", it) } ?: "--",
-                    label = "Projects",
-                    icon = Icons.Default.Folder,
-                    bgColor = Color(0xFFEBF8FF),
-                    contentColor = Color(0xFF2B6CB0),
-                    onClick = { onNavigateToTabName("Projects") },
-                    loading = totalProjects == null,
-                    modifier = Modifier.weight(1f)
-                )
+            // Projects Metric Card
+            MetricCard(
+                count = totalProjects?.let { String.format("%02d", it) } ?: "--",
+                label = "Projects",
+                icon = Icons.Default.Folder,
+                bgColor = Color(0xFFEBF8FF),
+                contentColor = Color(0xFF2B6CB0),
+                onClick = { onNavigateToTabName("Projects") },
+                loading = totalProjects == null,
+                modifier = Modifier.weight(1f)
+            )
 
-                // Tasks Metric Card
-                MetricCard(
-                    count = totalTasks?.let { String.format("%02d", it) } ?: "--",
-                    label = "Tasks",
-                    icon = Icons.Default.List,
-                    bgColor = HrOrangeLight,
-                    contentColor = HrOrange,
-                    onClick = { onNavigateToTabName("Tasks") },
-                    loading = totalTasks == null,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Team Members Metric Card (formerly In Office)
-                MetricCard(
-                    count = teamMembers?.let { String.format("%02d", it) } ?: "--",
-                    label = "Team Members",
-                    icon = Icons.Default.People,
-                    bgColor = Color(0xFFFAF5FF),
-                    contentColor = Color(0xFF6B46C1),
-                    onClick = { onNavigateToTabName("Attendance") },
-                    loading = teamMembers == null,
-                    modifier = Modifier.weight(1f)
-                )
+            // Tasks Metric Card
+            MetricCard(
+                count = totalTasks?.let { String.format("%02d", it) } ?: "--",
+                label = "Tasks",
+                icon = Icons.Default.List,
+                bgColor = HrOrangeLight,
+                contentColor = HrOrange,
+                onClick = { onNavigateToTabName("Tasks") },
+                loading = totalTasks == null,
+                modifier = Modifier.weight(1f)
+            )
 
-                // In Office Metric Card (currently checked in users)
-                MetricCard(
-                    count = checkedInCount?.let { String.format("%02d", it) } ?: "--",
-                    label = "In Office",
-                    icon = Icons.Default.CheckCircle,
-                    bgColor = HrGreenPresentBg,
-                    contentColor = HrGreenPresent,
-                    onClick = { onNavigateToTabName("Attendance") },
-                    loading = checkedInCount == null,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // Team Members Metric Card (formerly In Office)
+            MetricCard(
+                count = teamMembers?.let { String.format("%02d", it) } ?: "--",
+                label = "Team",
+                icon = Icons.Default.People,
+                bgColor = Color(0xFFFAF5FF),
+                contentColor = Color(0xFF6B46C1),
+                onClick = { onNavigateToTabName("Attendance") },
+                loading = teamMembers == null,
+                modifier = Modifier.weight(1f)
+            )
+
+            // In Office Metric Card (currently checked in users)
+            MetricCard(
+                count = checkedInCount?.let { String.format("%02d", it) } ?: "--",
+                label = "In Office",
+                icon = Icons.Default.CheckCircle,
+                bgColor = HrGreenPresentBg,
+                contentColor = HrGreenPresent,
+                onClick = { onNavigateToTabName("Attendance") },
+                loading = checkedInCount == null,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -492,33 +483,33 @@ fun MetricCard(
     Card(
         modifier = modifier
             .clickable(enabled = !loading) { onClick() },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor),
         border = BorderStroke(1.dp, contentColor.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(vertical = 12.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
                 tint = contentColor,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             if (loading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp,
                     color = contentColor
                 )
             } else {
                 Text(
                     text = count,
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = contentColor
                 )
@@ -526,9 +517,11 @@ fun MetricCard(
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = contentColor.copy(alpha = 0.8f)
+                color = contentColor.copy(alpha = 0.8f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

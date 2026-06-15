@@ -42,7 +42,7 @@ fun MainScreen(
             NavigationBar(
                 windowInsets = WindowInsets.navigationBars
             ) {
-                MainTab.values().forEach { tab ->
+                MainTab.entries.forEach { tab ->
                     NavigationBarItem(
                         selected = selectedTab == tab,
                         onClick = { selectedTab = tab },
@@ -63,7 +63,7 @@ fun MainScreen(
                 MainTab.Dashboard -> TimerRootScreen(
                     onNavigateToSettings = onNavigateToSettings,
                     onNavigateToTabName = { tabName ->
-                        selectedTab = MainTab.values().firstOrNull { it.label.equals(tabName, ignoreCase = true) } ?: MainTab.Dashboard
+                        selectedTab = MainTab.entries.firstOrNull { it.label.equals(tabName, ignoreCase = true) } ?: MainTab.Dashboard
                     }
                 )
                 MainTab.Tasks -> TasksRootScreen(
