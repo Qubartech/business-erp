@@ -87,11 +87,15 @@ fun TimerScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Curved Gradient Header
+                // App Header & Hero Card
                 item {
                     DashboardHeader(
                         isCheckedIn = state.activeAttendance != null,
                         userName = state.userName,
+                        totalProjects = state.totalProjects,
+                        totalTasks = state.totalTasks,
+                        teamMembers = state.teamMembers,
+                        checkedInCount = state.checkedInCount,
                         onCheckInToggle = {
                             if (state.activeAttendance != null) {
                                 onEvent(TimerEvent.CheckOut)
@@ -100,7 +104,8 @@ fun TimerScreen(
                             }
                         },
                         onRefresh = { onEvent(TimerEvent.RefreshStatus) },
-                        onNavigateToSettings = onNavigateToSettings
+                        onNavigateToSettings = onNavigateToSettings,
+                        onNavigateToTabName = onNavigateToTabName
                     )
                 }
 
@@ -119,15 +124,6 @@ fun TimerScreen(
                                 onDismiss = { onEvent(TimerEvent.DismissError) }
                             )
                         }
-
-                        // Workspace Stats Section
-                        StatsSection(
-                            totalProjects = state.totalProjects,
-                            totalTasks = state.totalTasks,
-                            teamMembers = state.teamMembers,
-                            checkedInCount = state.checkedInCount,
-                            onNavigateToTabName = onNavigateToTabName
-                        )
 
                         // Active Timer Section
                         ActiveTimerSection(
@@ -257,273 +253,253 @@ fun TimerScreen(
 fun DashboardHeader(
     isCheckedIn: Boolean,
     userName: String,
-    onCheckInToggle: () -> Unit,
-    onRefresh: () -> Unit,
-    onNavigateToSettings: () -> Unit
-) {
-    val formattedDate = remember {
-        val sdf = java.text.SimpleDateFormat("EEEE, dd MMM yyyy", java.util.Locale.getDefault())
-        sdf.format(java.util.Date())
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(HrOrange, HrOrangeDark)
-                )
-            )
-            .statusBarsPadding()
-            .padding(bottom = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Row 1: Title (Qubartech ERP) and Switch Card
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Qubartech ERP",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 0.5.sp
-                )
-                
-                // Toggle Button Card
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .clickable { onCheckInToggle() }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = if (isCheckedIn) "Checked In" else "Check In",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCheckedIn) HrGreenPresent else HrSlateMedium
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(28.dp)
-                                .height(16.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isCheckedIn) HrGreenPresent else Color(0xFFE2E8F0)),
-                            contentAlignment = if (isCheckedIn) Alignment.CenterEnd else Alignment.CenterStart
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(2.dp)
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White)
-                            )
-                        }
-                    }
-                }
-            }
-            
-            // Row 2: Welcome Name & Date on left, Settings icons on right
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Welcome, $userName",
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = formattedDate,
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    IconButton(
-                        onClick = onRefresh,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.15f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    
-                    IconButton(
-                        onClick = onNavigateToSettings,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.15f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun StatsSection(
     totalProjects: Int?,
     totalTasks: Int?,
     teamMembers: Int?,
     checkedInCount: Int?,
+    onCheckInToggle: () -> Unit,
+    onRefresh: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToTabName: (String) -> Unit
 ) {
-    Column {
-        Text(
-            text = "Workspace Stats",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = HrSlateDark,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+    val formattedDate = remember {
+        val sdf = java.text.SimpleDateFormat("EEE, dd MMM yyyy", java.util.Locale.getDefault())
+        sdf.format(java.util.Date())
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(top = 12.dp, bottom = 8.dp)
+    ) {
+        // App Header: Qubartech ERP and Refresh/Settings Icons
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Projects Metric Card
-            MetricCard(
-                count = totalProjects?.let { String.format("%02d", it) } ?: "--",
-                label = "Projects",
-                icon = Icons.Default.Folder,
-                bgColor = Color(0xFFEBF8FF),
-                contentColor = Color(0xFF2B6CB0),
-                onClick = { onNavigateToTabName("Projects") },
-                loading = totalProjects == null,
-                modifier = Modifier.weight(1f)
+            Text(
+                text = "Qubartech ERP",
+                color = HrSlateDark,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.5.sp
             )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                IconButton(
+                    onClick = onRefresh,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh",
+                        tint = HrSlateDark,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                
+                IconButton(
+                    onClick = onNavigateToSettings,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = HrSlateDark,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
 
-            // Tasks Metric Card
-            MetricCard(
-                count = totalTasks?.let { String.format("%02d", it) } ?: "--",
-                label = "Tasks",
-                icon = Icons.Default.List,
-                bgColor = HrOrangeLight,
-                contentColor = HrOrange,
-                onClick = { onNavigateToTabName("Tasks") },
-                loading = totalTasks == null,
-                modifier = Modifier.weight(1f)
-            )
+        Spacer(modifier = Modifier.height(8.dp))
 
-            // Team Members Metric Card (formerly In Office)
-            MetricCard(
-                count = teamMembers?.let { String.format("%02d", it) } ?: "--",
-                label = "Members",
-                icon = Icons.Default.People,
-                bgColor = Color(0xFFFAF5FF),
-                contentColor = Color(0xFF6B46C1),
-                onClick = { onNavigateToTabName("Attendance") },
-                loading = teamMembers == null,
-                modifier = Modifier.weight(1f)
-            )
+        // Hero Card (Royal Purple Minimalist Card)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color(0xFF5F3DC4), Color(0xFF7048E8))
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+                Column {
+                    // Row 1: Welcome message, Date & Check In toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Welcome, $userName",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = formattedDate,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
 
-            // In Office Metric Card (currently checked in users)
-            MetricCard(
-                count = checkedInCount?.let { String.format("%02d", it) } ?: "--",
-                label = "In Office",
-                icon = Icons.Default.CheckCircle,
-                bgColor = HrGreenPresentBg,
-                contentColor = HrGreenPresent,
-                onClick = { onNavigateToTabName("Attendance") },
-                loading = checkedInCount == null,
-                modifier = Modifier.weight(1f)
-            )
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // Toggle Button Card inside the Hero Card
+                        Card(
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .clickable { onCheckInToggle() }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = if (isCheckedIn) "Checked In" else "Check In",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(28.dp)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isCheckedIn) HrGreenPresent else Color.White.copy(alpha = 0.3f)),
+                                    contentAlignment = if (isCheckedIn) Alignment.CenterEnd else Alignment.CenterStart
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(2.dp)
+                                            .size(12.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        color = Color.White.copy(alpha = 0.15f)
+                    )
+
+                    // Row 2: Stats Grid inside the Hero Card
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        StatColumnItem(
+                            count = totalProjects?.let { String.format("%02d", it) } ?: "--",
+                            label = "Projects",
+                            loading = totalProjects == null,
+                            onClick = { onNavigateToTabName("Projects") }
+                        )
+                        VerticalDivider(
+                            color = Color.White.copy(alpha = 0.15f),
+                            modifier = Modifier.height(30.dp)
+                        )
+                        StatColumnItem(
+                            count = totalTasks?.let { String.format("%02d", it) } ?: "--",
+                            label = "Tasks",
+                            loading = totalTasks == null,
+                            onClick = { onNavigateToTabName("Tasks") }
+                        )
+                        VerticalDivider(
+                            color = Color.White.copy(alpha = 0.15f),
+                            modifier = Modifier.height(30.dp)
+                        )
+                        StatColumnItem(
+                            count = teamMembers?.let { String.format("%02d", it) } ?: "--",
+                            label = "Members",
+                            loading = teamMembers == null,
+                            onClick = { onNavigateToTabName("Attendance") }
+                        )
+                        VerticalDivider(
+                            color = Color.White.copy(alpha = 0.15f),
+                            modifier = Modifier.height(30.dp)
+                        )
+                        StatColumnItem(
+                            count = checkedInCount?.let { String.format("%02d", it) } ?: "--",
+                            label = "In Office",
+                            loading = checkedInCount == null,
+                            onClick = { onNavigateToTabName("Attendance") }
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun MetricCard(
+fun RowScope.StatColumnItem(
     count: String,
     label: String,
-    icon: ImageVector,
-    bgColor: Color,
-    contentColor: Color,
-    onClick: () -> Unit,
-    loading: Boolean = false,
-    modifier: Modifier = Modifier
+    loading: Boolean,
+    onClick: () -> Unit
 ) {
-    Card(
-        modifier = modifier
+    Column(
+        modifier = Modifier
+            .weight(1f)
             .clickable(enabled = !loading) { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        border = BorderStroke(1.dp, contentColor.copy(alpha = 0.2f))
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = contentColor,
-                modifier = Modifier.size(18.dp)
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = Color.White
             )
-            Spacer(modifier = Modifier.height(6.dp))
-            if (loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = contentColor
-                )
-            } else {
-                Text(
-                    text = count,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = contentColor
-                )
-            }
-            Spacer(modifier = Modifier.height(2.dp))
+        } else {
             Text(
-                text = label,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = contentColor.copy(alpha = 0.8f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = count,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White.copy(alpha = 0.7f)
+        )
     }
 }
 
