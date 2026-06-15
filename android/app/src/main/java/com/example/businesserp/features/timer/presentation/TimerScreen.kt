@@ -696,8 +696,8 @@ fun AttendanceStatsSection(
             StatCard(
                 count = if (timeEntriesCount > 0) String.format("%02d", timeEntriesCount) else "01",
                 label = "Overtime",
-                bgColor = HrYellowOvertimeBg,
-                contentColor = HrYellowOvertime,
+                bgColor = HrTealAccentBg,
+                contentColor = HrTealAccent,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -758,9 +758,10 @@ fun ActiveTimerSection(
         }
     }
 
-    val hours = elapsedSeconds / 3600
-    val minutes = (elapsedSeconds % 3600) / 60
-    val seconds = elapsedSeconds % 60
+    val remainingSeconds = maxOf(0L, 3600L - elapsedSeconds)
+    val hours = remainingSeconds / 3600
+    val minutes = (remainingSeconds % 3600) / 60
+    val seconds = remainingSeconds % 60
     val timeString = String.format("%02d:%02d:%02d", hours, minutes, seconds)
 
     Card(
@@ -795,12 +796,6 @@ fun ActiveTimerSection(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = HrPrimary
-                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

@@ -16,6 +16,6 @@ val HrGreenPresent = Color(0xFF1B5E20)
 val HrGreenPresentBg = Color(0xFFE8F5E9)
 val HrRedLeave = Color(0xFFB71C1C)
 val HrRedLeaveBg = Color(0xFFFFEBEE)
-val HrYellowOvertime = Color(0xFFE65100)
-val HrYellowOvertimeBg = Color(0xFFFFF3E0)
+val HrTealAccent = Color(0xFF0D9488)
+val HrTealAccentBg = Color(0xFFF0FDFA)
 

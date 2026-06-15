@@ -281,7 +281,7 @@ fun TaskRow(
     val (priorityText, priorityColor, priorityBg) = when (task.priority.lowercase()) {
         "critical" -> Triple("CRITICAL", HrRedLeave, HrRedLeaveBg)
         "high" -> Triple("HIGH", HrRedLeave.copy(alpha = 0.8f), HrRedLeaveBg)
-        "medium" -> Triple("MEDIUM", HrYellowOvertime, HrYellowOvertimeBg)
+        "medium" -> Triple("MEDIUM", HrTealAccent, HrTealAccentBg)
         else -> Triple("LOW", HrSlateLight, Color(0xFFF1F5F9))
     }
 

@@ -155,7 +155,7 @@ fun ProjectCard(project: Project) {
     val (statusLabel, statusColor, statusBg) = when (project.status.lowercase()) {
         "active" -> Triple("ACTIVE", HrGreenPresent, HrGreenPresentBg)
         "completed" -> Triple("COMPLETED", HrSlateLight, Color(0xFFF1F5F9))
-        "on_hold" -> Triple("ON HOLD", HrYellowOvertime, HrYellowOvertimeBg)
+        "on_hold" -> Triple("ON HOLD", HrTealAccent, HrTealAccentBg)
         else -> Triple(project.status.uppercase(), HrSlateMedium, Color(0xFFF1F5F9))
     }
 
