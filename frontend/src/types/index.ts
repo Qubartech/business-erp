@@ -40,6 +40,7 @@ export type Task = {
 
 export type Note = {
   id: string; userId: string; title: string; content: string;
+  color: string; category: string; pinned: boolean;
   createdAt: string; updatedAt: string;
 };
 

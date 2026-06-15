@@ -24,8 +24,10 @@ export const notesApi = {
   list: (q: { search?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<Note>>(api.get<ApiEnvelope<Paged<Note>>>("/notes", { params: q })),
   get: (id: string) => unwrap<Note>(api.get<ApiEnvelope<Note>>(`/notes/${id}`)),
-  create: (data: { title: string; content: string }) => unwrap<Note>(api.post<ApiEnvelope<Note>>("/notes", data)),
-  update: (id: string, data: { title?: string; content?: string }) => unwrap<Note>(api.patch<ApiEnvelope<Note>>(`/notes/${id}`, data)),
+  create: (data: { title: string; content: string; color?: string; category?: string; pinned?: boolean }) =>
+    unwrap<Note>(api.post<ApiEnvelope<Note>>("/notes", data)),
+  update: (id: string, data: { title?: string; content?: string; color?: string; category?: string; pinned?: boolean }) =>
+    unwrap<Note>(api.patch<ApiEnvelope<Note>>(`/notes/${id}`, data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/notes/${id}`)),
 };
 
