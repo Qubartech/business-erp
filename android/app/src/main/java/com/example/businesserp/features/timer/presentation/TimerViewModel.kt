@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.businesserp.core.security.SessionManager
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,13 +30,15 @@ class TimerViewModel @Inject constructor(
     private val timeEntryRepository: TimeEntryRepository,
     private val attendanceRepository: AttendanceRepository,
     private val dashboardService: com.example.businesserp.features.timer.data.remote.DashboardService,
-    private val commitDao: com.example.businesserp.features.timer.data.dao.CommitDao
+    private val commitDao: com.example.businesserp.features.timer.data.dao.CommitDao,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerState())
     val state: StateFlow<TimerState> = _state.asStateFlow()
 
     init {
+        _state.update { it.copy(userName = sessionManager.getUserName() ?: "Employee") }
         observeLocalDatabase()
         refreshSync()
     }
@@ -117,7 +120,15 @@ class TimerViewModel @Inject constructor(
 
             val dashboardResponse = dashboardResult.getOrNull()
             if (dashboardResponse != null && dashboardResponse.success && dashboardResponse.data != null) {
-                val commitEntities = dashboardResponse.data.latestCommits.map { dto ->
+                val data = dashboardResponse.data
+                _state.update { state ->
+                    state.copy(
+                        totalProjects = data.activeProjects,
+                        totalTasks = data.totalTasks,
+                        teamMembers = data.teamMembers
+                    )
+                }
+                val commitEntities = data.latestCommits.map { dto ->
                     com.example.businesserp.features.timer.data.entity.CommitEntity(
                         sha = dto.sha,
                         projectId = dto.projectId ?: "",

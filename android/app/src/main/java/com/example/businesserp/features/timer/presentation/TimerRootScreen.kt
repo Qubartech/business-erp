@@ -8,6 +8,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun TimerRootScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToTabName: (String) -> Unit,
     viewModel: TimerViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -15,6 +16,7 @@ fun TimerRootScreen(
     TimerScreen(
         state = state,
         onEvent = { event -> viewModel.onEvent(event) },
-        onNavigateToSettings = onNavigateToSettings
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToTabName = onNavigateToTabName
     )
 }

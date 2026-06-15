@@ -24,7 +24,7 @@ import com.example.businesserp.core.components.ErpButton
 import com.example.businesserp.core.components.ErpCard
 import com.example.businesserp.core.components.ErpErrorView
 import com.example.businesserp.core.components.ErpTextField
-import com.example.businesserp.theme.BusinessERPTheme
+import com.example.businesserp.theme.*
 
 @Composable
 fun AuthScreen(
@@ -38,8 +38,8 @@ fun AuthScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        MaterialTheme.colorScheme.surface
+                        HrOrangeLight.copy(alpha = 0.7f),
+                        MaterialTheme.colorScheme.background
                     )
                 )
             ),
@@ -56,20 +56,21 @@ fun AuthScreen(
         ) {
             // App Branding Header
             Text(
-                text = "BUSINESS ERP",
+                text = "Business ERP",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 1.sp
+                color = HrOrangeDark,
+                letterSpacing = 0.5.sp
             )
             Text(
                 text = "Sign in to manage your business operations",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = HrSlateLight,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
             )
 
-            // Glassmorphic Login Card
+            // Modern Login Card
             ErpCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -81,7 +82,7 @@ fun AuthScreen(
                         text = "Welcome Back",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = HrSlateDark,
                         modifier = Modifier.align(Alignment.Start)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -94,7 +95,8 @@ fun AuthScreen(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Email,
-                                contentDescription = "Email Icon"
+                                contentDescription = "Email Icon",
+                                tint = HrOrange
                             )
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -109,7 +111,8 @@ fun AuthScreen(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
-                                contentDescription = "Password Icon"
+                                contentDescription = "Password Icon",
+                                tint = HrOrange
                             )
                         },
                         visualTransformation = PasswordVisualTransformation(),

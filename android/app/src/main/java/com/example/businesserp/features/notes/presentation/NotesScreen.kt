@@ -1,5 +1,6 @@
 package com.example.businesserp.features.notes.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,7 +31,7 @@ import com.example.businesserp.core.components.ErpCard
 import com.example.businesserp.core.components.ErpErrorView
 import com.example.businesserp.core.components.ErpTextField
 import com.example.businesserp.features.notes.domain.model.Note
-import com.example.businesserp.theme.BusinessERPTheme
+import com.example.businesserp.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,14 +52,18 @@ fun NotesScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onEvent(NotesEvent.SelectNoteForEditing(null, "", "")) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = HrOrange,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Note")
             }
@@ -69,23 +74,26 @@ fun NotesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Search Bar
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = { onEvent(NotesEvent.SearchQueryChanged(it)) },
-                    placeholder = { Text("Search notes...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text("Search notes...", color = HrSlateLight) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = HrSlateLight) },
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    )
+                        focusedBorderColor = HrOrange,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    singleLine = true
                 )
 
                 // Notes Grid
@@ -115,7 +123,11 @@ fun NotesScreen(
                                     .padding(48.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No notes found. Create one!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    text = "No notes found. Create one!",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     } else {
@@ -143,7 +155,8 @@ fun NotesScreen(
 
             if (state.isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -161,8 +174,9 @@ fun NoteCard(
             .fillMaxWidth()
             .height(140.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
         Column(
             modifier = Modifier
@@ -176,13 +190,14 @@ fun NoteCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = HrSlateDark
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = note.content,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = HrSlateLight,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -199,7 +214,7 @@ fun NoteCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete Note",
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                        tint = HrRedLeave.copy(alpha = 0.8f),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -238,6 +253,7 @@ fun EditNoteDialog(
                     text = if (state.activeNoteId == null) "Create Note" else "Edit Note",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
+                    color = HrSlateDark,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -253,14 +269,16 @@ fun EditNoteDialog(
                 OutlinedTextField(
                     value = state.activeContent,
                     onValueChange = onContentChange,
-                    placeholder = { Text("Write your thoughts...") },
+                    placeholder = { Text("Write your thoughts...", color = HrSlateLight) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        focusedBorderColor = HrOrange,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
@@ -273,9 +291,13 @@ fun EditNoteDialog(
                     OutlinedButton(
                         onClick = onCancel,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = HrSlateMedium
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
-                        Text("Cancel")
+                        Text("Cancel", fontWeight = FontWeight.Bold)
                     }
                     ErpButton(
                         text = "Save",

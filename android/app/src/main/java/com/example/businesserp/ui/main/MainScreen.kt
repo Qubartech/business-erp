@@ -9,6 +9,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -37,7 +39,9 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                windowInsets = WindowInsets.navigationBars
+            ) {
                 MainTab.values().forEach { tab ->
                     NavigationBarItem(
                         selected = selectedTab == tab,
@@ -57,7 +61,10 @@ fun MainScreen(
         ) {
             when (selectedTab) {
                 MainTab.Dashboard -> TimerRootScreen(
-                    onNavigateToSettings = onNavigateToSettings
+                    onNavigateToSettings = onNavigateToSettings,
+                    onNavigateToTabName = { tabName ->
+                        selectedTab = MainTab.values().firstOrNull { it.label.equals(tabName, ignoreCase = true) } ?: MainTab.Dashboard
+                    }
                 )
                 MainTab.Tasks -> TasksRootScreen(
                     onNavigateToSettings = onNavigateToSettings

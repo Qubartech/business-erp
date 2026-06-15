@@ -1,5 +1,6 @@
 package com.example.businesserp.features.attendance.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -23,7 +25,7 @@ import com.example.businesserp.core.components.ErpCard
 import com.example.businesserp.core.components.ErpErrorView
 import com.example.businesserp.core.utils.DateUtils
 import com.example.businesserp.features.attendance.domain.model.Attendance
-import com.example.businesserp.theme.BusinessERPTheme
+import com.example.businesserp.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,12 +37,13 @@ fun AttendanceHistoryScreen(
 ) {
     val isCheckedIn = state.activeAttendance != null
     val statusText = if (isCheckedIn) "Checked In" else "Checked Out"
-    val statusColor = if (isCheckedIn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val statusColor = if (isCheckedIn) HrGreenPresent else HrRedLeave
+    val statusBgColor = if (isCheckedIn) HrGreenPresentBg else HrRedLeaveBg
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Attendance", fontWeight = FontWeight.Bold) },
+                title = { Text("Attendance Logs", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { onEvent(AttendanceHistoryEvent.RefreshAttendance) }) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
@@ -48,7 +51,10 @@ fun AttendanceHistoryScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         modifier = modifier
@@ -57,7 +63,7 @@ fun AttendanceHistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -75,7 +81,7 @@ fun AttendanceHistoryScreen(
                     }
                 }
 
-                // Banner Status
+                // Banner Status Card
                 item {
                     ErpCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -89,7 +95,7 @@ fun AttendanceHistoryScreen(
                                         text = "TODAY'S STATUS",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = HrSlateLight,
                                         letterSpacing = 0.5.sp
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -114,7 +120,8 @@ fun AttendanceHistoryScreen(
                                 Text(
                                     text = "Checked In at ${DateUtils.formatTime(state.activeAttendance.checkIn)}",
                                     fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = HrSlateMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
 
@@ -124,14 +131,14 @@ fun AttendanceHistoryScreen(
                                 ErpButton(
                                     text = "Check In Today",
                                     onClick = { onEvent(AttendanceHistoryEvent.CheckIn) },
-                                    containerColor = MaterialTheme.colorScheme.primary
+                                    containerColor = HrOrange
                                 )
                             } else {
                                 ErpButton(
                                     text = "Check Out Now",
                                     onClick = { onEvent(AttendanceHistoryEvent.CheckOut) },
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError
+                                    containerColor = HrRedLeave,
+                                    contentColor = Color.White
                                 )
                             }
                         }
@@ -141,10 +148,10 @@ fun AttendanceHistoryScreen(
                 // History Title
                 item {
                     Text(
-                        text = "Attendance Logs",
+                        text = "Recent Attendance Logs",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = HrSlateDark,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
@@ -154,7 +161,9 @@ fun AttendanceHistoryScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                         ) {
                             Box(
                                 modifier = Modifier
@@ -164,7 +173,8 @@ fun AttendanceHistoryScreen(
                             ) {
                                 Text(
                                     text = "No history recorded.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -178,7 +188,8 @@ fun AttendanceHistoryScreen(
 
             if (state.isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -189,8 +200,9 @@ fun AttendanceHistoryScreen(
 fun AttendanceHistoryRow(record: Attendance) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
@@ -204,7 +216,7 @@ fun AttendanceHistoryRow(record: Attendance) {
                     text = DateUtils.formatDate(record.checkIn),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = HrSlateDark
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 val inText = DateUtils.formatTime(record.checkIn)
@@ -212,7 +224,8 @@ fun AttendanceHistoryRow(record: Attendance) {
                 Text(
                     text = "In: $inText | Out: $outText",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = HrSlateLight,
+                    fontWeight = FontWeight.Medium
                 )
             }
             
@@ -222,15 +235,22 @@ fun AttendanceHistoryRow(record: Attendance) {
                     text = DateUtils.formatDuration(durationMinutes),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    color = HrOrange
                 )
             } else {
-                Text(
-                    text = "On-going",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(HrGreenPresentBg)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "ON-GOING",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 10.sp,
+                        color = HrGreenPresent
+                    )
+                }
             }
         }
     }

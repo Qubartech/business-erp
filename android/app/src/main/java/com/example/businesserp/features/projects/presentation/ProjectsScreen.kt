@@ -1,5 +1,6 @@
 package com.example.businesserp.features.projects.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,9 +10,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.businesserp.core.components.ErpCard
 import com.example.businesserp.core.components.ErpErrorView
 import com.example.businesserp.features.projects.domain.model.Project
-import com.example.businesserp.theme.BusinessERPTheme
+import com.example.businesserp.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +50,10 @@ fun ProjectsScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         modifier = modifier
@@ -55,14 +62,27 @@ fun ProjectsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Category Filter Tabs
-                TabRow(selectedTabIndex = state.filterCategory.ordinal) {
+                TabRow(
+                    selectedTabIndex = state.filterCategory.ordinal,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = HrSlateDark,
+                    indicator = { tabPositions ->
+                        if (state.filterCategory.ordinal < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                Modifier.tabIndicatorOffset(tabPositions[state.filterCategory.ordinal]),
+                                color = HrOrange
+                            )
+                        }
+                    }
+                ) {
                     ProjectCategoryFilter.values().forEach { filter ->
+                        val isSelected = state.filterCategory == filter
                         Tab(
-                            selected = state.filterCategory == filter,
+                            selected = isSelected,
                             onClick = { onEvent(ProjectsEvent.FilterCategoryChanged(filter)) },
                             text = {
                                 Text(
@@ -71,7 +91,9 @@ fun ProjectsScreen(
                                         ProjectCategoryFilter.CLIENT -> "Client"
                                         ProjectCategoryFilter.NON_CLIENT -> "Internal"
                                     },
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = if (isSelected) HrOrange else HrSlateMedium
                                 )
                             }
                         )
@@ -94,7 +116,7 @@ fun ProjectsScreen(
                         }
                     }
 
-                    if (filteredProjects.isEmpty()) {
+                    if (filteredProjects.isEmpty() && !state.isLoading) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -104,7 +126,8 @@ fun ProjectsScreen(
                             ) {
                                 Text(
                                     text = "No projects found.",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -118,7 +141,8 @@ fun ProjectsScreen(
 
             if (state.isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -127,6 +151,13 @@ fun ProjectsScreen(
 
 @Composable
 fun ProjectCard(project: Project) {
+    val (statusLabel, statusColor, statusBg) = when (project.status.lowercase()) {
+        "active" -> Triple("ACTIVE", HrGreenPresent, HrGreenPresentBg)
+        "completed" -> Triple("COMPLETED", HrSlateLight, Color(0xFFF1F5F9))
+        "on_hold" -> Triple("ON HOLD", HrYellowOvertime, HrYellowOvertimeBg)
+        else -> Triple(project.status.uppercase(), HrSlateMedium, Color(0xFFF1F5F9))
+    }
+
     ErpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -137,59 +168,67 @@ fun ProjectCard(project: Project) {
                 Text(
                     text = project.name,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Bold,
+                    color = HrSlateDark
                 )
                 
-                // Status Badge
-                val statusColor = when (project.status) {
-                    "active" -> MaterialTheme.colorScheme.primary
-                    "completed" -> MaterialTheme.colorScheme.secondary
-                    "on_hold" -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.outline
-                }
-                
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text(project.status.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold) },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        labelColor = statusColor
+                // State Badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(statusBg)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = statusLabel,
+                        color = statusColor,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
-                )
+                }
             }
 
             if (!project.description.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = project.description,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    fontSize = 13.sp,
+                    color = HrSlateMedium,
+                    maxLines = 3
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (project.category == "client") "Client Project" else "Internal Project",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
+                val isClient = project.category == "client"
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isClient) Color(0xFFE3F2FD) else Color(0xFFF1F5F9))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isClient) "Client Project" else "Internal Project",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isClient) Color(0xFF1E88E5) else HrSlateMedium
+                    )
+                }
                 
                 if (!project.githubRepo.isNullOrEmpty()) {
                     Text(
                         text = "🐙 ${project.githubRepo}",
                         fontSize = 11.sp,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.primary
+                        color = HrOrange,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

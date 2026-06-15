@@ -1,11 +1,11 @@
 package com.example.businesserp.features.tasks.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +29,7 @@ import com.example.businesserp.core.components.ErpCard
 import com.example.businesserp.core.components.ErpErrorView
 import com.example.businesserp.features.projects.domain.model.Project
 import com.example.businesserp.features.tasks.domain.model.Task
-import com.example.businesserp.features.timer.domain.model.TimeEntry
-import com.example.businesserp.theme.BusinessERPTheme
+import com.example.businesserp.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +39,6 @@ fun TasksScreen(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Filter tasks based on selections
     val filteredTasks = remember(state.tasks, state.selectedProjectId, state.filterStatus) {
         state.tasks.filter { task ->
             val projectMatch = state.selectedProjectId == null || task.projectId == state.selectedProjectId
@@ -60,7 +58,10 @@ fun TasksScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         modifier = modifier
@@ -69,7 +70,7 @@ fun TasksScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Horizontal scrollable project filter
@@ -85,13 +86,16 @@ fun TasksScreen(
                     onStatusSelected = { onEvent(TasksEvent.FilterStatus(it)) }
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Task List
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f)
                         .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     if (state.errorMessage != null) {
                         item {
@@ -110,7 +114,11 @@ fun TasksScreen(
                                     .padding(48.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No tasks found matching current filters.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    text = "No tasks found matching current filters.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     } else {
@@ -133,14 +141,15 @@ fun TasksScreen(
 
             if (state.isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectFilterChips(
     projects: List<Project>,
@@ -152,24 +161,53 @@ fun ProjectFilterChips(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FilterChip(
             selected = selectedProjectId == null,
             onClick = { onProjectSelected(null) },
-            label = { Text("All Projects") }
+            label = { Text("All Projects", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+            shape = RoundedCornerShape(12.dp),
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = HrOrange,
+                selectedLabelColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.surface,
+                labelColor = HrSlateMedium
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+                enabled = true,
+                selected = selectedProjectId == null,
+                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                selectedBorderColor = HrOrange,
+                borderWidth = 1.dp
+            )
         )
         projects.forEach { project ->
             FilterChip(
                 selected = selectedProjectId == project.id,
                 onClick = { onProjectSelected(project.id) },
-                label = { Text(project.name) }
+                label = { Text(project.name, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                shape = RoundedCornerShape(12.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = HrOrange,
+                    selectedLabelColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    labelColor = HrSlateMedium
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = selectedProjectId == project.id,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    selectedBorderColor = HrOrange,
+                    borderWidth = 1.dp
+                )
             )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusFilterChips(
     selectedStatus: String?,
@@ -188,13 +226,41 @@ fun StatusFilterChips(
         FilterChip(
             selected = selectedStatus == null,
             onClick = { onStatusSelected(null) },
-            label = { Text("All Statuses") }
+            label = { Text("All Statuses", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+            shape = RoundedCornerShape(12.dp),
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = HrSlateDark,
+                selectedLabelColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.surface,
+                labelColor = HrSlateMedium
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+                enabled = true,
+                selected = selectedStatus == null,
+                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                selectedBorderColor = HrSlateDark,
+                borderWidth = 1.dp
+            )
         )
         statuses.forEach { status ->
             FilterChip(
                 selected = selectedStatus?.equals(status, ignoreCase = true) == true,
                 onClick = { onStatusSelected(status) },
-                label = { Text(status.uppercase().replace("_", " ")) }
+                label = { Text(status.uppercase().replace("_", " "), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                shape = RoundedCornerShape(12.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = HrSlateDark,
+                    selectedLabelColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    labelColor = HrSlateMedium
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = selectedStatus?.equals(status, ignoreCase = true) == true,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    selectedBorderColor = HrSlateDark,
+                    borderWidth = 1.dp
+                )
             )
         }
     }
@@ -210,11 +276,12 @@ fun TaskRow(
     onStatusChange: (String) -> Unit
 ) {
     var showStatusMenu by remember { mutableStateOf(false) }
-    val priorityColor = when (task.priority.lowercase()) {
-        "critical" -> MaterialTheme.colorScheme.error
-        "high" -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-        "medium" -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.outline
+    
+    val (priorityText, priorityColor, priorityBg) = when (task.priority.lowercase()) {
+        "critical" -> Triple("CRITICAL", HrRedLeave, HrRedLeaveBg)
+        "high" -> Triple("HIGH", HrRedLeave.copy(alpha = 0.8f), HrRedLeaveBg)
+        "medium" -> Triple("MEDIUM", HrYellowOvertime, HrYellowOvertimeBg)
+        else -> Triple("LOW", HrSlateLight, Color(0xFFF1F5F9))
     }
 
     ErpCard(modifier = Modifier.fillMaxWidth()) {
@@ -229,56 +296,70 @@ fun TaskRow(
                         text = task.title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = HrSlateDark
                     )
                     if (!task.description.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = task.description,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = HrSlateLight,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
                 
-                // Priority Badge
+                // Custom HR state priority badge
                 Box(
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(priorityColor.copy(alpha = 0.15f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(priorityBg)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = task.priority.uppercase(),
+                        text = priorityText,
                         color = priorityColor,
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Status Selector dropdown trigger
+                // Dropdown status chip trigger
                 Box {
                     AssistChip(
                         onClick = { showStatusMenu = true },
-                        label = { Text(task.status.uppercase().replace("_", " ")) },
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) }
+                        label = { Text(task.status.uppercase().replace("_", " "), fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            labelColor = HrSlateMedium
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     )
                     DropdownMenu(
                         expanded = showStatusMenu,
-                        onDismissRequest = { showStatusMenu = false }
+                        onDismissRequest = { showStatusMenu = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         listOf("todo", "in_progress", "review", "done").forEach { status ->
                             DropdownMenuItem(
-                                text = { Text(status.uppercase().replace("_", " ")) },
+                                text = { Text(status.uppercase().replace("_", " "), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = HrSlateMedium) },
                                 onClick = {
                                     onStatusChange(status)
                                     showStatusMenu = false
@@ -288,27 +369,29 @@ fun TaskRow(
                     }
                 }
 
-                // Timer Inline control
+                // Timer Controller
                 if (isRunning) {
                     Button(
                         onClick = onStopTimer,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = HrRedLeave),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.height(36.dp)
                     ) {
-                        Text("Stop", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Stop", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 } else if (canStartTimer) {
                     Button(
                         onClick = onStartTimer,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), // Green
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = HrGreenPresent),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.height(36.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Start", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("Start", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }
