@@ -12,6 +12,7 @@ data class TimerState(
     val totalProjects: Int? = null,
     val totalTasks: Int? = null,
     val teamMembers: Int? = null,
+    val checkedInCount: Int? = null,
     val userName: String = "Employee",
     val isLoading: Boolean = false,
     val errorMessage: String? = null

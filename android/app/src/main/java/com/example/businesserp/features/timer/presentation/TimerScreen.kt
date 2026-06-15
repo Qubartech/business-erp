@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -123,6 +125,7 @@ fun TimerScreen(
                             totalProjects = state.totalProjects,
                             totalTasks = state.totalTasks,
                             teamMembers = state.teamMembers,
+                            checkedInCount = state.checkedInCount,
                             onNavigateToTabName = onNavigateToTabName
                         )
 
@@ -358,7 +361,7 @@ fun DashboardHeader(
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     IconButton(
                         onClick = onRefresh,
@@ -400,6 +403,7 @@ fun StatsSection(
     totalProjects: Int?,
     totalTasks: Int?,
     teamMembers: Int?,
+    checkedInCount: Int?,
     onNavigateToTabName: (String) -> Unit
 ) {
     Column {
@@ -410,45 +414,66 @@ fun StatsSection(
             color = HrSlateDark,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Projects Metric Card
-            MetricCard(
-                count = totalProjects?.let { String.format("%02d", it) } ?: "--",
-                label = "Projects",
-                icon = Icons.Default.Folder,
-                bgColor = Color(0xFFEBF8FF),
-                contentColor = Color(0xFF2B6CB0),
-                onClick = { onNavigateToTabName("Projects") },
-                loading = totalProjects == null,
-                modifier = Modifier.weight(1f)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Projects Metric Card
+                MetricCard(
+                    count = totalProjects?.let { String.format("%02d", it) } ?: "--",
+                    label = "Projects",
+                    icon = Icons.Default.Folder,
+                    bgColor = Color(0xFFEBF8FF),
+                    contentColor = Color(0xFF2B6CB0),
+                    onClick = { onNavigateToTabName("Projects") },
+                    loading = totalProjects == null,
+                    modifier = Modifier.weight(1f)
+                )
 
-            // Tasks Metric Card
-            MetricCard(
-                count = totalTasks?.let { String.format("%02d", it) } ?: "--",
-                label = "Tasks",
-                icon = Icons.Default.List,
-                bgColor = HrOrangeLight,
-                contentColor = HrOrange,
-                onClick = { onNavigateToTabName("Tasks") },
-                loading = totalTasks == null,
-                modifier = Modifier.weight(1f)
-            )
+                // Tasks Metric Card
+                MetricCard(
+                    count = totalTasks?.let { String.format("%02d", it) } ?: "--",
+                    label = "Tasks",
+                    icon = Icons.Default.List,
+                    bgColor = HrOrangeLight,
+                    contentColor = HrOrange,
+                    onClick = { onNavigateToTabName("Tasks") },
+                    loading = totalTasks == null,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Team Members Metric Card (formerly In Office)
+                MetricCard(
+                    count = teamMembers?.let { String.format("%02d", it) } ?: "--",
+                    label = "Team Members",
+                    icon = Icons.Default.People,
+                    bgColor = Color(0xFFFAF5FF),
+                    contentColor = Color(0xFF6B46C1),
+                    onClick = { onNavigateToTabName("Attendance") },
+                    loading = teamMembers == null,
+                    modifier = Modifier.weight(1f)
+                )
 
-            // People Metric Card
-            MetricCard(
-                count = teamMembers?.let { String.format("%02d", it) } ?: "--",
-                label = "In Office",
-                icon = Icons.Default.Check,
-                bgColor = HrGreenPresentBg,
-                contentColor = HrGreenPresent,
-                onClick = { onNavigateToTabName("Attendance") },
-                loading = teamMembers == null,
-                modifier = Modifier.weight(1f)
-            )
+                // In Office Metric Card (currently checked in users)
+                MetricCard(
+                    count = checkedInCount?.let { String.format("%02d", it) } ?: "--",
+                    label = "In Office",
+                    icon = Icons.Default.CheckCircle,
+                    bgColor = HrGreenPresentBg,
+                    contentColor = HrGreenPresent,
+                    onClick = { onNavigateToTabName("Attendance") },
+                    loading = checkedInCount == null,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }

@@ -49,6 +49,7 @@ fun NotesScreen(
                     IconButton(onClick = { onEvent(NotesEvent.Refresh) }) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
                     }

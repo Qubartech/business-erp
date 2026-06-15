@@ -135,7 +135,8 @@ class TimerViewModel @Inject constructor(
                     state.copy(
                         totalProjects = data.activeProjects,
                         totalTasks = data.totalTasks,
-                        teamMembers = data.teamMembers
+                        teamMembers = data.teamMembers,
+                        checkedInCount = data.activeAttendance.size
                     )
                 }
                 val commitEntities = data.latestCommits.map { dto ->
