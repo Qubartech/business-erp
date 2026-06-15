@@ -445,7 +445,7 @@ fun StatsSection(
             // Team Members Metric Card (formerly In Office)
             MetricCard(
                 count = teamMembers?.let { String.format("%02d", it) } ?: "--",
-                label = "Team",
+                label = "Members",
                 icon = Icons.Default.People,
                 bgColor = Color(0xFFFAF5FF),
                 contentColor = Color(0xFF6B46C1),
@@ -582,7 +582,7 @@ fun MyAttendanceSection(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "Check In",
+                            text = "Checked In",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -628,7 +628,7 @@ fun MyAttendanceSection(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "Check Out",
+                            text = "Checked Out",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

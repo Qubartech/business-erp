@@ -52,6 +52,7 @@ fun MainScreen(
                 }
             }
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = modifier
     ) { paddingValues ->
         Box(
