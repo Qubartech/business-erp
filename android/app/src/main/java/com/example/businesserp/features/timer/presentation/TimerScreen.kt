@@ -341,7 +341,7 @@ fun DashboardHeader(
                     .fillMaxWidth()
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFF5F3DC4), Color(0xFF7048E8))
+                            colors = listOf(HrOrange,HrOrangeDark)
                         )
                     )
                     .padding(20.dp)
