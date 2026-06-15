@@ -8,8 +8,7 @@ Internal ERP built per the included `ERP_System_Development_Plan.pdf` spec.
 - **Storage**: Supabase Storage for document uploads.
 - **Runtime**: Docker Compose with `backend`, `frontend`, `nginx` services.
 
-> The TanStack Start scaffold at the repo root is unused by this app — the
-> Lovable preview will not render it. Run the app via Docker Compose only.
+> The scaffold at the repo root is unused by this app. Run the app via Docker Compose only.
 
 ## First-run setup
 
