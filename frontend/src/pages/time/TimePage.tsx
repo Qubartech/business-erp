@@ -256,17 +256,17 @@ export default function TimePage() {
 
       {/* Active running timer bar */}
       {current ? (
-        <div className="card p-4 mb-6 flex items-center justify-between border-l-4 border-amber-500 bg-amber-50/30">
+        <div className="card p-4 mb-6 flex items-center justify-between border-l-4 border-amber-500 bg-amber-50/30 dark:bg-amber-950/15 dark:border-amber-600/70">
           <div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
-              <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Running Sprint</span>
+              <span className="text-xs font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Running Sprint</span>
             </div>
-            <div className="font-semibold text-slate-800 text-lg mt-1">{current.task?.title}</div>
-            <div className="text-xs text-slate-500 mt-0.5">Started at {formatDateTime(current.startTime)}</div>
+            <div className="font-semibold text-slate-800 dark:text-slate-100 text-lg mt-1">{current.task?.title}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Started at {formatDateTime(current.startTime)}</div>
           </div>
           <button className="btn-danger flex items-center gap-2" onClick={() => stop.mutate(current.id)} disabled={stop.isPending}>
             {stop.isPending ? (
@@ -278,19 +278,19 @@ export default function TimePage() {
           </button>
         </div>
       ) : (
-        <div className="card p-4 mb-6 text-sm text-slate-500 flex items-center gap-2 border border-slate-100">
-          <Clock className="h-4 w-4 text-slate-400" />
+        <div className="card p-4 mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 border border-slate-100 dark:border-white/[0.06]">
+          <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           No timer running. Start a sprint from any task detail page.
         </div>
       )}
 
       {/* Tab Selectors */}
-      <div className="flex border-b border-slate-200 mb-6">
+      <div className="flex border-b border-slate-200 dark:border-white/[0.06] mb-6">
         <button
           className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
             activeTab === "review"
-              ? "border-brand-600 text-brand-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
           onClick={() => setActiveTab("review")}
         >
@@ -299,8 +299,8 @@ export default function TimePage() {
         <button
           className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
             activeTab === "log"
-              ? "border-brand-600 text-brand-600"
-              : "border-transparent text-slate-500 hover:text-slate-800"
+              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
           onClick={() => setActiveTab("log")}
         >
@@ -313,7 +313,7 @@ export default function TimePage() {
       ) : (
         <div className="space-y-6">
           {/* Timeline Date Picker bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-xs border border-slate-200/80">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xs border border-slate-200/80 dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
               <button className="btn-secondary !p-2" onClick={() => shiftDay(-1)}>
                 <ChevronLeft className="h-4 w-4" />
@@ -321,44 +321,44 @@ export default function TimePage() {
               <div className="relative">
                 <input
                   type="date"
-                  className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-lg border-slate-200"
+                  className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/40 hover:bg-slate-100 dark:hover:bg-zinc-800/50 cursor-pointer rounded-lg border-slate-200 dark:border-white/[0.08]"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                 />
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
               </div>
               <button className="btn-secondary !p-2" onClick={() => shiftDay(1)}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="text-sm text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{filteredEntries.length} entries</span> for this day
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredEntries.length} entries</span> for this day
             </div>
           </div>
 
           {/* Daily session log per user */}
-          <div className="card p-5 border border-slate-200/80">
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <div className="card p-5 border border-slate-200/80 dark:border-white/[0.06]">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
               <User className="h-4 w-4 text-brand-600" />
               Daily Session Log
             </h3>
             {dailyUsersLog.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">No developer sessions logged for this day.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">No developer sessions logged for this day.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dailyUsersLog.map((log, idx) => (
                   <div
                     key={idx}
                     onClick={() => setSelectedUserId(log.id)}
-                    className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between hover:border-brand-300 hover:bg-slate-50/80 active:scale-[0.99] cursor-pointer transition-all shadow-xs"
+                    className="p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-zinc-900/40 flex flex-col justify-between hover:border-brand-300 dark:hover:border-brand-500/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900 active:scale-[0.99] cursor-pointer transition-all shadow-xs"
                   >
-                    <div className="font-medium text-slate-800 text-sm truncate">{log.name}</div>
+                    <div className="font-medium text-slate-800 dark:text-slate-200 text-sm truncate">{log.name}</div>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="badge bg-brand-50 text-brand-700 ring-brand-100">
+                      <span className="badge bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 ring-brand-100 dark:ring-brand-900/40">
                         {log.sessions} {log.sessions === 1 ? "sprint" : "sprints"}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatMinutesDuration(log.minutes)}
                       </span>
@@ -372,21 +372,21 @@ export default function TimePage() {
           {/* Timeline View */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 flex flex-col">
-              <div className="mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider pl-16">
+              <div className="mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-16">
                 Activity Timeline
               </div>
               <div
                 ref={timelineContainerRef}
-                className="relative h-[600px] overflow-y-auto border border-slate-200 rounded-xl bg-white shadow-xs"
+                className="relative h-[600px] overflow-y-auto border border-slate-200 dark:border-white/[0.06] rounded-xl bg-white dark:bg-zinc-900 shadow-xs"
               >
                 {/* 24 hour grid lines */}
                 {Array.from({ length: 24 }).map((_, hour) => (
                   <div
                     key={hour}
-                    className="absolute w-full border-t border-slate-100 flex items-start pl-3 text-slate-400 select-none"
+                    className="absolute w-full border-t border-slate-100 dark:border-white/[0.04] flex items-start pl-3 text-slate-400 dark:text-slate-500 select-none"
                     style={{ top: `${hour * 60}px`, height: "60px" }}
                   >
-                    <span className="text-[10px] font-semibold font-mono tracking-tight bg-white pr-2 mt-[-7px] z-10">
+                    <span className="text-[10px] font-semibold font-mono tracking-tight bg-white dark:bg-zinc-900 pr-2 mt-[-7px] z-10">
                       {hour.toString().padStart(2, "0")}:00
                     </span>
                   </div>
@@ -408,21 +408,21 @@ export default function TimePage() {
                         top: `${startMin}px`,
                         height: `${dur}px`,
                       }}
-                      className="absolute left-[65px] right-4 bg-brand-50/90 border-l-4 border-brand-600 rounded-lg p-2.5 cursor-pointer shadow-xs hover:bg-brand-100 hover:shadow-sm hover:scale-[1.005] active:scale-100 transition-all overflow-hidden flex flex-col justify-between group"
+                      className="absolute left-[65px] right-4 bg-brand-50/90 dark:bg-brand-900/40 border-l-4 border-brand-600 dark:border-brand-500 rounded-lg p-2.5 cursor-pointer shadow-xs hover:bg-brand-100 dark:hover:bg-brand-800/40 hover:shadow-sm hover:scale-[1.005] active:scale-100 transition-all overflow-hidden flex flex-col justify-between group"
                     >
                       <div className="min-w-0">
-                        <div className="font-bold text-slate-800 text-[11px] truncate group-hover:text-brand-900 leading-tight">
+                        <div className="font-bold text-slate-800 dark:text-slate-100 text-[11px] truncate group-hover:text-brand-900 dark:group-hover:text-brand-100 leading-tight">
                           {e.task?.title ?? "—"}
                         </div>
-                        <div className="text-[9px] text-slate-500 font-medium truncate mt-0.5">
+                        <div className="text-[9px] text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
                           {e.user?.name}
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono tracking-tight font-semibold mt-1">
+                      <div className="flex items-center justify-between text-[9px] text-slate-400 dark:text-slate-500 font-mono tracking-tight font-semibold mt-1">
                         <span>
                           {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
                         </span>
-                        <span className="bg-brand-100/80 text-brand-700 px-1 rounded">
+                        <span className="bg-brand-100/80 dark:bg-brand-800/40 text-brand-700 dark:text-brand-300 px-1 rounded">
                           {formatMinutesDuration(endMin - startMin)}
                         </span>
                       </div>
@@ -433,9 +433,9 @@ export default function TimePage() {
             </div>
 
             <div className="lg:col-span-4 space-y-4">
-              <div className="card p-5 border border-slate-200/80 bg-slate-50/30">
-                <h4 className="font-bold text-slate-700 text-sm uppercase tracking-wider mb-2">Timeline Review Guide</h4>
-                <ul className="text-xs text-slate-500 space-y-2 list-disc pl-4">
+              <div className="card p-5 border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/30 dark:bg-zinc-900/20">
+                <h4 className="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wider mb-2">Timeline Review Guide</h4>
+                <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-2 list-disc pl-4">
                   <li>Select a date using the picker to view logs from that specific day.</li>
                   <li>Developer sessions and total hours will summarize in the log cards at the top.</li>
                   <li>Click on any colored block in the timeline grid to review or edit details.</li>
@@ -570,14 +570,14 @@ export default function TimePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <span className="text-slate-400 block text-xs">Start Time</span>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="text-slate-400 dark:text-slate-550 block text-xs">Start Time</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 font-mono">
                     {formatMinutesToTime(editStartMinutes)}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-400 block text-xs">End Time</span>
-                  <span className="font-bold text-slate-800 font-mono">
+                  <span className="text-slate-400 dark:text-slate-550 block text-xs">End Time</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 font-mono">
                     {formatMinutesToTime(editEndMinutes)}
                   </span>
                 </div>
@@ -596,25 +596,25 @@ export default function TimePage() {
                   min={0}
                   step={5}
                 >
-                  <Slider.Track className="bg-slate-200 relative grow rounded-full h-2">
-                    <Slider.Range className="absolute bg-brand-600 rounded-full h-full" />
+                  <Slider.Track className="bg-slate-200 dark:bg-zinc-800 relative grow rounded-full h-2">
+                    <Slider.Range className="absolute bg-brand-600 dark:bg-brand-500 rounded-full h-full" />
                   </Slider.Track>
                   <Slider.Thumb
-                    className="block w-5 h-5 bg-white border-2 border-brand-600 shadow-md rounded-full hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer transition-transform hover:scale-110 active:scale-100"
+                    className="block w-5 h-5 bg-white dark:bg-zinc-900 border-2 border-brand-600 dark:border-brand-500 shadow-md rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer transition-transform hover:scale-110 active:scale-100"
                     aria-label="Start time"
                   />
                   <Slider.Thumb
-                    className="block w-5 h-5 bg-white border-2 border-brand-600 shadow-md rounded-full hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer transition-transform hover:scale-110 active:scale-100"
+                    className="block w-5 h-5 bg-white dark:bg-zinc-900 border-2 border-brand-600 dark:border-brand-500 shadow-md rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer transition-transform hover:scale-110 active:scale-100"
                     aria-label="End time"
                   />
                 </Slider.Root>
               </div>
 
-              <div className="bg-brand-50/50 rounded-xl p-3 border border-brand-100 text-center">
-                <span className="text-xs text-slate-500 block uppercase font-bold tracking-wider mb-1">
+              <div className="bg-brand-50/50 dark:bg-brand-900/20 rounded-xl p-3 border border-brand-100 dark:border-brand-900/40 text-center">
+                <span className="text-xs text-slate-500 dark:text-slate-400 block uppercase font-bold tracking-wider mb-1">
                   Adjusted Duration
                 </span>
-                <span className="text-2xl font-extrabold text-brand-700 font-mono">
+                <span className="text-2xl font-extrabold text-brand-700 dark:text-brand-400 font-mono">
                   {formatMinutesDuration(editEndMinutes - editStartMinutes)}
                 </span>
               </div>
@@ -639,18 +639,18 @@ export default function TimePage() {
             <p className="text-sm text-slate-400 italic">No entries found for this user.</p>
           ) : (
             groupedUserTasks.map((group) => (
-              <div key={group.taskId} className="border border-slate-200/80 rounded-xl p-4 bg-white shadow-xs space-y-3">
+              <div key={group.taskId} className="border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-4 bg-white dark:bg-zinc-900 shadow-xs space-y-3">
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-slate-800 text-sm break-words">{group.taskTitle}</h4>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm break-words">{group.taskTitle}</h4>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
                     <Clock className="h-3 w-3 text-slate-400 shrink-0" />
                     Total: {formatMinutesDuration(group.totalMinutes)}
                   </span>
                 </div>
                 
-                <div className="border-t border-slate-100 pt-2.5 space-y-2">
+                <div className="border-t border-slate-100 dark:border-white/[0.06] pt-2.5 space-y-2">
                   {group.sprints.map((sprint, sIdx) => {
                     const start = new Date(sprint.startTime);
                     const end = sprint.endTime ? new Date(sprint.endTime) : new Date();
@@ -658,15 +658,15 @@ export default function TimePage() {
                     const endMin = end.getHours() * 60 + end.getMinutes();
 
                     return (
-                      <div key={sprint.id} className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 hover:bg-slate-100/70 p-2 rounded-lg transition-colors">
-                        <span className="font-semibold text-slate-500 font-mono">
+                      <div key={sprint.id} className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-350 bg-slate-50 dark:bg-zinc-800/40 hover:bg-slate-100/70 dark:hover:bg-zinc-800/60 p-2 rounded-lg transition-colors">
+                        <span className="font-semibold text-slate-500 dark:text-zinc-550 font-mono">
                           Sprint #{sIdx + 1}
                         </span>
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-slate-600">
+                          <span className="font-mono text-slate-600 dark:text-zinc-450">
                             {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
                           </span>
-                          <span className="bg-brand-50 text-brand-700 font-semibold px-1.5 py-0.5 rounded text-[10px]">
+                          <span className="bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 font-semibold px-1.5 py-0.5 rounded text-[10px]">
                             {formatMinutesDuration((sprint.durationMinutes ?? (endMin - startMin)))}
                           </span>
                         </div>
