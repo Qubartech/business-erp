@@ -3,6 +3,7 @@ export type Role = "admin" | "manager" | "member";
 export type User = {
   id: string; name: string; email: string; role: Role; isActive: boolean;
   createdAt: string; updatedAt?: string;
+  leaves?: Leave[];
 };
 
 export type ProjectStatus = "draft" | "active" | "on_hold" | "completed" | "archived";
@@ -76,4 +77,29 @@ export type AttendanceEntry = {
       task?: Pick<Task, "id" | "title" | "projectId">;
     }>;
   };
+};
+
+export type LeaveType = "sick" | "casual" | "annual" | "unpaid";
+export type LeaveStatus = "pending" | "approved" | "rejected";
+
+export type Leave = {
+  id: string;
+  userId: string;
+  type: LeaveType;
+  startDate: string;
+  endDate: string;
+  reason: string | null;
+  status: LeaveStatus;
+  createdAt: string;
+  updatedAt: string;
+  user?: Pick<User, "id" | "name" | "email">;
+};
+
+export type Holiday = {
+  id: string;
+  date: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
