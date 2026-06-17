@@ -18,6 +18,7 @@ import AttendancePage from "@/pages/attendance/AttendancePage";
 import DocumentsPage from "@/pages/documents/DocumentsPage";
 import DocumentGeneratorPage from "@/pages/documents/DocumentGeneratorPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
+import ProfilePage from "@/pages/profile/ProfilePage";
 
 export function App() {
   return (
@@ -50,6 +51,7 @@ export function App() {
           <Route path="documents" element={<DocumentsPage />} />
           <Route path="documents/generate" element={<DocumentGeneratorPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

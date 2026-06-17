@@ -112,7 +112,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
             </div>
             <select 
               className={clsx(
-                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs",
+                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs h-9",
                 errors.projectId ? "ring-red-500 focus:ring-red-500" : ""
               )}
               {...register("projectId")}
@@ -138,7 +138,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
               return (
                 <div className="relative">
                   <div 
-                    className="input pl-9 pr-3 rounded-xl focus:ring-2 focus:ring-brand-500 cursor-pointer flex items-center justify-between min-h-[38px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/[0.08]"
+                    className="input pl-9 pr-3 rounded-xl focus:ring-2 focus:ring-brand-500 cursor-pointer flex items-center justify-between h-9 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/[0.08]"
                     onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
                   >
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -215,7 +215,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
             <input
               type="text"
               className={clsx(
-                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs",
+                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs h-9",
                 errors.title ? "ring-red-500 focus:ring-red-500" : ""
               )}
               placeholder="Enter task title..."
@@ -244,7 +244,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
         <div>
           <label className="label text-xs font-semibold mb-1.5 block">Status</label>
           <select 
-            className="input rounded-xl focus:ring-2 focus:ring-brand-500 text-xs" 
+            className="input rounded-xl focus:ring-2 focus:ring-brand-500 text-xs h-9" 
             {...register("status")}
           >
             <option value="todo">Todo</option>
@@ -258,7 +258,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
         <div>
           <label className="label text-xs font-semibold mb-1.5 block">Priority</label>
           <select 
-            className="input rounded-xl focus:ring-2 focus:ring-brand-500 text-xs" 
+            className="input rounded-xl focus:ring-2 focus:ring-brand-500 text-xs h-9" 
             {...register("priority")}
           >
             <option value="low">Low</option>
@@ -277,7 +277,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
             </div>
             <input
               type="date"
-              className="input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs"
+              className="input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs h-9"
               {...register("dueDate")}
             />
           </div>

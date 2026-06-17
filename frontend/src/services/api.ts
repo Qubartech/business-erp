@@ -27,3 +27,9 @@ export const usersApi = {
   setActive: (id: string, isActive: boolean) =>
     unwrap<User>(api.post<ApiEnvelope<User>>(`/users/${id}/active`, { isActive })),
 };
+
+export const profileApi = {
+  get: () => unwrap<User>(api.get<ApiEnvelope<User>>("/auth/me")),
+  update: (data: Partial<{ name: string; email: string; password?: string }>) =>
+    unwrap<User>(api.patch<ApiEnvelope<User>>("/auth/me", data)),
+};

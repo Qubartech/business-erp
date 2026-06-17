@@ -1,10 +1,10 @@
 import { addDays } from "../lib/date.js";
 import { hashPassword, sha256, verifyPassword } from "../lib/crypto.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
-import { Unauthorized } from "../lib/errors.js";
+import { Unauthorized, Conflict } from "../lib/errors.js";
 import { env } from "../lib/env.js";
 import type { Container } from "../lib/container.js";
-import type { LoginInput } from "./auth.schemas.js";
+import type { LoginInput, UpdateProfileInput } from "./auth.schemas.js";
 import crypto from "node:crypto";
 
 export function createAuthService({ prisma }: Pick<Container, "prisma">) {
@@ -106,6 +106,37 @@ export function createAuthService({ prisma }: Pick<Container, "prisma">) {
       await prisma.user.update({
         where: { id: userId },
         data: { apiKey: null },
+      });
+    },
+
+    async updateProfile(userId: string, input: UpdateProfileInput) {
+      const exists = await prisma.user.findUnique({ where: { id: userId } });
+      if (!exists) throw Unauthorized("User not found");
+
+      const data: Record<string, any> = {};
+      if (input.name !== undefined) data.name = input.name;
+      
+      if (input.email !== undefined && input.email !== exists.email) {
+        const dup = await prisma.user.findUnique({ where: { email: input.email } });
+        if (dup) throw Conflict("Email already in use");
+        data.email = input.email;
+      }
+
+      if (input.password !== undefined && input.password !== "") {
+        data.passwordHash = await hashPassword(input.password);
+      }
+
+      return prisma.user.update({
+        where: { id: userId },
+        data,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+        },
       });
     },
 

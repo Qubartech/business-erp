@@ -8,8 +8,36 @@ import { timeApi, tasksApi } from "@/services/featureApis";
 import type { TimeEntry, Task } from "@/types";
 import { formatDateTime, formatMinutes } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square, Loader2 } from "lucide-react";
+import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square, Loader2, SlidersHorizontal, List } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
+
+const getAvatarColor = (name: string) => {
+  const colors = [
+    "bg-indigo-500 text-white",
+    "bg-emerald-500 text-white",
+    "bg-sky-500 text-white",
+    "bg-amber-500 text-white",
+    "bg-rose-500 text-white",
+    "bg-violet-500 text-white",
+    "bg-pink-500 text-white",
+    "bg-teal-500 text-white",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
 
 export default function TimePage() {
   const qc = useQueryClient();
@@ -224,17 +252,70 @@ export default function TimePage() {
 
 
   const cols: Column<TimeEntry>[] = [
-    { key: "t", header: "Task", render: (e) => e.task?.title ?? "—" },
-    { key: "s", header: "Start", render: (e) => formatDateTime(e.startTime) },
-    { key: "e", header: "End", render: (e) => formatDateTime(e.endTime) },
-    { key: "d", header: "Duration", render: (e) => formatMinutes(e.durationMinutes) },
-    { key: "u", header: "User", render: (e) => e.user?.name ?? "—" },
+    {
+      key: "t",
+      header: "Task",
+      render: (e) => (
+        <span className="font-bold text-slate-850 dark:text-slate-200">
+          {e.task?.title ?? "—"}
+        </span>
+      )
+    },
+    {
+      key: "s",
+      header: "Start",
+      render: (e) => (
+        <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
+          {formatDateTime(e.startTime)}
+        </span>
+      )
+    },
+    {
+      key: "e",
+      header: "End",
+      render: (e) => (
+        e.endTime ? (
+          <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
+            {formatDateTime(e.endTime)}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold animate-pulse ring-1 ring-amber-500/25">
+            Running
+          </span>
+        )
+      )
+    },
+    {
+      key: "d",
+      header: "Duration",
+      render: (e) => (
+        <span className="badge bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-slate-300 ring-slate-200/50 dark:ring-white/[0.04] font-semibold">
+          {formatMinutes(e.durationMinutes)}
+        </span>
+      )
+    },
+    {
+      key: "u",
+      header: "User",
+      render: (e) => (
+        e.user ? (
+          <div className="flex items-center gap-2">
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${getAvatarColor(e.user.name)}`}>
+              {getInitials(e.user.name)}
+            </div>
+            <span className="font-medium text-slate-750 dark:text-slate-350">{e.user.name}</span>
+          </div>
+        ) : (
+          <span className="text-slate-450 dark:text-slate-655">—</span>
+        )
+      )
+    },
     {
       key: "actions",
       header: "",
       render: (e) => (
         <button
-          className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800 transition-colors"
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
           onClick={() => openEditModal(e)}
         >
           <Edit2 className="h-4 w-4" />
@@ -248,7 +329,7 @@ export default function TimePage() {
       <PageHeader
         title="Time Tracking"
         actions={
-          <button className="btn-primary" onClick={() => setManualOpen(true)}>
+          <button className="btn-primary shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer" onClick={() => setManualOpen(true)}>
             Manual entry
           </button>
         }
@@ -256,56 +337,78 @@ export default function TimePage() {
 
       {/* Active running timer bar */}
       {current ? (
-        <div className="card p-4 mb-6 flex items-center justify-between border-l-4 border-amber-500 bg-amber-50/30 dark:bg-amber-950/15 dark:border-amber-600/70">
+        <div className="card-premium p-5 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-l-4 border-amber-500 relative overflow-hidden bg-gradient-to-r from-amber-500/[0.03] to-transparent dark:from-amber-500/[0.02]">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none" />
           <div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
               </span>
-              <span className="text-xs font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Running Sprint</span>
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Active Sprint Timer</span>
             </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-100 text-lg mt-1">{current.task?.title}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Started at {formatDateTime(current.startTime)}</div>
+            <div className="font-extrabold text-slate-850 dark:text-slate-100 text-lg mt-1 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500 animate-pulse shrink-0" />
+              {current.task?.title}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-450 mt-1 flex items-center gap-1.5">
+              <span className="font-semibold text-slate-450">Started at:</span>
+              <span className="font-mono bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded text-slate-655 dark:text-slate-355">
+                {formatDateTime(current.startTime)}
+              </span>
+            </div>
           </div>
-          <button className="btn-danger flex items-center gap-2" onClick={() => stop.mutate(current.id)} disabled={stop.isPending}>
+          <button
+            className="btn-danger flex items-center gap-2 shadow-md shadow-red-500/10 hover:shadow-red-500/20 transform hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+            onClick={() => stop.mutate(current.id)}
+            disabled={stop.isPending}
+          >
             {stop.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin text-white" />
             ) : (
-              <Square className="h-4 w-4 fill-white" />
+              <Square className="h-4 w-4 fill-white text-white" />
             )}
             {stop.isPending ? "Stopping..." : "Stop Sprint"}
           </button>
         </div>
       ) : (
-        <div className="card p-4 mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 border border-slate-100 dark:border-white/[0.06]">
-          <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-          No timer running. Start a sprint from any task detail page.
+        <div className="card-premium p-4 mb-6 text-sm text-slate-500 dark:text-slate-450 flex items-center gap-3 border border-slate-100 dark:border-white/[0.06] bg-slate-50/20 dark:bg-zinc-900/20">
+          <div className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-lg text-slate-455 dark:text-slate-500">
+            <Clock className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="font-bold text-slate-700 dark:text-slate-350">No timer is running</p>
+            <p className="text-xs text-slate-450 dark:text-slate-500">Start a sprint from any task detail page to track time automatically.</p>
+          </div>
         </div>
       )}
 
       {/* Tab Selectors */}
-      <div className="flex border-b border-slate-200 dark:border-white/[0.06] mb-6">
-        <button
-          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
-            activeTab === "review"
-              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-          onClick={() => setActiveTab("review")}
-        >
-          Smart Review Timeline
-        </button>
-        <button
-          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-all ${
-            activeTab === "log"
-              ? "border-brand-600 dark:border-brand-500 text-brand-600 dark:text-brand-400"
-              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-          onClick={() => setActiveTab("log")}
-        >
-          All Time Logs
-        </button>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-xs">
+          <button
+            onClick={() => setActiveTab("review")}
+            className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              activeTab === "review"
+                ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-slate-100 shadow-xs font-bold"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+            }`}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span>Smart Review Timeline</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("log")}
+            className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              activeTab === "log"
+                ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-slate-100 shadow-xs font-bold"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+            }`}
+          >
+            <List className="h-3.5 w-3.5" />
+            <span>All Time Logs</span>
+          </button>
+        </div>
       </div>
 
       {activeTab === "log" ? (
@@ -313,9 +416,9 @@ export default function TimePage() {
       ) : (
         <div className="space-y-6">
           {/* Timeline Date Picker bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xs border border-slate-200/80 dark:border-white/[0.06]">
+          <div className="card-premium p-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 shadow-xs border border-slate-200/80 dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
-              <button className="btn-secondary !p-2" onClick={() => shiftDay(-1)}>
+              <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftDay(-1)}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="relative">
@@ -327,39 +430,47 @@ export default function TimePage() {
                 />
                 <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
               </div>
-              <button className="btn-secondary !p-2" onClick={() => shiftDay(1)}>
+              <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftDay(1)}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredEntries.length} entries</span> for this day
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] px-3 py-1 rounded-lg">
+              Showing <span className="font-bold text-brand-600 dark:text-brand-400">{filteredEntries.length} entries</span> for this day
             </div>
           </div>
 
           {/* Daily session log per user */}
-          <div className="card p-5 border border-slate-200/80 dark:border-white/[0.06]">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <User className="h-4 w-4 text-brand-600" />
+          <div className="card-premium p-5 border border-slate-200/80 dark:border-white/[0.06]">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-100 dark:border-white/[0.04] pb-3">
+              <User className="h-4 w-4 text-brand-650 dark:text-brand-400" />
               Daily Session Log
             </h3>
             {dailyUsersLog.length === 0 ? (
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">No developer sessions logged for this day.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic py-2">No developer sessions logged for this day.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dailyUsersLog.map((log, idx) => (
                   <div
                     key={idx}
                     onClick={() => setSelectedUserId(log.id)}
-                    className="p-4 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-zinc-900/40 flex flex-col justify-between hover:border-brand-300 dark:hover:border-brand-500/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900 active:scale-[0.99] cursor-pointer transition-all shadow-xs"
+                    className="p-4 rounded-xl border border-slate-250/35 dark:border-white/[0.05] bg-slate-50/40 dark:bg-zinc-900/30 flex items-center justify-between hover:border-brand-400/50 dark:hover:border-brand-500/50 hover:bg-white dark:hover:bg-zinc-800/40 active:scale-[0.98] cursor-pointer transition-all duration-300 shadow-xs"
                   >
-                    <div className="font-medium text-slate-800 dark:text-slate-200 text-sm truncate">{log.name}</div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="badge bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 ring-brand-100 dark:ring-brand-900/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${getAvatarColor(log.name)}`}>
+                        {getInitials(log.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">{log.name}</div>
+                        <div className="text-[11px] text-slate-455 dark:text-slate-500 font-medium font-semibold">Logged today</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className="badge bg-brand-55/60 dark:bg-brand-950/40 text-brand-700 dark:text-brand-400 ring-brand-100 dark:ring-brand-900/30">
                         {log.sessions} {log.sessions === 1 ? "sprint" : "sprints"}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
+                        <Clock className="h-3 w-3 text-slate-400" />
                         {formatMinutesDuration(log.minutes)}
                       </span>
                     </div>
@@ -372,21 +483,21 @@ export default function TimePage() {
           {/* Timeline View */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 flex flex-col">
-              <div className="mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-16">
+              <div className="mb-2 text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider pl-16">
                 Activity Timeline
               </div>
               <div
                 ref={timelineContainerRef}
-                className="relative h-[600px] overflow-y-auto border border-slate-200 dark:border-white/[0.06] rounded-xl bg-white dark:bg-zinc-900 shadow-xs"
+                className="relative h-[600px] overflow-y-auto border border-slate-200 dark:border-white/[0.06] rounded-2xl bg-white dark:bg-zinc-900 shadow-sm"
               >
                 {/* 24 hour grid lines */}
                 {Array.from({ length: 24 }).map((_, hour) => (
                   <div
                     key={hour}
-                    className="absolute w-full border-t border-slate-100 dark:border-white/[0.04] flex items-start pl-3 text-slate-400 dark:text-slate-500 select-none"
+                    className="absolute w-full border-t border-slate-100 dark:border-white/[0.04] flex items-start pl-3 text-slate-400 dark:text-slate-550 select-none"
                     style={{ top: `${hour * 60}px`, height: "60px" }}
                   >
-                    <span className="text-[10px] font-semibold font-mono tracking-tight bg-white dark:bg-zinc-900 pr-2 mt-[-7px] z-10">
+                    <span className="text-[10px] font-semibold font-mono tracking-tight bg-white dark:bg-zinc-900 pr-2 mt-[-7px] z-10 text-slate-400 dark:text-slate-550">
                       {hour.toString().padStart(2, "0")}:00
                     </span>
                   </div>
@@ -408,24 +519,38 @@ export default function TimePage() {
                         top: `${startMin}px`,
                         height: `${dur}px`,
                       }}
-                      className="absolute left-[65px] right-4 bg-brand-50/90 dark:bg-brand-900/40 border-l-4 border-brand-600 dark:border-brand-500 rounded-lg p-2.5 cursor-pointer shadow-xs hover:bg-brand-100 dark:hover:bg-brand-800/40 hover:shadow-sm hover:scale-[1.005] active:scale-100 transition-all overflow-hidden flex flex-col justify-between group"
+                      className="absolute left-[65px] right-4 bg-brand-500/[0.04] dark:bg-brand-500/[0.06] border-l-4 border-brand-600 dark:border-brand-500 rounded-xl p-2.5 cursor-pointer hover:bg-brand-500/[0.08] dark:hover:bg-brand-500/[0.1] hover:scale-[1.002] active:scale-100 transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-slate-200/50 dark:border-white/[0.05] overflow-hidden flex flex-col justify-between group"
                     >
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-800 dark:text-slate-100 text-[11px] truncate group-hover:text-brand-900 dark:group-hover:text-brand-100 leading-tight">
-                          {e.task?.title ?? "—"}
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-extrabold text-slate-800 dark:text-slate-100 text-[11px] truncate group-hover:text-brand-700 dark:group-hover:text-brand-400 leading-tight">
+                            {e.task?.title ?? "—"}
+                          </div>
+                          {dur >= 45 && (
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5 mt-1">
+                              <div className={`h-4.5 w-4.5 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0 ${getAvatarColor(e.user?.name ?? "")}`}>
+                                {getInitials(e.user?.name ?? "")}
+                              </div>
+                              <span className="truncate">{e.user?.name}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-[9px] text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
-                          {e.user?.name}
+                        
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          <span className="bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md">
+                            {formatMinutesDuration(endMin - startMin)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-[9px] text-slate-400 dark:text-slate-500 font-mono tracking-tight font-semibold mt-1">
-                        <span>
-                          {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
-                        </span>
-                        <span className="bg-brand-100/80 dark:bg-brand-800/40 text-brand-700 dark:text-brand-300 px-1 rounded">
-                          {formatMinutesDuration(endMin - startMin)}
-                        </span>
-                      </div>
+
+                      {dur >= 35 && (
+                        <div className="flex items-center justify-between text-[9px] text-slate-450 dark:text-slate-500 font-mono tracking-tight font-semibold mt-1">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-slate-400" />
+                            {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -433,14 +558,30 @@ export default function TimePage() {
             </div>
 
             <div className="lg:col-span-4 space-y-4">
-              <div className="card p-5 border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/30 dark:bg-zinc-900/20">
-                <h4 className="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wider mb-2">Timeline Review Guide</h4>
-                <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-2 list-disc pl-4">
-                  <li>Select a date using the picker to view logs from that specific day.</li>
-                  <li>Developer sessions and total hours will summarize in the log cards at the top.</li>
-                  <li>Click on any colored block in the timeline grid to review or edit details.</li>
-                  <li>
-                    A visual dual range slider allows you to drag the handles to correct times if you forgot to pause.
+              <div className="card-premium p-5 border border-slate-200/80 dark:border-white/[0.06] bg-slate-50/30 dark:bg-zinc-900/20 relative overflow-hidden">
+                <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-brand-500/5 rounded-full filter blur-xl" />
+                <h4 className="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <span className="p-1 bg-brand-55/60 dark:bg-brand-500/10 rounded text-brand-600 dark:text-brand-400">
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </span>
+                  Timeline Review Guide
+                </h4>
+                <ul className="text-xs text-slate-550 dark:text-slate-400 space-y-2.5 list-none pl-0">
+                  <li className="flex items-start gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0" />
+                    <span>Select a date using the picker to view logs from that specific day.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0" />
+                    <span>Developer sessions and total hours will summarize in the log cards at the top.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0" />
+                    <span>Click on any colored block in the timeline grid to review or edit details.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 mt-1.5 shrink-0" />
+                    <span>A visual dual range slider allows you to drag the handles to correct times if you forgot to pause.</span>
                   </li>
                 </ul>
               </div>
@@ -629,7 +770,7 @@ export default function TimePage() {
         onClose={() => setSelectedUserId(null)}
         title={`${dailyUsersLog.find(u => u.id === selectedUserId)?.name || "User"}'s Daily Sessions`}
         footer={
-          <button className="btn-secondary" onClick={() => setSelectedUserId(null)}>
+          <button className="btn-secondary cursor-pointer" onClick={() => setSelectedUserId(null)}>
             Close
           </button>
         }
@@ -639,18 +780,18 @@ export default function TimePage() {
             <p className="text-sm text-slate-400 italic">No entries found for this user.</p>
           ) : (
             groupedUserTasks.map((group) => (
-              <div key={group.taskId} className="border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-4 bg-white dark:bg-zinc-900 shadow-xs space-y-3">
+              <div key={group.taskId} className="border border-slate-200/70 dark:border-white/[0.06] rounded-xl p-4 bg-slate-50/50 dark:bg-zinc-900/40 shadow-xs space-y-3">
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0 flex-1">
                     <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm break-words">{group.taskTitle}</h4>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                    <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-655 dark:text-zinc-350 flex items-center gap-1.5 bg-white dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-white/[0.04] shrink-0 whitespace-nowrap shadow-2xs">
+                    <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     Total: {formatMinutesDuration(group.totalMinutes)}
                   </span>
                 </div>
                 
-                <div className="border-t border-slate-100 dark:border-white/[0.06] pt-2.5 space-y-2">
+                <div className="border-t border-slate-200/60 dark:border-white/[0.06] pt-3 space-y-2">
                   {group.sprints.map((sprint, sIdx) => {
                     const start = new Date(sprint.startTime);
                     const end = sprint.endTime ? new Date(sprint.endTime) : new Date();
@@ -658,15 +799,15 @@ export default function TimePage() {
                     const endMin = end.getHours() * 60 + end.getMinutes();
 
                     return (
-                      <div key={sprint.id} className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-350 bg-slate-50 dark:bg-zinc-800/40 hover:bg-slate-100/70 dark:hover:bg-zinc-800/60 p-2 rounded-lg transition-colors">
-                        <span className="font-semibold text-slate-500 dark:text-zinc-550 font-mono">
+                      <div key={sprint.id} className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-350 bg-white/75 dark:bg-zinc-800/45 hover:bg-slate-100/70 dark:hover:bg-zinc-850 p-2 rounded-lg transition-colors border border-slate-150/40 dark:border-white/[0.02]">
+                        <span className="font-semibold text-slate-450 dark:text-zinc-500 font-mono">
                           Sprint #{sIdx + 1}
                         </span>
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-slate-600 dark:text-zinc-450">
+                          <span className="font-mono text-slate-600 dark:text-zinc-400">
                             {formatMinutesToTime(startMin)} - {formatMinutesToTime(endMin)}
                           </span>
-                          <span className="bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 font-semibold px-1.5 py-0.5 rounded text-[10px]">
+                          <span className="bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 font-bold px-2 py-0.5 rounded text-[10px]">
                             {formatMinutesDuration((sprint.durationMinutes ?? (endMin - startMin)))}
                           </span>
                         </div>
