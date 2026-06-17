@@ -10,12 +10,15 @@ import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2 } from "lucide-react";
 import { LoadingPage } from "@/components/Loading";
+import { TaskFormModal } from "./TaskFormPage";
+import { useState } from "react";
 
 export default function TaskDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
   const { data: task, isLoading } = useQuery({ queryKey: ["tasks", id], queryFn: () => tasksApi.get(id!), enabled: !!id });
 
   const update = useMutation({
@@ -49,14 +52,23 @@ export default function TaskDetailPage() {
               Start timer
             </button>
             {canManage && (
-              <button
-                className="btn-danger"
-                disabled={startTimer.isPending || remove.isPending}
-                onClick={() => remove.mutate()}
-              >
-                {remove.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
-                Delete
-              </button>
+              <>
+                <button
+                  className="btn-secondary"
+                  disabled={startTimer.isPending || remove.isPending}
+                  onClick={() => setTaskModalOpen(true)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn-danger"
+                  disabled={startTimer.isPending || remove.isPending}
+                  onClick={() => remove.mutate()}
+                >
+                  {remove.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
+                  Delete
+                </button>
+              </>
             )}
           </>
         }
@@ -84,6 +96,7 @@ export default function TaskDetailPage() {
         </div>
       </div>
       {task.description && <div className="card p-4"><div className="text-xs text-slate-500 mb-2">Description</div><div className="text-sm whitespace-pre-wrap">{task.description}</div></div>}
+      <TaskFormModal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} taskId={task.id} />
     </>
   );
 }

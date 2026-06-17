@@ -13,6 +13,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { LoadingPage } from "@/components/Loading";
+import { TaskFormModal } from "./TaskFormPage";
 
 export default function TasksListPage() {
   const nav = useNavigate();
@@ -24,6 +25,8 @@ export default function TasksListPage() {
   const [priority, setPriority] = useState<"" | TaskPriority>("");
   const [assignedTo, setAssignedTo] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const { data: projects } = useQuery({ queryKey: ["projects","all"], queryFn: () => projectsApi.list({ pageSize: 100 }) });
   const { data: users } = useQuery({ queryKey: ["users","all"], queryFn: () => usersApi.list({ pageSize: 100 }) });
@@ -129,7 +132,10 @@ export default function TasksListPage() {
               <>
                 <button
                   className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                  onClick={() => nav(`/tasks/${t.id}/edit`)}
+                  onClick={() => {
+                    setSelectedTaskId(t.id);
+                    setTaskModalOpen(true);
+                  }}
                   title="Edit task"
                 >
                   <Edit2 className="h-4 w-4" />
@@ -163,7 +169,10 @@ export default function TasksListPage() {
     <>
       <PageHeader title="Tasks"
         actions={(user?.role === "admin" || user?.role === "manager") ?
-          <button className="btn-primary" onClick={() => nav("/tasks/new")}>New task</button> : null} />
+          <button className="btn-primary" onClick={() => {
+            setSelectedTaskId(null);
+            setTaskModalOpen(true);
+          }}>New task</button> : null} />
       <div className="mb-3 flex flex-wrap gap-2">
         <select className="input w-full md:max-w-[200px]" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           <option value="">All projects</option>
@@ -309,7 +318,10 @@ export default function TasksListPage() {
                               <>
                                 <button
                                   className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                                  onClick={() => nav(`/tasks/${t.id}/edit`)}
+                                  onClick={() => {
+                                    setSelectedTaskId(t.id);
+                                    setTaskModalOpen(true);
+                                  }}
                                   title="Edit task"
                                 >
                                   <Edit2 className="h-3.5 w-3.5" />
@@ -343,6 +355,15 @@ export default function TasksListPage() {
           })}
         </div>
       )}
+
+      <TaskFormModal 
+        open={taskModalOpen} 
+        onClose={() => {
+          setTaskModalOpen(false);
+          setSelectedTaskId(null);
+        }} 
+        taskId={selectedTaskId} 
+      />
     </>
   );
 }

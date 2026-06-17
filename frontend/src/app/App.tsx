@@ -38,14 +38,10 @@ export function App() {
           <Route path="users/:id" element={<ProtectedRoute roles={["admin"]}><UserFormPage /></ProtectedRoute>} />
 
           <Route path="projects" element={<ProjectsListPage />} />
-          <Route path="projects/new" element={<ProtectedRoute roles={["admin","manager"]}><ProjectFormPage /></ProtectedRoute>} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />
-          <Route path="projects/:id/edit" element={<ProtectedRoute roles={["admin","manager"]}><ProjectFormPage /></ProtectedRoute>} />
 
           <Route path="tasks" element={<TasksListPage />} />
-          <Route path="tasks/new" element={<ProtectedRoute roles={["admin","manager"]}><TaskFormPage /></ProtectedRoute>} />
           <Route path="tasks/:id" element={<TaskDetailPage />} />
-          <Route path="tasks/:id/edit" element={<ProtectedRoute roles={["admin","manager"]}><TaskFormPage /></ProtectedRoute>} />
 
           <Route path="notes" element={<NotesPage />} />
           <Route path="time" element={<TimePage />} />

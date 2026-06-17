@@ -6,8 +6,9 @@ import { StatusBadge } from "@/components/Badges";
 import { projectsApi } from "@/services/api";
 import type { Project, ProjectStatus } from "@/types";
 import { formatDate } from "@/lib/format";
-import { useAuth } from "@/features/auth/AuthProvider";
 import { LoadingPage } from "@/components/Loading";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { ProjectFormModal } from "./ProjectFormPage";
 
 type ViewMode = "board" | "list";
 
@@ -89,6 +90,7 @@ export default function ProjectsListPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"" | ProjectStatus>("");
   const [viewMode, setViewMode] = useState<ViewMode>("board");
+  const [formModalOpen, setFormModalOpen] = useState(false);
 
   // In board mode — fetch all projects (no category filter), then split client-side
   // In list mode — also fetch all, unified table
@@ -155,7 +157,7 @@ export default function ProjectsListPage() {
             </div>
 
             {(user?.role === "admin" || user?.role === "manager") && (
-              <button className="btn-primary" onClick={() => nav("/projects/new")}>
+              <button className="btn-primary" onClick={() => setFormModalOpen(true)}>
                 New project
               </button>
             )}
@@ -262,6 +264,11 @@ export default function ProjectsListPage() {
           </table>
         </div>
       )}
+
+      <ProjectFormModal 
+        open={formModalOpen} 
+        onClose={() => setFormModalOpen(false)} 
+      />
     </>
   );
 }

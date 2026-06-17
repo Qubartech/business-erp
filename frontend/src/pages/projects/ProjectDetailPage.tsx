@@ -13,12 +13,17 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2, Play, Square, Trash2, Edit2 } from "lucide-react";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { LoadingPage } from "@/components/Loading";
+import { ProjectFormModal } from "./ProjectFormPage";
+import { TaskFormModal } from "../tasks/TaskFormPage";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { data: project, isLoading } = useQuery({ queryKey: ["projects", id], queryFn: () => projectsApi.get(id!), enabled: !!id });
   const { data: tasks } = useQuery({ queryKey: ["tasks", { projectId: id }], queryFn: () => tasksApi.list({ projectId: id, pageSize: 100 }), enabled: !!id });
 
@@ -122,7 +127,10 @@ export default function ProjectDetailPage() {
               <>
                 <button
                   className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                  onClick={() => nav(`/tasks/${t.id}/edit`)}
+                  onClick={() => {
+                    setSelectedTaskId(t.id);
+                    setTaskModalOpen(true);
+                  }}
                   title="Edit task"
                 >
                   <Edit2 className="h-4 w-4" />
@@ -161,7 +169,7 @@ export default function ProjectDetailPage() {
         description={project.description ?? undefined}
         actions={canEdit ? (
           <>
-            <button className="btn-secondary" onClick={() => nav(`/projects/${project.id}/edit`)}>Edit</button>
+            <button className="btn-secondary" onClick={() => setProjectModalOpen(true)}>Edit</button>
             <button className="btn-secondary" onClick={() => archive.mutate()} disabled={project.status === "archived" || archive.isPending}>
               {archive.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
               Archive
@@ -185,7 +193,10 @@ export default function ProjectDetailPage() {
       <div className="flex items-center justify-between mb-2 mt-6">
         <h2 className="text-lg font-medium">Tasks</h2>
         {canEdit && (
-          <button className="btn-primary" onClick={() => nav(`/tasks/new?projectId=${project.id}`)}>
+          <button className="btn-primary" onClick={() => {
+            setSelectedTaskId(null);
+            setTaskModalOpen(true);
+          }}>
             New task
           </button>
         )}
@@ -315,7 +326,10 @@ export default function ProjectDetailPage() {
                               <>
                                 <button
                                   className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                                  onClick={() => nav(`/tasks/${t.id}/edit`)}
+                                  onClick={() => {
+                                    setSelectedTaskId(t.id);
+                                    setTaskModalOpen(true);
+                                  }}
                                   title="Edit task"
                                 >
                                   <Edit2 className="h-3.5 w-3.5" />
@@ -349,6 +363,22 @@ export default function ProjectDetailPage() {
           })}
         </div>
       )}
+
+      <ProjectFormModal 
+        open={projectModalOpen} 
+        onClose={() => setProjectModalOpen(false)} 
+        projectId={project.id} 
+      />
+
+      <TaskFormModal 
+        open={taskModalOpen} 
+        onClose={() => {
+          setTaskModalOpen(false);
+          setSelectedTaskId(null);
+        }} 
+        taskId={selectedTaskId} 
+        projectId={project.id} 
+      />
     </>
   );
 }
