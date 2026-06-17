@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2, Play, Square, Trash2, Edit2 } from "lucide-react";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
+import { LoadingPage } from "@/components/Loading";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -151,7 +152,7 @@ export default function ProjectDetailPage() {
     }
   ];
 
-  if (isLoading || !project) return <div className="text-sm text-slate-500">Loading…</div>;
+  if (isLoading || !project) return <LoadingPage message="Loading Project..." />;
   const canEdit = user?.role === "admin" || user?.role === "manager";
 
   return (

@@ -10,6 +10,7 @@ import { tasksApi } from "@/services/featureApis";
 import { projectsApi, usersApi } from "@/services/api";
 import { Loader2, Briefcase, User, Type, FileText, Calendar } from "lucide-react";
 import { clsx } from "clsx";
+import { LoadingPage } from "@/components/Loading";
 
 const schema = z.object({
   projectId: z.string().uuid("Pick a project"),
@@ -72,7 +73,7 @@ export default function TaskFormPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (editing && existingLoading) return <div className="text-sm text-slate-500">Loading…</div>;
+  if (editing && existingLoading) return <LoadingPage message="Loading Task Data..." />;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

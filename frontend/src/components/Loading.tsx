@@ -19,16 +19,16 @@ export function LoadingSpinner({ size = "md", className }: { size?: "xs" | "sm" 
   );
 }
 
-export function LoadingPage({ message = "Loading Workspace..." }: { message?: string }) {
+export function LoadingPage({ message = "Loading Workspace...", fullScreen = false }: { message?: string; fullScreen?: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 w-full">
+    <div className={clsx("flex flex-col items-center justify-center w-full", fullScreen ? "fixed inset-0 bg-slate-50/50 dark:bg-zinc-950/80 backdrop-blur-md z-50 h-screen" : "py-20")}>
       <div className="relative flex items-center justify-center">
         {/* Pulsing outer ring */}
-        <div className="absolute h-12 w-12 rounded-full border border-brand-500/20 animate-ping opacity-75" />
+        <div className="absolute h-14 w-14 rounded-full border border-brand-500/20 animate-ping opacity-75" />
         {/* Main Spinner */}
         <LoadingSpinner size="lg" className="relative z-10" />
       </div>
-      <span className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mt-4 animate-pulse">
+      <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mt-4 animate-pulse">
         {message}
       </span>
     </div>
