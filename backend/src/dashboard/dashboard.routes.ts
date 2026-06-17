@@ -8,7 +8,12 @@ dashboardRouter.use(requireAuth);
 
 dashboardRouter.get("/summary", async (_req, res, next) => {
   try {
-        const [
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const [
       totalProjects,
       activeProjects,
       totalTasks,
@@ -38,7 +43,23 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
         include: { project: { select: { id: true, name: true } } },
       }),
       prisma.attendance.findMany({
-        where: { checkOut: null },
+        where: {
+          OR: [
+            { checkOut: null },
+            {
+              checkIn: {
+                gte: startOfToday,
+                lte: endOfToday,
+              },
+            },
+            {
+              checkOut: {
+                gte: startOfToday,
+                lte: endOfToday,
+              },
+            },
+          ],
+        },
         include: {
           user: {
             select: {
