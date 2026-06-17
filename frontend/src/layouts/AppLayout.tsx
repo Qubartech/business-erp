@@ -22,7 +22,7 @@ const items: NavItem[] = [
   { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/users", label: "Users", icon: Users, roles: ["admin"] },
-  { to: "/settings", label: "Settings", icon: Cog, roles: ["admin"] },
+  { to: "/settings", label: "Settings", icon: Cog },
 ];
 
 export function AppLayout() {

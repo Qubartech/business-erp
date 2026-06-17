@@ -51,7 +51,7 @@ export function App() {
           <Route path="time" element={<TimePage />} />
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="documents" element={<DocumentsPage />} />
-          <Route path="settings" element={<ProtectedRoute roles={["admin"]}><SettingsPage /></ProtectedRoute>} />
+          <Route path="settings" element={<SettingsPage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

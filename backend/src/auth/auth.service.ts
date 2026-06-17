@@ -84,6 +84,31 @@ export function createAuthService({ prisma }: Pick<Container, "prisma">) {
       return user;
     },
 
+    async getApiKey(userId: string) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { apiKey: true },
+      });
+      if (!user) throw Unauthorized();
+      return { apiKey: user.apiKey };
+    },
+
+    async generateApiKey(userId: string) {
+      const apiKey = `erp_${crypto.randomBytes(24).toString("hex")}`;
+      await prisma.user.update({
+        where: { id: userId },
+        data: { apiKey },
+      });
+      return { apiKey };
+    },
+
+    async deleteApiKey(userId: string) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { apiKey: null },
+      });
+    },
+
     hashPassword,
   };
 }

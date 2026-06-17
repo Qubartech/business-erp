@@ -86,3 +86,10 @@ export const attendanceApi = {
   list: (q?: { userId?: string; date?: string; month?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<AttendanceEntry>>(api.get<ApiEnvelope<Paged<AttendanceEntry>>>("/attendance", { params: q })),
 };
+
+export const personalApiKeyApi = {
+  get: () => unwrap<{ apiKey: string | null }>(api.get<ApiEnvelope<{ apiKey: string | null }>>("/auth/me/api-key")),
+  generate: () => unwrap<{ apiKey: string }>(api.post<ApiEnvelope<{ apiKey: string }>>("/auth/me/api-key")),
+  revoke: () => unwrap<null>(api.delete<ApiEnvelope<null>>("/auth/me/api-key")),
+};
+

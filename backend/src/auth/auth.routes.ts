@@ -36,3 +36,25 @@ authRouter.get("/me", requireAuth, async (req, res, next) => {
     return ok(res, user);
   } catch (e) { next(e); }
 });
+
+authRouter.get("/me/api-key", requireAuth, async (req, res, next) => {
+  try {
+    const result = await service.getApiKey(req.user!.sub);
+    return ok(res, result);
+  } catch (e) { next(e); }
+});
+
+authRouter.post("/me/api-key", requireAuth, async (req, res, next) => {
+  try {
+    const result = await service.generateApiKey(req.user!.sub);
+    return ok(res, result, "API key generated");
+  } catch (e) { next(e); }
+});
+
+authRouter.delete("/me/api-key", requireAuth, async (req, res, next) => {
+  try {
+    await service.deleteApiKey(req.user!.sub);
+    return ok(res, null, "API key revoked");
+  } catch (e) { next(e); }
+});
+
