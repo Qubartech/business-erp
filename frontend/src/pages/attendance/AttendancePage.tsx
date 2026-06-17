@@ -10,6 +10,21 @@ import { formatDateTime, formatDate } from "@/lib/format";
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import type { User as UserType, AttendanceEntry, Leave, Holiday, LeaveType, LeaveStatus } from "@/types";
 
+const getLeaveAbbreviation = (type: LeaveType): string => {
+  switch (type) {
+    case "casual":
+      return "CL";
+    case "annual":
+      return "AL";
+    case "sick":
+      return "SL";
+    case "unpaid":
+      return "UL";
+    default:
+      return "L";
+  }
+};
+
 type UserAttendanceRow = {
   user: UserType;
   entries: AttendanceEntry[];
@@ -275,24 +290,23 @@ export default function AttendancePage() {
       key: "status",
       header: "Status",
       render: (r) => {
-        if (r.entries.length === 0) {
-          // Check approved leave status
-          const isLeaveToday = (leavesData?.items ?? []).find((l) => {
-            if (l.status !== "approved" || l.userId !== r.user.id) return false;
-            const sDate = new Date(l.startDate);
-            const eDate = new Date(l.endDate);
-            const checkDate = new Date(selectedDate + "T00:00:00");
-            checkDate.setHours(0, 0, 0, 0);
-            sDate.setHours(0, 0, 0, 0);
-            eDate.setHours(0, 0, 0, 0);
-            return checkDate >= sDate && checkDate <= eDate;
-          });
+        const isLeaveToday = (leavesData?.items ?? []).find((l) => {
+          if (l.status !== "approved" || l.userId !== r.user.id) return false;
+          const sDate = new Date(l.startDate);
+          const eDate = new Date(l.endDate);
+          const checkDate = new Date(selectedDate + "T00:00:00");
+          checkDate.setHours(0, 0, 0, 0);
+          sDate.setHours(0, 0, 0, 0);
+          eDate.setHours(0, 0, 0, 0);
+          return checkDate >= sDate && checkDate <= eDate;
+        });
 
+        if (r.entries.length === 0) {
           if (isLeaveToday) {
             return (
-              <span className="badge bg-violet-50 text-violet-700 ring-violet-200/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-800/30 flex items-center gap-1 w-fit capitalize font-semibold">
+              <span className="badge bg-violet-50 text-violet-750 ring-violet-200/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-800/30 flex items-center gap-1 w-fit font-semibold">
                 <Plane className="h-3.5 w-3.5" />
-                {isLeaveToday.type} Leave
+                {getLeaveAbbreviation(isLeaveToday.type)} Leave
               </span>
             );
           }
@@ -305,20 +319,31 @@ export default function AttendancePage() {
           );
         }
         const hasActive = r.entries.some((e) => !e.checkOut);
-        if (hasActive) {
-          return (
-            <span className="badge bg-amber-50 text-amber-700 ring-amber-200/50 dark:bg-amber-950/30 dark:text-amber-400 dark:ring-amber-800/30 flex items-center gap-1 w-fit animate-pulse font-semibold">
-              <Clock className="h-3.5 w-3.5" />
-              Checked In
-            </span>
-          );
-        }
-        return (
+        const statusBadge = hasActive ? (
+          <span className="badge bg-amber-50 text-amber-700 ring-amber-200/50 dark:bg-amber-950/30 dark:text-amber-400 dark:ring-amber-800/30 flex items-center gap-1 w-fit animate-pulse font-semibold">
+            <Clock className="h-3.5 w-3.5" />
+            Checked In
+          </span>
+        ) : (
           <span className="badge bg-emerald-50 text-emerald-700 ring-emerald-200/50 dark:bg-emerald-950/30 dark:text-emerald-450 dark:ring-emerald-800/30 flex items-center gap-1 w-fit font-semibold">
             <UserCheck className="h-3.5 w-3.5" />
             Present
           </span>
         );
+
+        if (isLeaveToday) {
+          return (
+            <div className="flex flex-col gap-1">
+              {statusBadge}
+              <span className="badge bg-violet-50 text-violet-750 ring-violet-200/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-800/30 flex items-center gap-1 w-fit text-[10px] font-bold">
+                <Plane className="h-3 w-3" />
+                Leave: {getLeaveAbbreviation(isLeaveToday.type)}
+              </span>
+            </div>
+          );
+        }
+
+        return statusBadge;
       },
     },
     {
@@ -479,13 +504,50 @@ export default function AttendancePage() {
           });
 
           if (approvedLeave) {
+            const leaveAbbrev = getLeaveAbbreviation(approvedLeave.type);
+            let totalMins = 0;
+            let hasActive = false;
+            let workedString = "";
+
+            if (dayEntries.length > 0) {
+              dayEntries.forEach((entry) => {
+                if (!entry.checkOut) {
+                  hasActive = true;
+                  const diffMs = new Date().getTime() - new Date(entry.checkIn).getTime();
+                  totalMins += Math.max(0, Math.round(diffMs / 60000));
+                } else {
+                  const diffMs = new Date(entry.checkOut).getTime() - new Date(entry.checkIn).getTime();
+                  totalMins += Math.max(0, Math.round(diffMs / 60000));
+                }
+              });
+
+              const hrs = Math.floor(totalMins / 60);
+              const mins = totalMins % 60;
+              const formattedTime = hrs > 0 ? `${hrs}h${mins > 0 ? `${mins}m` : ""}` : `${mins}m`;
+              workedString = hasActive ? "Active" : formattedTime;
+            }
+
             return (
-              <span
-                className="text-[9px] font-extrabold uppercase tracking-wide text-violet-750 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-800/30 px-1 py-0.5 rounded cursor-help"
-                title={`Leave: ${approvedLeave.type} Leave${approvedLeave.reason ? ` - "${approvedLeave.reason}"` : ""}`}
-              >
-                Leave
-              </span>
+              <div className="flex flex-col items-center justify-center gap-1">
+                <span
+                  className="text-[9px] font-extrabold tracking-wide text-violet-750 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-800/30 px-1 py-0.5 rounded cursor-help"
+                  title={`Leave: ${approvedLeave.type} Leave${approvedLeave.reason ? ` - "${approvedLeave.reason}"` : ""}`}
+                >
+                  {leaveAbbrev}
+                </span>
+                {dayEntries.length > 0 && (
+                  <span
+                    className={`text-[8px] font-bold px-1 py-0.2 rounded border ${
+                      hasActive
+                        ? "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30 animate-pulse"
+                        : "text-emerald-700 bg-emerald-50/70 dark:text-emerald-450 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30"
+                    }`}
+                    title={`Worked on leave day: ${workedString}`}
+                  >
+                    {workedString}
+                  </span>
+                )}
+              </div>
             );
           }
 

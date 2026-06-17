@@ -27,7 +27,7 @@ githubWebhooksRouter.post("/", async (req, res, next) => {
     }
 
     // Find projects matching this repository
-    const projects = await prisma.project.findMany({
+    let projects = await prisma.project.findMany({
       where: {
         githubRepo: {
           equals: repoName,
@@ -37,7 +37,37 @@ githubWebhooksRouter.post("/", async (req, res, next) => {
     });
 
     if (projects.length === 0) {
-      return ok(res, null, `No matching projects for repository ${repoName}`);
+      // Find or create a default "General" project to associate this commit with
+      let generalProject = await prisma.project.findFirst({
+        where: {
+          name: {
+            equals: "General",
+            mode: "insensitive",
+          },
+        },
+      });
+
+      if (!generalProject) {
+        // Find an admin user to own this project
+        const adminUser = await prisma.user.findFirst({
+          where: { role: "admin" },
+        });
+        if (!adminUser) {
+          throw BadRequest("No admin user found to own the General fallback project");
+        }
+        
+        generalProject = await prisma.project.create({
+          data: {
+            name: "General",
+            description: "Fallback project for unmatched GitHub repository commits",
+            status: "active",
+            category: "non_client",
+            createdBy: adminUser.id,
+          },
+        });
+      }
+
+      projects = [generalProject];
     }
 
     const commitsData = payload.commits;
