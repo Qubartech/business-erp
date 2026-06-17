@@ -17,6 +17,7 @@ import TimePage from "@/pages/time/TimePage";
 import AttendancePage from "@/pages/attendance/AttendancePage";
 import DocumentsPage from "@/pages/documents/DocumentsPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
+import ProfilePage from "@/pages/profile/ProfilePage";
 
 export function App() {
   return (
@@ -48,6 +49,7 @@ export function App() {
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="documents" element={<DocumentsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

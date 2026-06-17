@@ -3,7 +3,7 @@ import { container } from "../lib/container.js";
 import { validate } from "../middleware/validate.js";
 import { requireAuth } from "../middleware/auth.js";
 import { created, ok } from "../lib/response.js";
-import { loginSchema, refreshSchema } from "./auth.schemas.js";
+import { loginSchema, refreshSchema, updateProfileSchema } from "./auth.schemas.js";
 import { createAuthService } from "./auth.service.js";
 
 export const authRouter = Router();
@@ -34,6 +34,13 @@ authRouter.get("/me", requireAuth, async (req, res, next) => {
   try {
     const user = await service.me(req.user!.sub);
     return ok(res, user);
+  } catch (e) { next(e); }
+});
+
+authRouter.patch("/me", requireAuth, validate(updateProfileSchema), async (req, res, next) => {
+  try {
+    const user = await service.updateProfile(req.user!.sub, req.body);
+    return ok(res, user, "Profile updated");
   } catch (e) { next(e); }
 });
 

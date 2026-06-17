@@ -304,22 +304,26 @@ export function AppLayout() {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 top-12 mt-2 w-60 origin-top-right rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.08] shadow-xl ring-1 ring-black/5 dark:ring-white/[0.02] focus:outline-none z-50 p-1.5 transition-all">
-                    <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.06] mb-1.5">
-                      <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">Signed in as</p>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5">{user.email}</p>
-                      <div className="mt-2 flex">
-                        <span className={clsx(
-                          "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
-                          user.role === "admin" 
-                            ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
-                            : user.role === "manager"
-                            ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
-                            : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
-                        )}>
-                          {user.role}
-                        </span>
+                  <div className="absolute right-0 top-12 mt-2 w-64 origin-top-right rounded-2xl bg-white/90 dark:bg-zinc-900/95 backdrop-blur-lg border border-slate-200/50 dark:border-white/[0.08] shadow-[0_10px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.35)] focus:outline-none z-50 p-2 transition-all animate-dropdown-in">
+                    <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.06] mb-2 bg-slate-50/50 dark:bg-zinc-850/30 rounded-xl flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white font-extrabold text-xs shadow-xs shrink-0 select-none">
+                        {user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate leading-tight">{user.name}</span>
+                          <span className={clsx(
+                            "inline-flex items-center rounded-md px-1.5 py-0.2 text-[8px] font-extrabold uppercase tracking-wider border shrink-0 select-none",
+                            user.role === "admin" 
+                              ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
+                              : user.role === "manager"
+                              ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
+                              : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
+                          )}>
+                            {user.role}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate leading-tight mt-0.5">{user.email}</p>
                       </div>
                     </div>
 
@@ -327,16 +331,16 @@ export function AppLayout() {
                       <button
                         onClick={() => {
                           setProfileOpen(false);
-                          toast.info("Edit Profile is coming soon!");
+                          nav("/profile");
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-zinc-800/60 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer"
                       >
-                        <User className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                        Edit Profile
+                        <User className="h-4 w-4 text-brand-500" />
+                        <span>Edit Profile</span>
                       </button>
 
                       <button
-                        disabled={loggingOut || checkIn.isPending || checkOut.isPending}
+                        disabled={loggingOut}
                         onClick={async () => {
                           setProfileOpen(false);
                           setLoggingOut(true);
@@ -349,14 +353,14 @@ export function AppLayout() {
                             setLoggingOut(false);
                           }
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/25 transition-colors text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-650 dark:text-rose-405 hover:bg-rose-50 dark:hover:bg-rose-950/25 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                       >
                         {loggingOut ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-500" />
+                          <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
                         ) : (
-                          <LogOut className="h-3.5 w-3.5 text-rose-500" />
+                          <LogOut className="h-4 w-4 text-rose-500" />
                         )}
-                        Logout
+                        <span>Logout</span>
                       </button>
                     </div>
                   </div>
