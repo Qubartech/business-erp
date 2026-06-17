@@ -211,10 +211,6 @@ export function AppLayout() {
                     )}
                     {checkOut.isPending ? "Checking Out..." : "Check Out"}
                   </button>
-                ) : attendance?.status === "checked-out" ? (
-                  <span className="px-3.5 py-1.5 bg-slate-100 dark:bg-zinc-800/65 text-slate-505 dark:text-zinc-400 border border-slate-200 dark:border-white/[0.08] rounded-xl text-xs font-bold flex items-center gap-1 select-none shadow-inner">
-                    Checked Out
-                  </span>
                 ) : (
                   <button
                     disabled={checkIn.isPending || loggingOut}
@@ -229,7 +225,7 @@ export function AppLayout() {
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                       </span>
                     )}
-                    {checkIn.isPending ? "Checking In..." : "Check In"}
+                    {checkIn.isPending ? "Checking In..." : (attendance?.status === "checked-out" ? "Check In Again" : "Check In")}
                   </button>
                 )}
               </div>
