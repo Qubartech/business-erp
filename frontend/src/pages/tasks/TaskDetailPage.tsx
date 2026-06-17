@@ -9,6 +9,7 @@ import type { TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2 } from "lucide-react";
+import { LoadingPage } from "@/components/Loading";
 
 export default function TaskDetailPage() {
   const { id } = useParams();
@@ -31,7 +32,7 @@ export default function TaskDetailPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !task) return <div className="text-sm text-slate-500">Loading…</div>;
+  if (isLoading || !task) return <LoadingPage message="Loading Task..." />;
   const canManage = user?.role === "admin" || user?.role === "manager";
 
   return (

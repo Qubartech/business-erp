@@ -41,6 +41,7 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       toast.success("Sprint started");
       qc.invalidateQueries({ queryKey: ["time"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to start timer"),
   });
@@ -50,6 +51,7 @@ export function TimeTrackerProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       toast.success("Timer stopped");
       qc.invalidateQueries({ queryKey: ["time"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to stop timer"),
   });

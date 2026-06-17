@@ -24,7 +24,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      {description && <p className="text-sm text-slate-600">{description}</p>}
+      {description && <p className="text-sm text-slate-600 dark:text-slate-400">{description}</p>}
     </Modal>
   );
 }

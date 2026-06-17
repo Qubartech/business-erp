@@ -91,7 +91,7 @@ export default function DocumentsPage() {
     <>
       <PageHeader title="Documents" actions={<button className="btn-primary" onClick={() => setOpen(true)}>Upload</button>} />
       <div className="mb-3">
-        <select className="input max-w-[240px]" value={filterProj} onChange={(e) => setFilterProj(e.target.value)}>
+        <select className="input w-full md:max-w-[240px]" value={filterProj} onChange={(e) => setFilterProj(e.target.value)}>
           <option value="">All projects</option>
           {projects?.items.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>

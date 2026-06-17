@@ -10,6 +10,8 @@ import { documentsRouter } from "../documents/documents.routes.js";
 import { settingsRouter } from "../settings/settings.routes.js";
 import { githubWebhooksRouter } from "../webhooks/github.routes.js";
 import { attendanceRouter } from "../attendance/attendance.routes.js";
+import { leavesRouter } from "../leaves/leaves.routes.js";
+import { holidaysRouter } from "../holidays/holidays.routes.js";
 
 export const router = Router();
 
@@ -24,4 +26,6 @@ router.use("/documents", documentsRouter);
 router.use("/settings", settingsRouter);
 router.use("/webhooks/github", githubWebhooksRouter);
 router.use("/attendance", attendanceRouter);
+router.use("/leaves", leavesRouter);
+router.use("/holidays", holidaysRouter);
 

@@ -1,5 +1,5 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
-import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry } from "@/types";
+import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry, Leave, LeaveType, LeaveStatus, Holiday } from "@/types";
 
 export type ListTasksQuery = {
   projectId?: string; status?: TaskStatus; priority?: TaskPriority;
@@ -24,8 +24,10 @@ export const notesApi = {
   list: (q: { search?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<Note>>(api.get<ApiEnvelope<Paged<Note>>>("/notes", { params: q })),
   get: (id: string) => unwrap<Note>(api.get<ApiEnvelope<Note>>(`/notes/${id}`)),
-  create: (data: { title: string; content: string }) => unwrap<Note>(api.post<ApiEnvelope<Note>>("/notes", data)),
-  update: (id: string, data: { title?: string; content?: string }) => unwrap<Note>(api.patch<ApiEnvelope<Note>>(`/notes/${id}`, data)),
+  create: (data: { title: string; content: string; color?: string; category?: string; pinned?: boolean }) =>
+    unwrap<Note>(api.post<ApiEnvelope<Note>>("/notes", data)),
+  update: (id: string, data: { title?: string; content?: string; color?: string; category?: string; pinned?: boolean }) =>
+    unwrap<Note>(api.patch<ApiEnvelope<Note>>(`/notes/${id}`, data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/notes/${id}`)),
 };
 
@@ -70,6 +72,7 @@ export type DashboardSummary = {
   totalMinutes: number;
   latestCommits: Commit[];
   activeAttendance: AttendanceEntry[];
+  leavesToday: Leave[];
 };
 
 export const dashboardApi = {
@@ -93,3 +96,20 @@ export const personalApiKeyApi = {
   revoke: () => unwrap<null>(api.delete<ApiEnvelope<null>>("/auth/me/api-key")),
 };
 
+export const leavesApi = {
+  list: (q?: { userId?: string; status?: string }) =>
+    unwrap<{ items: Leave[] }>(api.get<ApiEnvelope<{ items: Leave[] }>>("/leaves", { params: q })),
+  create: (data: { type: LeaveType; startDate: string; endDate: string; reason?: string | null }) =>
+    unwrap<Leave>(api.post<ApiEnvelope<Leave>>("/leaves", data)),
+  update: (id: string, data: { type?: LeaveType; startDate?: string; endDate?: string; reason?: string | null; status?: LeaveStatus }) =>
+    unwrap<Leave>(api.patch<ApiEnvelope<Leave>>(`/leaves/${id}`, data)),
+  remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/leaves/${id}`)),
+};
+
+export const holidaysApi = {
+  list: (q?: { year?: number }) =>
+    unwrap<{ items: Holiday[] }>(api.get<ApiEnvelope<{ items: Holiday[] }>>("/holidays", { params: q })),
+  create: (data: { date: string; name: string; description?: string | null }) =>
+    unwrap<Holiday>(api.post<ApiEnvelope<Holiday>>("/holidays", data)),
+  remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/holidays/${id}`)),
+};

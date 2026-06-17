@@ -12,6 +12,7 @@ import { projectsApi, usersApi } from "@/services/api";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { LoadingPage } from "@/components/Loading";
 
 export default function TasksListPage() {
   const nav = useNavigate();
@@ -164,19 +165,19 @@ export default function TasksListPage() {
         actions={(user?.role === "admin" || user?.role === "manager") ?
           <button className="btn-primary" onClick={() => nav("/tasks/new")}>New task</button> : null} />
       <div className="mb-3 flex flex-wrap gap-2">
-        <select className="input max-w-[200px]" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+        <select className="input w-full md:max-w-[200px]" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           <option value="">All projects</option>
           {projects?.items.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <select className="input max-w-[160px]" value={status} onChange={(e) => setStatus(e.target.value as TaskStatus | "")}>
+        <select className="input w-full md:max-w-[160px]" value={status} onChange={(e) => setStatus(e.target.value as TaskStatus | "")}>
           <option value="">All statuses</option>
           {(["todo","in_progress","review","done"] as TaskStatus[]).map((s) => <option key={s} value={s}>{s.replace("_"," ")}</option>)}
         </select>
-        <select className="input max-w-[160px]" value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority | "")}>
+        <select className="input w-full md:max-w-[160px]" value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority | "")}>
           <option value="">All priorities</option>
           {(["low","medium","high","critical"] as TaskPriority[]).map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select className="input max-w-[200px]" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+        <select className="input w-full md:max-w-[200px]" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
           <option value="">Any assignee</option>
           {users?.items.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
@@ -211,7 +212,7 @@ export default function TasksListPage() {
       {viewMode === "list" ? (
         <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(t) => t.id} onRowClick={(t) => nav(`/tasks/${t.id}`)} />
       ) : isLoading ? (
-        <div className="text-sm text-slate-500">Loading Kanban Board...</div>
+        <LoadingPage message="Loading Kanban Board..." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           {boardColumns.map((col) => {

@@ -1,4 +1,4 @@
-import { BadRequest, NotFound } from "../lib/errors.js";
+import { Conflict, NotFound } from "../lib/errors.js";
 import type { Container } from "../lib/container.js";
 import type { z } from "zod";
 import type { listAttendanceQuerySchema } from "./attendance.schemas.js";
@@ -9,7 +9,30 @@ const include = {
   user: { select: { id: true, name: true, email: true } },
 } as const;
 
+function getLocalDayRange(now = new Date()) {
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return { startOfDay, endOfDay };
+}
+
 export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
+  async function findLatestEntryForToday(userId: string) {
+    const { startOfDay, endOfDay } = getLocalDayRange();
+
+    return prisma.attendance.findFirst({
+      where: {
+        userId,
+        checkIn: { gte: startOfDay, lte: endOfDay },
+      },
+      orderBy: { checkIn: "desc" },
+      include,
+    });
+  }
+
   return {
     async checkIn(userId: string) {
       // Check if user is already checked in (has an entry with checkout null)
@@ -17,7 +40,7 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         where: { userId, checkOut: null },
       });
       if (active) {
-        throw BadRequest("You are already checked in");
+        throw Conflict("You are already checked in");
       }
 
       return prisma.attendance.create({
@@ -57,19 +80,7 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         return { status: "checked-in", activeEntry: active };
       }
 
-      // Check if there is a completed check-in today
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const lastToday = await prisma.attendance.findFirst({
-        where: {
-          userId,
-          checkIn: { gte: today },
-        },
-        orderBy: { checkIn: "desc" },
-        include,
-      });
-
+      const lastToday = await findLatestEntryForToday(userId);
       if (lastToday) {
         return { status: "checked-out", activeEntry: lastToday };
       }

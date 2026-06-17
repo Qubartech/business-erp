@@ -8,6 +8,11 @@ dashboardRouter.use(requireAuth);
 
 dashboardRouter.get("/summary", async (_req, res, next) => {
   try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
     const [
       totalProjects,
       activeProjects,
@@ -17,7 +22,8 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
       statusCounts,
       totalTimeResult,
       latestCommits,
-      activeAttendance
+      activeAttendance,
+      leavesToday
     ] = await Promise.all([
       prisma.project.count(),
       prisma.project.count({ where: { status: "active" } }),
@@ -37,7 +43,23 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
         include: { project: { select: { id: true, name: true } } },
       }),
       prisma.attendance.findMany({
-        where: { checkOut: null },
+        where: {
+          OR: [
+            { checkOut: null },
+            {
+              checkIn: {
+                gte: startOfToday,
+                lte: endOfToday,
+              },
+            },
+            {
+              checkOut: {
+                gte: startOfToday,
+                lte: endOfToday,
+              },
+            },
+          ],
+        },
         include: {
           user: {
             select: {
@@ -60,6 +82,22 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
         },
         orderBy: { checkIn: "asc" },
       }),
+      prisma.leave.findMany({
+        where: {
+          status: "approved",
+          startDate: { lte: new Date(new Date().setHours(23, 59, 59, 999)) },
+          endDate: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
     ]);
 
     const projectsByStatus = statusCounts.reduce((acc, curr) => {
@@ -77,6 +115,7 @@ dashboardRouter.get("/summary", async (_req, res, next) => {
       totalMinutes: totalTimeResult._sum.durationMinutes ?? 0,
       latestCommits,
       activeAttendance,
+      leavesToday,
     });
   } catch (e) { next(e); }
 });
