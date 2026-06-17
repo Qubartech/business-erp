@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -11,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { Loader2 } from "lucide-react";
 
 export default function DocumentsPage() {
+  const nav = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -89,7 +91,15 @@ export default function DocumentsPage() {
 
   return (
     <>
-      <PageHeader title="Documents" actions={<button className="btn-primary" onClick={() => setOpen(true)}>Upload</button>} />
+      <PageHeader 
+        title="Documents" 
+        actions={
+          <div className="flex gap-2">
+            <button className="btn-secondary" onClick={() => nav("/documents/generate")}>Generate Doc</button>
+            <button className="btn-primary" onClick={() => setOpen(true)}>Upload</button>
+          </div>
+        } 
+      />
       <div className="mb-3">
         <select className="input w-full md:max-w-[240px]" value={filterProj} onChange={(e) => setFilterProj(e.target.value)}>
           <option value="">All projects</option>

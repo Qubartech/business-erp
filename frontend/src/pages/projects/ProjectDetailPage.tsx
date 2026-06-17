@@ -170,6 +170,8 @@ export default function ProjectDetailPage() {
         actions={canEdit ? (
           <>
             <button className="btn-secondary" onClick={() => setProjectModalOpen(true)}>Edit</button>
+            <button className="btn-secondary" onClick={() => nav(`/documents/generate?projectId=${project.id}`)}>Generate Doc</button>
+            <button className="btn-secondary" onClick={() => nav(`/projects/${project.id}/edit`)}>Edit</button>
             <button className="btn-secondary" onClick={() => archive.mutate()} disabled={project.status === "archived" || archive.isPending}>
               {archive.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
               Archive

@@ -16,6 +16,7 @@ import NotesPage from "@/pages/notes/NotesPage";
 import TimePage from "@/pages/time/TimePage";
 import AttendancePage from "@/pages/attendance/AttendancePage";
 import DocumentsPage from "@/pages/documents/DocumentsPage";
+import DocumentGeneratorPage from "@/pages/documents/DocumentGeneratorPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 
 export function App() {
@@ -47,6 +48,7 @@ export function App() {
           <Route path="time" element={<TimePage />} />
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="documents" element={<DocumentsPage />} />
+          <Route path="documents/generate" element={<DocumentGeneratorPage />} />
           <Route path="settings" element={<SettingsPage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
