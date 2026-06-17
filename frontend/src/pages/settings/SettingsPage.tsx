@@ -244,15 +244,16 @@ export default function SettingsPage() {
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               How to configure in Claude Desktop / Antigravity
             </h4>
-            <p className="text-[11px] text-slate-500 mb-3 max-w-2xl">
-              Add the following configuration block to your Claude Desktop configuration file (located at <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px]">~/Library/Application Support/Claude/claude_desktop_config.json</code>) or your workspace's MCP config:
+            <p className="text-[11px] text-slate-500 mb-3 max-w-2xl leading-relaxed">
+              Add the following configuration block to your Claude Desktop configuration file (located at <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px]">~/Library/Application Support/Claude/claude_desktop_config.json</code>) or your workspace's MCP config. <br />
+              <strong className="text-amber-700 font-semibold">⚠️ IMPORTANT:</strong> You must replace <code className="bg-amber-50 text-amber-800 px-1 py-0.5 rounded text-[10px]">/absolute/path/to/your/project</code> with the actual absolute path to this project directory on your computer (e.g. <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-[10px]">/Users/yourusername/projects/business-erp/mcp/dist/index.js</code>).
             </p>
             <pre className="bg-slate-900 text-slate-100 text-[10px] p-3 rounded-lg overflow-x-auto font-mono max-w-2xl">
 {`{
   "mcpServers": {
     "erp-mcp": {
       "command": "node",
-      "args": ["${window.location.pathname.replace(/\/settings\/?$/, "")}/mcp/dist/index.js"],
+      "args": ["/absolute/path/to/your/project/mcp/dist/index.js"],
       "env": {
         "ERP_API_KEY": "${showKey ? apiKeyData.apiKey : "YOUR_API_KEY_HERE"}",
         "ERP_API_URL": "${window.location.origin}/api"
