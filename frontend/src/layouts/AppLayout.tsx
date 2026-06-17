@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
-  Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar, Building2,
+  Clock, FileText, Settings as Cog, LogOut, LogIn, Menu, Square, Loader2, Calendar, Building2,
   Sun, Moon, User, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -197,24 +197,24 @@ export function AppLayout() {
         {/* Top Header */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200/60 dark:border-white/[0.06] bg-white/70 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-30">
           <div className="flex items-center gap-3">
-            <button className="md:hidden p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900" onClick={() => setOpen((v) => !v)}>
+            <button className="md:hidden h-9 w-9 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900" onClick={() => setOpen((v) => !v)}>
               <Menu className="h-4 w-4" />
             </button>
             {/* Desktop collapse button */}
             <button
-              className="hidden md:flex p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900 cursor-pointer"
+              className="hidden md:flex h-9 w-9 items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900 cursor-pointer"
               onClick={toggleDesktopCollapse}
               title={desktopCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {desktopCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
-            <div className="text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest hidden sm:block">Internal ERP Workspace</div>
+            {/* <div className="text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest hidden sm:block">Internal ERP Workspace</div> */}
           </div>
 
           <div className="flex items-center gap-3">
             {/* Active Task Time Tracker */}
             {currentTimer && (
-              <div className="flex items-center gap-3 px-3.5 py-1 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-900/60 rounded-full shadow-sm text-xs font-semibold select-none animate-pulse-slow">
+              <div className="hidden md:flex items-center gap-3 px-3.5 py-1 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-900/60 rounded-full shadow-sm text-xs font-semibold select-none animate-pulse-slow">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
@@ -249,14 +249,14 @@ export function AppLayout() {
                   <button
                     disabled={checkOut.isPending || loggingOut}
                     onClick={() => checkOut.mutate()}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-450 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/65 rounded-xl text-xs font-bold active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none hover:shadow-sm shadow-rose-200/50"
+                    className="flex items-center gap-2 h-8 px-5 bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/25 dark:to-red-950/25 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 hover:from-rose-100 hover:to-red-100 dark:hover:from-rose-900/40 dark:hover:to-red-900/40 active:scale-[0.97] rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none shadow-sm shadow-rose-250/20"
                   >
                     {checkOut.isPending ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin text-rose-600 dark:text-rose-455" />
                     ) : (
                       <span className="relative flex h-2 w-2">
-                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                       </span>
                     )}
                     {checkOut.isPending ? "Checking Out..." : "Check Out"}
@@ -265,14 +265,14 @@ export function AppLayout() {
                   <button
                     disabled={checkIn.isPending || loggingOut}
                     onClick={() => checkIn.mutate()}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/40 dark:hover:to-teal-900/40 active:scale-[0.97] rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none shadow-sm shadow-emerald-200/40"
+                    className="flex items-center gap-2 h-9 px-5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/40 dark:hover:to-teal-900/40 active:scale-[0.97] rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none shadow-sm shadow-emerald-250/20"
                   >
                     {checkIn.isPending ? (
                       <Loader2 className="h-3 w-3 animate-spin text-emerald-700 dark:text-emerald-400" />
                     ) : (
-                      <span className="relative flex h-1.5 w-1.5">
+                      <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                       </span>
                     )}
                     {checkIn.isPending ? "Checking In..." : (attendance?.status === "checked-out" ? "Check In Again" : "Check In")}
@@ -284,7 +284,7 @@ export function AppLayout() {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800/80 rounded-xl transition-all duration-200 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900/50 shadow-sm flex items-center justify-center cursor-pointer"
+              className="h-9 w-9 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800/80 rounded-xl transition-all duration-200 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900/50 shadow-sm flex items-center justify-center cursor-pointer"
               title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
             >
               {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
@@ -365,6 +365,38 @@ export function AppLayout() {
             )}
           </div>
         </header>
+
+        {/* Active Task Time Tracker - Mobile Banner */}
+        {currentTimer && (
+          <div className="md:hidden flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-b border-amber-100 dark:border-amber-900/40 backdrop-blur-md sticky top-16 z-20 text-xs font-semibold select-none">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+              </span>
+              <span className="text-amber-800 dark:text-amber-300 font-medium truncate">
+                Tracking: {currentTimer.task?.title}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 ml-2 shrink-0">
+              <span className="font-mono bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800 font-extrabold shadow-sm">
+                {formatSeconds(sprintRemaining)}
+              </span>
+              <button
+                onClick={stopTimer}
+                disabled={isTimerActionPending}
+                className="p-1.5 bg-amber-100 dark:bg-amber-950/50 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-450 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center border border-amber-200 dark:border-amber-800"
+                title="Stop timer"
+              >
+                {isTimerActionPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Square className="h-2.5 w-2.5 fill-amber-700 dark:fill-amber-400" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content Outlet */}
         <main className="flex-1 overflow-auto p-6 md:p-8 bg-slate-50/60 dark:bg-zinc-950/20">
