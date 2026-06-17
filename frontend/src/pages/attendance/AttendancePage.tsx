@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { DataTable, type Column } from "@/components/DataTable";
+import { Modal } from "@/components/Modal";
 import { usersApi } from "@/services/api";
 import { attendanceApi, leavesApi, holidaysApi } from "@/services/featureApis";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -76,6 +77,7 @@ export default function AttendancePage() {
   const [leaveStartDate, setLeaveStartDate] = useState<string>("");
   const [leaveEndDate, setLeaveEndDate] = useState<string>("");
   const [leaveReason, setLeaveReason] = useState<string>("");
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
   // Holiday Form states
   const [holidayModalOpen, setHolidayModalOpen] = useState(false);
@@ -121,6 +123,7 @@ export default function AttendancePage() {
       setLeaveStartDate("");
       setLeaveEndDate("");
       setLeaveReason("");
+      setLeaveModalOpen(false);
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to request leave");
@@ -390,7 +393,7 @@ export default function AttendancePage() {
             return checkDate >= sDate && checkDate <= eDate;
           });
           return (
-            <span className="text-slate-400 dark:text-zinc-550 italic text-xs font-medium">
+            <span className="text-slate-400 dark:text-zinc-500 italic text-xs font-medium">
               {isLeaveToday ? "Approved time-off" : "Did not attend office on this day"}
             </span>
           );
@@ -398,17 +401,17 @@ export default function AttendancePage() {
         return (
           <div className="space-y-1.5 py-0.5">
             {r.entries.map((entry, idx) => (
-              <div key={entry.id} className="flex items-center gap-1.5 text-xs text-slate-650 dark:text-zinc-400">
+              <div key={entry.id} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-400">
                 {r.entries.length > 1 && (
-                  <span className="font-bold text-slate-400 dark:text-zinc-550 text-[10px] bg-slate-100 dark:bg-zinc-800 px-1 py-0.2 rounded font-mono">
+                  <span className="font-bold text-slate-400 dark:text-zinc-500 text-[10px] bg-slate-100 dark:bg-zinc-800 px-1 py-0.2 rounded font-mono">
                     #{idx + 1}
                   </span>
                 )}
-                <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
+                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {formatDateTime(entry.checkIn)}
                 </span>
-                <span className="text-slate-400 dark:text-zinc-555">→</span>
-                <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
+                <span className="text-slate-400 dark:text-zinc-500">→</span>
+                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {entry.checkOut ? formatDateTime(entry.checkOut) : "Active Check-In"}
                 </span>
               </div>
@@ -646,6 +649,40 @@ export default function AttendancePage() {
   const myLeaves = (leavesData?.items ?? []).filter((l) => l.userId === currentUser?.id);
   const pendingLeaves = (leavesData?.items ?? []).filter((l) => l.status === "pending");
   const leaveHistory = (leavesData?.items ?? []).filter((l) => l.status !== "pending");
+  
+  // Helper to calculate leave days excluding weekends and public holidays
+  const calculateLeaveDays = (startDateStr: string, endDateStr: string) => {
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    
+    const startMidnight = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    
+    let workingDays = 0;
+    const current = new Date(startMidnight);
+    
+    const holidays = holidaysData?.items ?? [];
+    
+    while (current <= endMidnight) {
+      const dayOfWeek = current.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
+      
+      const isHoliday = holidays.some((h) => {
+        const hDate = new Date(h.date);
+        return hDate.getFullYear() === current.getFullYear() &&
+               hDate.getMonth() === current.getMonth() &&
+               hDate.getDate() === current.getDate();
+      });
+      
+      if (!isWeekend && !isHoliday) {
+        workingDays++;
+      }
+      
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return workingDays;
+  };
 
   // Calculations for Leave limits/balances (Allowance default values: Sick: 10, Casual: 15, Annual: 20)
   const getLeaveStats = () => {
@@ -656,9 +693,7 @@ export default function AttendancePage() {
     let unpaid = 0;
 
     approvedMyLeaves.forEach((l) => {
-      const s = new Date(l.startDate);
-      const e = new Date(l.endDate);
-      const diffDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const diffDays = calculateLeaveDays(l.startDate, l.endDate);
       if (l.type === "sick") sick += diffDays;
       else if (l.type === "casual") casual += diffDays;
       else if (l.type === "annual") annual += diffDays;
@@ -670,12 +705,39 @@ export default function AttendancePage() {
 
   const leaveStats = getLeaveStats();
 
-  const handleRequestLeave = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRequestLeave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!leaveStartDate || !leaveEndDate) {
       toast.error("Please enter start and end dates");
       return;
     }
+
+    const start = new Date(leaveStartDate);
+    const end = new Date(leaveEndDate);
+    if (start > end) {
+      toast.error("Start date must be before or equal to end date");
+      return;
+    }
+
+    // Overlap validation check
+    const hasOverlap = myLeaves.some((l) => {
+      if (l.status === "rejected") return false;
+      const existingStart = new Date(l.startDate);
+      const existingEnd = new Date(l.endDate);
+      const newStart = new Date(leaveStartDate);
+      const newEnd = new Date(leaveEndDate);
+      existingStart.setHours(0, 0, 0, 0);
+      existingEnd.setHours(0, 0, 0, 0);
+      newStart.setHours(0, 0, 0, 0);
+      newEnd.setHours(0, 0, 0, 0);
+      return existingStart <= newEnd && existingEnd >= newStart;
+    });
+
+    if (hasOverlap) {
+      toast.error("You already have an approved or pending leave request that overlaps with this date range.");
+      return;
+    }
+
     createLeave.mutate({
       type: leaveType,
       startDate: leaveStartDate,
@@ -746,7 +808,7 @@ export default function AttendancePage() {
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                     />
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-550 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
                   </div>
                   <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftDay(1)}>
                     <ChevronRight className="h-4 w-4" />
@@ -764,7 +826,7 @@ export default function AttendancePage() {
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
                     />
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-550 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
                   </div>
                   <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftMonth(1)}>
                     <ChevronRight className="h-4 w-4" />
@@ -774,7 +836,7 @@ export default function AttendancePage() {
 
               {/* View Toggle */}
               <div className="flex flex-wrap items-center gap-4">
-                <span className="text-xs text-slate-550 dark:text-zinc-400 hidden md:inline font-semibold">
+                <span className="text-xs text-slate-500 dark:text-zinc-400 hidden md:inline font-semibold">
                   {viewMode === "daily"
                     ? `Showing logs for ${getDayName(selectedDate)}, ${formatDate(selectedDate)}`
                     : `Showing monthly grid for ${selectedMonth}`}
@@ -866,75 +928,20 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              {/* Leave Request Form */}
-              <div className="card-premium p-5">
-                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-3 mb-4 flex items-center gap-2">
-                  <Calendar className="h-4.5 w-4.5 text-brand-600 dark:text-brand-400" />
-                  Request Time-Off
-                </h3>
-                <form onSubmit={handleRequestLeave} className="space-y-4">
-                  <div>
-                    <label className="label">Leave Type</label>
-                    <select
-                      className="input cursor-pointer font-semibold"
-                      value={leaveType}
-                      onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-                    >
-                      <option value="casual">Casual Leave</option>
-                      <option value="sick">Sick Leave</option>
-                      <option value="annual">Annual Leave</option>
-                      <option value="unpaid">Unpaid Leave</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label">Start Date</label>
-                      <input
-                        type="date"
-                        className="input"
-                        required
-                        value={leaveStartDate}
-                        onChange={(e) => setLeaveStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="label">End Date</label>
-                      <input
-                        type="date"
-                        className="input"
-                        required
-                        value={leaveEndDate}
-                        onChange={(e) => setLeaveEndDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="label">Reason / Notes</label>
-                    <textarea
-                      placeholder="Explain your request details..."
-                      rows={3}
-                      className="input resize-none"
-                      value={leaveReason}
-                      onChange={(e) => setLeaveReason(e.target.value)}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={createLeave.isPending}
-                    className="btn-primary w-full py-2 flex items-center justify-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
-                  >
-                    {createLeave.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Submit Leave Request
-                  </button>
-                </form>
-              </div>
+              {/* Request Time-Off Trigger Button */}
+              <button
+                onClick={() => setLeaveModalOpen(true)}
+                className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> Request Time-Off
+              </button>
             </div>
 
             {/* Right Column: User lists & Admin Actions */}
             <div className="lg:col-span-2 space-y-6">
               {/* Admin Approval Queue */}
               {isAdminOrManager && pendingLeaves.length > 0 && (
-                <div className="card-premium p-5 border-amber-250/35 dark:border-amber-900/30 bg-gradient-to-r from-amber-500/[0.02] to-transparent">
+                <div className="card-premium p-5 border-amber-200/30 dark:border-amber-900/30 bg-gradient-to-r from-amber-500/[0.02] to-transparent">
                   <h3 className="font-bold text-sm text-amber-800 dark:text-amber-400 uppercase tracking-wide border-b border-amber-100/50 dark:border-amber-900/30 pb-3 mb-4 flex items-center gap-2">
                     <span className="p-1 bg-amber-50 dark:bg-amber-500/15 rounded text-amber-600 dark:text-amber-400 animate-pulse">
                       <AlertCircle className="h-4.5 w-4.5" />
@@ -943,9 +950,7 @@ export default function AttendancePage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {pendingLeaves.map((leave) => {
-                      const start = new Date(leave.startDate);
-                      const end = new Date(leave.endDate);
-                      const daysCount = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                      const daysCount = calculateLeaveDays(leave.startDate, leave.endDate);
                       return (
                         <div
                           key={leave.id}
@@ -963,19 +968,19 @@ export default function AttendancePage() {
                                   <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold truncate block">{leave.user?.email}</span>
                                 </div>
                               </div>
-                              <span className="badge uppercase tracking-wider text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border-amber-250/30 shrink-0 font-bold shadow-2xs">
+                              <span className="badge uppercase tracking-wider text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border-amber-200/30 shrink-0 font-bold shadow-2xs">
                                 {leave.type}
                               </span>
                             </div>
                             
-                            <div className="text-xs font-semibold text-slate-655 dark:text-zinc-400 mt-3 flex items-center gap-1.5">
+                            <div className="text-xs font-semibold text-slate-600 dark:text-zinc-400 mt-3 flex items-center gap-1.5">
                               <Calendar className="h-3.5 w-3.5 text-slate-400" />
                               <span className="bg-slate-50 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-slate-650 dark:text-slate-350">{formatDate(leave.startDate)} — {formatDate(leave.endDate)}</span>
                               <span className="text-slate-400 dark:text-zinc-500 font-semibold">({daysCount} {daysCount === 1 ? "day" : "days"})</span>
                             </div>
 
                             {leave.reason && (
-                              <p className="text-xs text-slate-550 dark:text-zinc-500 italic mt-2.5 bg-slate-50 dark:bg-zinc-950/40 p-2.5 rounded-lg border border-slate-100/60 dark:border-white/[0.02] break-words">
+                              <p className="text-xs text-slate-500 dark:text-zinc-500 italic mt-2.5 bg-slate-50 dark:bg-zinc-950/40 p-2.5 rounded-lg border border-slate-100/60 dark:border-white/[0.02] break-words">
                                 "{leave.reason}"
                               </p>
                             )}
@@ -1024,9 +1029,7 @@ export default function AttendancePage() {
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
                       {(isAdminOrManager ? [...pendingLeaves, ...leaveHistory] : myLeaves).map((leave) => {
-                        const start = new Date(leave.startDate);
-                        const end = new Date(leave.endDate);
-                        const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        const days = calculateLeaveDays(leave.startDate, leave.endDate);
                         
                         return (
                           <tr key={leave.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors">
@@ -1040,7 +1043,7 @@ export default function AttendancePage() {
                                 </div>
                               </td>
                             )}
-                            <td className="py-3 px-3 capitalize font-semibold text-slate-655 dark:text-zinc-400">
+                            <td className="py-3 px-3 capitalize font-semibold text-slate-600 dark:text-zinc-400">
                               <span className={`badge uppercase text-[9px] font-bold ${
                                 leave.type === "sick"
                                   ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 ring-emerald-100"
@@ -1081,7 +1084,7 @@ export default function AttendancePage() {
                                       cancelLeaveRequest.mutate(leave.id);
                                     }
                                   }}
-                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 font-bold hover:bg-red-55/60 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 font-bold hover:bg-red-50/60 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                                   title="Cancel Leave Request"
                                 >
                                   Cancel
@@ -1093,7 +1096,7 @@ export default function AttendancePage() {
                       })}
                       {(isAdminOrManager ? [...pendingLeaves, ...leaveHistory] : myLeaves).length === 0 && (
                         <tr>
-                          <td colSpan={isAdminOrManager ? 6 : 5} className="py-8 text-center text-slate-400 dark:text-zinc-550 font-medium">
+                          <td colSpan={isAdminOrManager ? 6 : 5} className="py-8 text-center text-slate-400 dark:text-zinc-500 font-medium">
                             No leave requests recorded.
                           </td>
                         </tr>
@@ -1154,7 +1157,7 @@ export default function AttendancePage() {
 
                       {/* Description */}
                       {holiday.description && (
-                        <p className="text-xs text-slate-550 dark:text-zinc-550 mt-4 leading-relaxed bg-slate-50/50 dark:bg-zinc-950/30 p-2.5 rounded-lg border border-slate-100/50 dark:border-white/[0.02] break-words">
+                        <p className="text-xs text-slate-555 dark:text-zinc-500 mt-4 leading-relaxed bg-slate-50/50 dark:bg-zinc-955/30 p-2.5 rounded-lg border border-slate-100/50 dark:border-white/[0.02] break-words">
                           {holiday.description}
                         </p>
                       )}
@@ -1169,7 +1172,7 @@ export default function AttendancePage() {
                               removeHoliday.mutate(holiday.id);
                             }
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-red-500 dark:text-zinc-650 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-955/20 transition-all cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-red-500 dark:text-zinc-650 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer"
                           title="Delete Holiday"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1181,7 +1184,7 @@ export default function AttendancePage() {
               })}
 
               {(holidaysData?.items ?? []).length === 0 && (
-                <div className="col-span-full card py-16 text-center text-slate-400 dark:text-zinc-550 font-medium">
+                <div className="col-span-full card py-16 text-center text-slate-400 dark:text-zinc-500 font-medium">
                   <Palmtree className="h-10 w-10 text-slate-300 dark:text-zinc-700 mx-auto mb-2" />
                   No holidays declared for this year.
                 </div>
@@ -1193,86 +1196,152 @@ export default function AttendancePage() {
       </div>
 
       {/* HOLIDAY CREATE MODAL */}
-      {holidayModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-slate-900/40 dark:bg-zinc-950/70 backdrop-blur-sm transition-opacity duration-300"
-            onClick={() => setHolidayModalOpen(false)}
-          />
-
-          <div className="relative w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden transition-all duration-300 transform scale-100 z-10 p-6 animate-dropdown-in">
-            <button
-              onClick={() => setHolidayModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-655 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors z-20 cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <h3 className="font-bold text-base text-slate-900 dark:text-zinc-50 border-b border-slate-100 dark:border-white/[0.04] pb-3 mb-4 flex items-center gap-2">
-              <Palmtree className="h-5 w-5 text-brand-655 dark:text-brand-400" />
-              Add Public Holiday
-            </h3>
-
-            <form onSubmit={handleCreateHoliday} className="space-y-4">
-              <div>
-                <label className="label">Holiday Date</label>
-                <input
-                  type="date"
-                  className="input cursor-pointer"
-                  required
-                  value={holidayDate}
-                  onChange={(e) => setHolidayDate(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <label className="label">Holiday Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Christmas, New Year"
-                  className="input"
-                  required
-                  value={holidayName}
-                  onChange={(e) => setHolidayName(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="label">Description (Optional)</label>
-                <textarea
-                  placeholder="e.g. National office closure"
-                  rows={2}
-                  className="input resize-none"
-                  value={holidayDesc}
-                  onChange={(e) => setHolidayDesc(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setHolidayModalOpen(false)}
-                  className="btn-secondary text-xs px-4 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createHoliday.isPending}
-                  className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
-                >
-                  {createHoliday.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" />
-                  )}
-                  Add Holiday
-                </button>
-              </div>
-            </form>
+      <Modal
+        open={holidayModalOpen}
+        onClose={() => setHolidayModalOpen(false)}
+        title={
+          <>
+            <Palmtree className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+            <span>Add Public Holiday</span>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateHoliday} className="space-y-4">
+          <div>
+            <label className="label">Holiday Date</label>
+            <input
+              type="date"
+              className="input cursor-pointer"
+              required
+              value={holidayDate}
+              onChange={(e) => setHolidayDate(e.target.value)}
+            />
           </div>
-        </div>
-      )}
+          
+          <div>
+            <label className="label">Holiday Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Christmas, New Year"
+              className="input"
+              required
+              value={holidayName}
+              onChange={(e) => setHolidayName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="label">Description (Optional)</label>
+            <textarea
+              placeholder="e.g. National office closure"
+              rows={2}
+              className="input resize-none"
+              value={holidayDesc}
+              onChange={(e) => setHolidayDesc(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
+            <button
+              type="button"
+              onClick={() => setHolidayModalOpen(false)}
+              className="btn-secondary text-xs px-4 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createHoliday.isPending}
+              className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
+            >
+              {createHoliday.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              Add Holiday
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* LEAVE REQUEST MODAL */}
+      <Modal
+        open={leaveModalOpen}
+        onClose={() => setLeaveModalOpen(false)}
+        title={
+          <>
+            <Plane className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+            <span>Request Time-Off</span>
+          </>
+        }
+      >
+        <form onSubmit={(e) => handleRequestLeave(e)} className="space-y-4">
+          <div>
+            <label className="label">Leave Type</label>
+            <select
+              className="input cursor-pointer font-semibold"
+              value={leaveType}
+              onChange={(e) => setLeaveType(e.target.value as LeaveType)}
+            >
+              <option value="casual">Casual Leave</option>
+              <option value="sick">Sick Leave</option>
+              <option value="annual">Annual Leave</option>
+              <option value="unpaid">Unpaid Leave</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Start Date</label>
+              <input
+                type="date"
+                className="input cursor-pointer"
+                required
+                value={leaveStartDate}
+                onChange={(e) => setLeaveStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">End Date</label>
+              <input
+                type="date"
+                className="input cursor-pointer"
+                required
+                value={leaveEndDate}
+                onChange={(e) => setLeaveEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label">Reason / Notes</label>
+            <textarea
+              placeholder="Explain your request details..."
+              rows={3}
+              className="input resize-none"
+              value={leaveReason}
+              onChange={(e) => setLeaveReason(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
+            <button
+              type="button"
+              onClick={() => setLeaveModalOpen(false)}
+              className="btn-secondary text-xs px-4 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createLeave.isPending}
+              className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
+            >
+              {createLeave.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Submit Leave Request
+            </button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

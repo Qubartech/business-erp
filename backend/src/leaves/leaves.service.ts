@@ -28,6 +28,18 @@ export function createLeavesService({ prisma }: Pick<Container, "prisma">) {
     },
 
     async create(userId: string, input: CreateInput) {
+      const overlap = await prisma.leave.findFirst({
+        where: {
+          userId,
+          status: { in: ["approved", "pending"] },
+          startDate: { lte: input.endDate },
+          endDate: { gte: input.startDate },
+        },
+      });
+      if (overlap) {
+        throw BadRequest("You already have an approved or pending leave request that overlaps with this date range.");
+      }
+
       return prisma.leave.create({
         data: {
           userId,
@@ -43,6 +55,24 @@ export function createLeavesService({ prisma }: Pick<Container, "prisma">) {
     async update(userId: string, role: string, id: string, input: UpdateInput) {
       const leave = await prisma.leave.findUnique({ where: { id } });
       if (!leave) throw NotFound("Leave request not found");
+
+      if (input.startDate || input.endDate) {
+        const targetStartDate = input.startDate ?? leave.startDate;
+        const targetEndDate = input.endDate ?? leave.endDate;
+
+        const overlap = await prisma.leave.findFirst({
+          where: {
+            userId: leave.userId,
+            id: { not: id },
+            status: { in: ["approved", "pending"] },
+            startDate: { lte: targetEndDate },
+            endDate: { gte: targetStartDate },
+          },
+        });
+        if (overlap) {
+          throw BadRequest("The updated date range overlaps with an existing approved or pending leave request.");
+        }
+      }
 
       if (role === "member") {
         if (leave.userId !== userId) throw Forbidden("Not your leave request");
