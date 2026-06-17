@@ -1,8 +1,8 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
   Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar, Building2,
-  Sun, Moon, User
+  Sun, Moon, User, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -32,10 +32,26 @@ export function AppLayout() {
   const { currentTimer, stopTimer, sprintRemaining, isTimerActionPending } = useTimeTracker();
   const { theme, toggleTheme } = useTheme();
   const nav = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    return localStorage.getItem("qubar_sidebar_collapsed") === "true";
+  });
+
+  const toggleDesktopCollapse = () => {
+    setDesktopCollapsed((v) => {
+      const next = !v;
+      localStorage.setItem("qubar_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -60,6 +76,7 @@ export function AppLayout() {
     onSuccess: () => {
       toast.success("Checked in successfully");
       qc.invalidateQueries({ queryKey: ["attendance"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message || "Check in failed"),
   });
@@ -69,6 +86,7 @@ export function AppLayout() {
     onSuccess: () => {
       toast.success("Checked out successfully");
       qc.invalidateQueries({ queryKey: ["attendance"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onError: (e: Error) => toast.error(e.message || "Check out failed"),
   });
@@ -83,28 +101,39 @@ export function AppLayout() {
     <div className="flex h-full bg-slate-50/50 dark:bg-zinc-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Sidebar Section */}
       <aside className={clsx(
-        "w-64 shrink-0 border-r border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/70 dark:backdrop-blur-lg flex flex-col shadow-sm relative z-40 transition-transform duration-300 md:translate-x-0",
-        open ? "translate-x-0 fixed inset-y-0 left-0" : "-translate-x-full absolute md:relative md:flex",
+        "shrink-0 border-r border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/70 dark:backdrop-blur-lg flex flex-col shadow-sm z-40 transition-all duration-300 fixed inset-y-0 left-0 md:relative md:translate-x-0 md:flex",
+        open ? "translate-x-0 w-64" : "-translate-x-full w-64",
+        desktopCollapsed ? "md:w-[72px]" : "md:w-64",
       )}>
         {/* Logo Area */}
-        <div className="h-16 flex items-center gap-2.5 px-6 border-b border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/70 dark:backdrop-blur-lg">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white shadow-lg shadow-brand-500/10">
+        <div className={clsx(
+          "h-16 flex items-center border-b border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/70 dark:backdrop-blur-lg transition-all duration-300",
+          desktopCollapsed ? "px-4 justify-center" : "px-6 gap-2.5"
+        )}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white shadow-lg shadow-brand-500/10 shrink-0">
             <Building2 className="h-5 w-5" />
           </div>
-          <span className="font-bold text-base tracking-tight text-gradient-brand">Qubartech ERP</span>
+          {!desktopCollapsed && (
+            <span className="font-bold text-base tracking-tight text-gradient-brand truncate animate-fade-in">Qubartech ERP</span>
+          )}
         </div>
 
         {/* Navigation list */}
-        <nav className="flex-1 overflow-y-auto py-5 px-3.5 space-y-1 bg-slate-50/20 dark:bg-zinc-900/10">
+        <nav className={clsx(
+          "flex-1 overflow-y-auto py-5 space-y-1 bg-slate-50/20 dark:bg-zinc-900/10 transition-all duration-300",
+          desktopCollapsed ? "px-2" : "px-3.5"
+        )}>
           {visible.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === "/"}
               onClick={() => setOpen(false)}
+              title={desktopCollapsed ? item.label : undefined}
               className={({ isActive }) =>
                 clsx(
-                  "flex items-center gap-3 py-2.5 pr-4 pl-3 rounded-r-xl rounded-l-none text-sm font-semibold transition-all duration-200 group border-l-[4px] relative",
+                  "flex items-center rounded-r-xl rounded-l-none text-sm font-semibold transition-all duration-200 group border-l-[4px] relative py-2.5",
+                  desktopCollapsed ? "justify-center pl-0 pr-0" : "gap-3 pr-4 pl-3",
                   isActive
                     ? "bg-brand-50/80 dark:bg-brand-900/35 text-brand-700 dark:text-brand-400 border-brand-600 dark:border-brand-500"
                     : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-slate-105 dark:hover:bg-zinc-800/50",
@@ -117,7 +146,7 @@ export function AppLayout() {
                     "h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
                     isActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400"
                   )} />
-                  <span>{item.label}</span>
+                  {!desktopCollapsed && <span className="truncate animate-fade-in">{item.label}</span>}
                 </>
               )}
             </NavLink>
@@ -125,38 +154,59 @@ export function AppLayout() {
         </nav>
 
         {/* User Profile Card */}
-        <div className="p-4 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/60 dark:bg-zinc-900/40 dark:backdrop-blur-md">
-          <div className="flex items-center gap-3">
+        <div className={clsx(
+          "border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/60 dark:bg-zinc-900/40 dark:backdrop-blur-md transition-all duration-300",
+          desktopCollapsed ? "p-3 flex justify-center" : "p-4"
+        )}>
+          <div className={clsx("flex items-center", desktopCollapsed ? "" : "gap-3")}>
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-sm select-none shrink-0">
               {user?.name ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "U"}
             </div>
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="truncate font-bold text-xs text-slate-800 dark:text-slate-200 leading-tight">{user?.name}</span>
-                <span className={clsx(
-                  "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
-                  user?.role === "admin" 
-                    ? "bg-red-50 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
-                    : user?.role === "manager"
-                    ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
-                    : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
-                )}>
-                  {user?.role}
-                </span>
+            {!desktopCollapsed && (
+              <div className="min-w-0 flex-1 space-y-0.5 animate-fade-in">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="truncate font-bold text-xs text-slate-800 dark:text-slate-200 leading-tight">{user?.name}</span>
+                  <span className={clsx(
+                    "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
+                    user?.role === "admin" 
+                      ? "bg-red-55 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
+                      : user?.role === "manager"
+                      ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
+                      : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
+                  )}>
+                    {user?.role}
+                  </span>
+                </div>
+                <div className="truncate text-[10px] text-slate-400 dark:text-zinc-400 font-medium leading-none">{user?.email}</div>
               </div>
-              <div className="truncate text-[10px] text-slate-400 dark:text-zinc-400 font-medium leading-none">{user?.email}</div>
-            </div>
+            )}
           </div>
         </div>
       </aside>
+
+      {/* Sidebar Backdrop Overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         {/* Top Header */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200/60 dark:border-white/[0.06] bg-white/70 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-30">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button className="md:hidden p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900" onClick={() => setOpen((v) => !v)}>
               <Menu className="h-4 w-4" />
+            </button>
+            {/* Desktop collapse button */}
+            <button
+              className="hidden md:flex p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900 cursor-pointer"
+              onClick={toggleDesktopCollapse}
+              title={desktopCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {desktopCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
             <div className="text-xs font-bold text-slate-400 dark:text-zinc-400 uppercase tracking-widest hidden sm:block">Internal ERP Workspace</div>
           </div>

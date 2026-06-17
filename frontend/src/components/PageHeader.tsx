@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">{title}</h1>
         {description && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>}

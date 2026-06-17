@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { notesApi } from "@/services/featureApis";
 import type { Note } from "@/types";
 import { Loader2, Plus, Search, Pin, Trash2, X, FileText } from "lucide-react";
+import { LoadingPage } from "@/components/Loading";
 
 interface NoteMeta {
   color?: string;
@@ -354,10 +355,7 @@ export default function NotesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-600 dark:text-brand-500 mb-2" />
-          <span className="text-sm text-slate-500 dark:text-zinc-400">Loading notes...</span>
-        </div>
+        <LoadingPage message="Loading Notes..." />
       ) : (
         <div className="space-y-6">
           {pinnedNotes.length > 0 && (

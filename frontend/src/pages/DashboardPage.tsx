@@ -49,7 +49,164 @@ function formatRelativeTime(dateStr: string) {
   return `${diffDays}d ago`;
 }
 
-function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: any[]; isLoading: boolean }) {
+interface UserAttendanceCardProps {
+  group: any;
+  type: "active" | "checked-out";
+  now: number;
+}
+
+function UserAttendanceCard({ group, type, now }: UserAttendanceCardProps) {
+  const [showAll, setShowAll] = useState(false);
+
+  const userInitials = group.user?.name
+    ? group.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "U";
+
+  const totalSessions = group.entries.length;
+  const firstEntry = group.entries[0];
+  const remainingEntries = group.entries.slice(1);
+
+  // We show 2 sessions max by default: 1 main session + 1 remaining session
+  const visibleEntries = showAll ? remainingEntries : remainingEntries.slice(0, 1);
+  const extraSessionsCount = remainingEntries.length - 1; // totalSessions - 2
+
+  const checkInTime = new Date(firstEntry.checkIn).getTime();
+  const durationMs = type === "active" ? now - checkInTime : new Date(firstEntry.checkOut).getTime() - checkInTime;
+  const mins = Math.max(0, Math.round(durationMs / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const durationStr = `${h > 0 ? `${h}h ` : ""}${m}m`;
+
+  const activeTimer = firstEntry.user?.timeEntries?.[0];
+  const activeTask = activeTimer?.task;
+
+  return (
+    <div className="relative flex flex-col p-3.5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs transition-all duration-200 overflow-hidden">
+      {/* Dashed line connecting sessions, only show if we have more than 1 session */}
+      {totalSessions > 1 && (
+        <div className="absolute left-[30px] top-[46px] bottom-[22px] border-l border-dashed border-slate-200 dark:border-slate-800/80" />
+      )}
+
+      {/* Header: User Profile & First/Latest Session */}
+      <div className="flex items-center justify-between gap-3 relative z-10">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`h-8 w-8 rounded-xl bg-gradient-to-tr ${type === "active" ? "from-emerald-500 to-teal-500" : "from-slate-400 to-slate-500"} flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0 select-none`}>
+            {userInitials}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-slate-700 dark:text-slate-200 text-xs truncate leading-snug">
+                {group.user?.name}
+              </span>
+              {totalSessions > 1 && (
+                <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border shrink-0 select-none ${
+                  type === "active" 
+                    ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
+                    : "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-400 border-brand-100 dark:border-brand-900/40"
+                }`}>
+                  {totalSessions} sessions
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+              {type === "active" ? (
+                `In: ${new Date(firstEntry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              ) : (
+                `In: ${new Date(firstEntry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Out: ${new Date(firstEntry.checkOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              )}
+            </div>
+          </div>
+        </div>
+        {type === "active" ? (
+          <span className="text-[10px] font-extrabold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 select-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            {durationStr}
+          </span>
+        ) : (
+          <span className="text-[10px] font-extrabold font-mono bg-slate-105 dark:bg-zinc-800 text-slate-650 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 select-none">
+            {durationStr}
+          </span>
+        )}
+      </div>
+
+      {/* Active Task for main session */}
+      {type === "active" && activeTask && (
+        <div className="mt-2.5 text-[10px] text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/40 rounded-xl p-2 flex items-center gap-2 min-w-0 ml-[42px] relative z-10">
+          <Play className="h-3 w-3 text-amber-600 fill-amber-600 shrink-0 animate-pulse" />
+          <span className="truncate font-semibold">
+            Working on: <span className="font-bold text-slate-700 dark:text-slate-200">{activeTask.title}</span>
+          </span>
+        </div>
+      )}
+
+      {/* Stacked remaining sessions list */}
+      {visibleEntries.length > 0 && (
+        <div className="mt-3 space-y-3 relative z-10">
+          {visibleEntries.map((entry: any) => {
+            const entryCheckInTime = new Date(entry.checkIn).getTime();
+            const entryDurationMs = type === "active" ? now - entryCheckInTime : new Date(entry.checkOut).getTime() - entryCheckInTime;
+            const entryMins = Math.max(0, Math.round(entryDurationMs / 60000));
+            const entryH = Math.floor(entryMins / 60);
+            const entryM = entryMins % 60;
+            const entryDurationStr = `${entryH > 0 ? `${entryH}h ` : ""}${entryM}m`;
+
+            const entryActiveTimer = entry.user?.timeEntries?.[0];
+            const entryActiveTask = entryActiveTimer?.task;
+
+            return (
+              <div key={entry.id} className="relative pl-[42px] flex flex-col gap-1.5">
+                {/* Timeline node dot */}
+                <div className="absolute left-[27px] top-[7px] w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-750 border border-slate-50 dark:border-slate-900 shadow-sm shrink-0" />
+                
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                    {type === "active" ? (
+                      `In: ${new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                    ) : (
+                      `In: ${new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Out: ${new Date(entry.checkOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                    )}
+                  </div>
+                  {type === "active" ? (
+                    <span className="text-[9px] font-extrabold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 select-none">
+                      <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                      {entryDurationStr}
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-extrabold font-mono bg-slate-100 dark:bg-zinc-800 text-slate-650 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 select-none">
+                      {entryDurationStr}
+                    </span>
+                  )}
+                </div>
+                {type === "active" && entryActiveTask && (
+                  <div className="text-[9px] text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/40 rounded-lg p-1.5 flex items-center gap-1.5 min-w-0">
+                    <Play className="h-2.5 w-2.5 text-amber-600 fill-amber-600 shrink-0 animate-pulse" />
+                    <span className="truncate font-semibold">
+                      Working on: <span className="font-bold text-slate-700 dark:text-slate-200">{entryActiveTask.title}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Show more button if extra sessions exist */}
+      {totalSessions > 2 && (
+        <div className="mt-2.5 pl-[42px] relative z-10">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-350 transition-colors duration-150 cursor-pointer flex items-center gap-1 select-none"
+          >
+            {showAll ? "Show less" : `Show more (${extraSessionsCount} more)`}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActiveUsersList({ activeAttendance, isLoading, type = "active" }: { activeAttendance: any[]; isLoading: boolean; type?: "active" | "checked-out" }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -62,54 +219,46 @@ function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: an
   }
 
   if (!activeAttendance || activeAttendance.length === 0) {
-    return <div className="text-xs text-slate-400 dark:text-slate-500 py-6 italic text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">Nobody is checked in right now.</div>;
+    return (
+      <div className="text-xs text-slate-400 dark:text-slate-500 py-6 italic text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+        {type === "active" ? "Nobody is checked in right now." : "Nobody has checked out today."}
+      </div>
+    );
   }
+
+  // Group entries by user
+  const groupedByUser = activeAttendance.reduce((acc: any[], entry) => {
+    const userId = entry.userId || entry.user?.id || "unknown";
+    let group = acc.find((g: any) => g.userId === userId);
+    if (!group) {
+      group = {
+        userId,
+        user: entry.user,
+        entries: [],
+      };
+      acc.push(group);
+    }
+    group.entries.push(entry);
+    return acc;
+  }, []);
+
+  // Sort groups: latest checkIn time of any entry in the group descending
+  groupedByUser.sort((a: any, b: any) => {
+    const latestA = Math.max(...a.entries.map((e: any) => new Date(e.checkIn).getTime()));
+    const latestB = Math.max(...b.entries.map((e: any) => new Date(e.checkIn).getTime()));
+    return latestB - latestA;
+  });
+
+  // Sort entries inside each group descending (latest checkIn first)
+  groupedByUser.forEach((group: any) => {
+    group.entries.sort((a: any, b: any) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime());
+  });
 
   return (
     <div className="space-y-3">
-      {activeAttendance.map((entry) => {
-        const checkInTime = new Date(entry.checkIn).getTime();
-        const elapsedMs = now - checkInTime;
-        const mins = Math.max(0, Math.round(elapsedMs / 60000));
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        const durationStr = `${h > 0 ? `${h}h ` : ""}${m}m`;
-
-        const activeTimer = entry.user?.timeEntries?.[0];
-        const activeTask = activeTimer?.task;
-
-        const userInitials = entry.user?.name
-          ? entry.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
-          : "U";
-
-        return (
-          <div key={entry.id} className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs transition-all duration-205">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0 select-none">
-                  {userInitials}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-slate-700 dark:text-slate-200 text-xs truncate leading-snug">{entry.user?.name}</div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">Checked in at {new Date(entry.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-extrabold font-mono bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 select-none">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                {durationStr}
-              </span>
-            </div>
-            {activeTask && (
-              <div className="mt-2 text-[10px] text-amber-800 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/40 rounded-xl p-2 flex items-center gap-2 min-w-0">
-                <Play className="h-3 w-3 text-amber-600 fill-amber-600 shrink-0 animate-pulse" />
-                <span className="truncate font-semibold">
-                  Working on: <span className="font-bold text-slate-700 dark:text-slate-200">{activeTask.title}</span>
-                </span>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {groupedByUser.map((group: any) => (
+        <UserAttendanceCard key={group.userId} group={group} type={type} now={now} />
+      ))}
     </div>
   );
 }
@@ -149,12 +298,14 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
       })}
     </div>
   );
-}
-
-export default function DashboardPage() {
+}export default function DashboardPage() {
   const { user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: dashboardApi.summary });
   const [webhookModalOpen, setWebhookModalOpen] = useState(false);
+  const [officeTab, setOfficeTab] = useState<"active" | "checked-out">("active");
+
+  const activeAttendance = data?.activeAttendance?.filter((entry: any) => !entry.checkOut) || [];
+  const checkedOutAttendance = data?.activeAttendance?.filter((entry: any) => entry.checkOut !== null) || [];
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     active: { bg: "bg-emerald-50/50 dark:bg-emerald-950/10", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-100/80 dark:border-emerald-900/30" },
@@ -217,6 +368,43 @@ export default function DashboardPage() {
         {/* Left Column: Projects & Rates */}
         <div className="lg:col-span-2 space-y-6">
           
+          {/* Who is checked in */}
+          <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
+            <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-600" />
+                Who's in the Office
+              </h3>
+              <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-zinc-800/60 p-0.5 rounded-xl border border-slate-200/50 dark:border-white/[0.05]">
+                <button
+                  onClick={() => setOfficeTab("active")}
+                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${
+                    officeTab === "active"
+                      ? "bg-white dark:bg-zinc-700 text-emerald-700 dark:text-emerald-450 shadow-xs"
+                      : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setOfficeTab("checked-out")}
+                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${
+                    officeTab === "checked-out"
+                      ? "bg-white dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 shadow-xs"
+                      : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
+                  }`}
+                >
+                  Checked Out Today
+                </button>
+              </div>
+            </div>
+            <ActiveUsersList 
+              activeAttendance={officeTab === "active" ? activeAttendance : checkedOutAttendance} 
+              isLoading={isLoading} 
+              type={officeTab}
+            />
+          </div>
+
           {/* Projects Status Distribution */}
           <div className="card-premium p-6 bg-white border border-slate-200/50">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-5">Projects Status Distribution</h3>
@@ -269,18 +457,6 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Who is checked in */}
-          <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
-            <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-600" />
-                Who's in the Office
-              </h3>
-              <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40 rounded-full select-none uppercase tracking-wider">Active</span>
-            </div>
-            <ActiveUsersList activeAttendance={data?.activeAttendance || []} isLoading={isLoading} />
           </div>
         </div>
 

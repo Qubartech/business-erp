@@ -6,14 +6,14 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
-import { SelectField, TextField, TextareaField } from "@/components/fields";
 import { tasksApi } from "@/services/featureApis";
 import { projectsApi, usersApi } from "@/services/api";
-import { Loader2 } from "lucide-react";
+import { Loader2, Briefcase, User, Type, FileText, Calendar } from "lucide-react";
+import { clsx } from "clsx";
 
 const schema = z.object({
   projectId: z.string().uuid("Pick a project"),
-  title: z.string().min(1),
+  title: z.string().min(1, "Task title is required"),
   description: z.string().optional(),
   status: z.enum(["todo","in_progress","review","done"]),
   priority: z.enum(["low","medium","high","critical"]),
@@ -75,32 +75,157 @@ export default function TaskFormPage() {
   if (editing && existingLoading) return <div className="text-sm text-slate-500">Loading…</div>;
 
   return (
-    <>
-      <PageHeader title={editing ? "Edit task" : "New task"} />
-      <form className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl" onSubmit={handleSubmit(async (v) => {
-        try {
-          await save.mutateAsync(v);
-        } catch {}
-      })}>
-        <SelectField label="Project" {...register("projectId")} error={errors.projectId?.message}
-          options={[{ value: "", label: "— pick —" }, ...(projects?.items.map(p => ({ value: p.id, label: p.name })) ?? [])]} />
-        <SelectField label="Assignee" {...register("assignedTo")}
-          options={[{ value: "", label: "Unassigned" }, ...(users?.items.map(u => ({ value: u.id, label: u.name })) ?? [])]} />
-        <TextField className="sm:col-span-2" label="Title" {...register("title")} error={errors.title?.message} />
-        <TextareaField className="sm:col-span-2" label="Description" {...register("description")} />
-        <SelectField label="Status" {...register("status")}
-          options={[{value:"todo",label:"Todo"},{value:"in_progress",label:"In Progress"},{value:"review",label:"Review"},{value:"done",label:"Done"}]} />
-        <SelectField label="Priority" {...register("priority")}
-          options={[{value:"low",label:"Low"},{value:"medium",label:"Medium"},{value:"high",label:"High"},{value:"critical",label:"Critical"}]} />
-        <TextField label="Due date" type="date" {...register("dueDate")} />
-        <div className="sm:col-span-2 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" disabled={save.isPending || isSubmitting} onClick={() => nav(-1)}>Cancel</button>
-          <button className="btn-primary" disabled={save.isPending || isSubmitting}>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <PageHeader title={editing ? "Edit Task" : "New Task"} />
+
+      <form 
+        className="glass-panel p-6 sm:p-8 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-6 border border-slate-200/50 dark:border-white/[0.08] shadow-lg animate-fade-in" 
+        onSubmit={handleSubmit(async (v) => {
+          try {
+            await save.mutateAsync(v);
+          } catch {}
+        })}
+      >
+        {/* Project Selector */}
+        <div>
+          <label className="label text-sm font-semibold mb-1.5 block">Project</label>
+          <div className="relative rounded-xl shadow-sm">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Briefcase className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <select 
+              className={clsx(
+                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500",
+                errors.projectId ? "ring-red-500 focus:ring-red-500" : ""
+              )}
+              {...register("projectId")}
+            >
+              <option value="">— pick project —</option>
+              {projects?.items.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          {errors.projectId?.message && <p className="field-error text-xs text-red-500 mt-1">{errors.projectId.message}</p>}
+        </div>
+
+        {/* Assignee Selector */}
+        <div>
+          <label className="label text-sm font-semibold mb-1.5 block">Assignee</label>
+          <div className="relative rounded-xl shadow-sm">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <User className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <select 
+              className="input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500" 
+              {...register("assignedTo")}
+            >
+              <option value="">Unassigned</option>
+              {users?.items.map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Task Title */}
+        <div className="sm:col-span-2">
+          <label className="label text-sm font-semibold mb-1.5 block">Task Title</label>
+          <div className="relative rounded-xl shadow-sm">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Type className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <input
+              type="text"
+              className={clsx(
+                "input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500",
+                errors.title ? "ring-red-500 focus:ring-red-500" : ""
+              )}
+              placeholder="Enter task title..."
+              {...register("title")}
+            />
+          </div>
+          {errors.title?.message && <p className="field-error text-xs text-red-500 mt-1">{errors.title.message}</p>}
+        </div>
+
+        {/* Description */}
+        <div className="sm:col-span-2">
+          <label className="label text-sm font-semibold mb-1.5 block">Description</label>
+          <div className="relative rounded-xl shadow-sm">
+            <div className="pointer-events-none absolute top-3 left-0 flex items-start pl-3">
+              <FileText className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <textarea
+              className="input pl-9 rounded-xl min-h-[120px] py-2 focus:ring-2 focus:ring-brand-500"
+              placeholder="Add description or notes for this task..."
+              {...register("description")}
+            />
+          </div>
+        </div>
+
+        {/* Status */}
+        <div>
+          <label className="label text-sm font-semibold mb-1.5 block">Status</label>
+          <select 
+            className="input rounded-xl focus:ring-2 focus:ring-brand-500" 
+            {...register("status")}
+          >
+            <option value="todo">Todo</option>
+            <option value="in_progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label className="label text-sm font-semibold mb-1.5 block">Priority</label>
+          <select 
+            className="input rounded-xl focus:ring-2 focus:ring-brand-500" 
+            {...register("priority")}
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+
+        {/* Due Date */}
+        <div>
+          <label className="label text-sm font-semibold mb-1.5 block">Due Date</label>
+          <div className="relative rounded-xl shadow-sm">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <input
+              type="date"
+              className="input pl-9 rounded-xl focus:ring-2 focus:ring-brand-500"
+              {...register("dueDate")}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="sm:col-span-2 flex justify-end gap-2 mt-4">
+          <button 
+            type="button" 
+            className="btn-secondary px-5 py-2 rounded-xl" 
+            disabled={save.isPending || isSubmitting} 
+            onClick={() => nav(-1)}
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit"
+            className="btn-primary px-6 py-2 rounded-xl" 
+            disabled={save.isPending || isSubmitting}
+          >
             {(save.isPending || isSubmitting) && <Loader2 className="h-4 w-4 animate-spin mr-1.5 inline" />}
-            {editing ? "Save" : "Create"}
+            {editing ? "Save Changes" : "Create Task"}
           </button>
         </div>
       </form>
-    </>
+    </div>
   );
 }

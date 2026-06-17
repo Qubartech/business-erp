@@ -51,7 +51,7 @@ export default function UsersListPage() {
       <PageHeader title="Users" description="Manage team members and roles"
         actions={<button className="btn-primary" onClick={() => nav("/users/new")}>New user</button>} />
       <div className="mb-3">
-        <input className="input max-w-sm" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input className="input w-full md:max-w-sm" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
       <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(u) => u.id} onRowClick={(u) => nav(`/users/${u.id}`)} />
     </>

@@ -7,6 +7,7 @@ import { projectsApi } from "@/services/api";
 import type { Project, ProjectStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { LoadingPage } from "@/components/Loading";
 
 type ViewMode = "board" | "list";
 
@@ -162,16 +163,15 @@ export default function ProjectsListPage() {
         }
       />
 
-      {/* Filters */}
-      <div className="mb-4 flex gap-2 flex-wrap">
+      <div className="mb-4 flex gap-2 flex-wrap w-full">
         <input
-          className="input max-w-sm"
+          className="input w-full md:max-w-sm"
           placeholder="Search projects"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <select
-          className="input max-w-[180px]"
+          className="input w-full md:max-w-[180px]"
           value={status}
           onChange={(e) => setStatus(e.target.value as ProjectStatus | "")}
         >
@@ -185,9 +185,7 @@ export default function ProjectsListPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-40">
-          <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-        </div>
+        <LoadingPage message="Loading Projects..." />
       ) : viewMode === "board" ? (
         /* ── Board view: two columns side by side ── */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -237,7 +235,7 @@ export default function ProjectsListPage() {
         </div>
       ) : (
         /* ── List view: unified table ── */
-        <div className="card overflow-hidden">
+        <div className="card overflow-x-auto">
           <table className="w-full text-left">
             <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
