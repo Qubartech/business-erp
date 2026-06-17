@@ -29,7 +29,16 @@ export function createNotesService({ prisma }: Pick<Container, "prisma">) {
     },
     async get(userId: string, id: string) { return assertOwner(id, userId); },
     async create(userId: string, input: CreateInput) {
-      return prisma.note.create({ data: { userId, title: input.title, content: input.content } });
+      return prisma.note.create({
+        data: {
+          userId,
+          title: input.title,
+          content: input.content,
+          color: input.color,
+          category: input.category,
+          pinned: input.pinned,
+        }
+      });
     },
     async update(userId: string, id: string, input: UpdateInput) {
       await assertOwner(id, userId);

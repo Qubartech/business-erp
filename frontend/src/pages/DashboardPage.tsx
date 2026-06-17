@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
-import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play, Calendar } from "lucide-react";
+import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play, Calendar, Palmtree } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -107,6 +107,43 @@ function ActiveUsersList({ activeAttendance, isLoading }: { activeAttendance: an
                 </span>
               </div>
             )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoading: boolean }) {
+  if (isLoading) {
+    return <div className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center animate-pulse">Loading leave status...</div>;
+  }
+
+  if (!leavesToday || leavesToday.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      {leavesToday.map((leave) => {
+        const userInitials = leave.user?.name
+          ? leave.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+          : "U";
+
+        return (
+          <div key={leave.id} className="flex items-center justify-between p-3 rounded-2xl bg-violet-50/50 dark:bg-violet-950/10 border border-violet-100 dark:border-violet-900/30">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0 select-none">
+                {userInitials}
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-slate-700 dark:text-zinc-200 text-xs truncate leading-snug">{leave.user?.name}</div>
+                <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-0.5">{leave.user?.email}</div>
+              </div>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider bg-violet-100/70 dark:bg-violet-900/40 text-violet-750 dark:text-violet-400 border border-violet-200/40 dark:border-violet-900/20 px-2 py-0.5 rounded-lg shrink-0 select-none">
+              {leave.type}
+            </span>
           </div>
         );
       })}
@@ -233,10 +270,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Office status & Timeline */}
-        <div className="lg:col-span-1 space-y-6">
           {/* Who is checked in */}
           <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
             <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
@@ -244,10 +278,28 @@ export default function DashboardPage() {
                 <Users className="w-4 h-4 text-emerald-600" />
                 Who's in the Office
               </h3>
-              <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 rounded-full select-none uppercase tracking-wider">Active</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-650 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40 rounded-full select-none uppercase tracking-wider">Active</span>
             </div>
             <ActiveUsersList activeAttendance={data?.activeAttendance || []} isLoading={isLoading} />
           </div>
+        </div>
+
+        {/* Right Column: Office status & Timeline */}
+        <div className="lg:col-span-1 space-y-6">
+
+          {/* Who is on leave today (Only show if > 0) */}
+          {!isLoading && data?.leavesToday && data.leavesToday.length > 0 && (
+            <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
+              <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <Palmtree className="w-4 h-4 text-violet-600" />
+                  On Leave Today
+                </h3>
+                <span className="text-[9px] font-bold px-2 py-0.5 bg-violet-50 dark:bg-violet-950/20 text-violet-650 dark:text-violet-400 border border-violet-100 dark:border-violet-900/40 rounded-full select-none uppercase tracking-wider">Time-Off</span>
+              </div>
+              <LeavesTodayList leavesToday={data.leavesToday} isLoading={isLoading} />
+            </div>
+          )}
 
           {/* Commits timeline card */}
           <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">

@@ -54,6 +54,7 @@ model User {
   timeEntries     TimeEntry[]
   documents       Document[]
   attendanceEntries Attendance[]
+  leaves          Leave[]
 
   @@map("users")
 }
@@ -138,6 +139,9 @@ model Note {
   userId    String   @map("user_id") @db.Uuid
   title     String
   content   String
+  color     String   @default("neutral")
+  category  String   @default("work")
+  pinned    Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt      @map("updated_at")
 
@@ -222,5 +226,46 @@ model Attendance {
 
   @@index([userId])
   @@map("attendance")
+}
+
+enum LeaveType {
+  sick
+  casual
+  annual
+  unpaid
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+}
+
+model Leave {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  type        LeaveType   @default(casual)
+  startDate   DateTime    @map("start_date")
+  endDate     DateTime    @map("end_date")
+  reason      String?
+  status      LeaveStatus @default(pending)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt      @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("leaves")
+}
+
+model Holiday {
+  id          String   @id @default(uuid()) @db.Uuid
+  date        DateTime @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  @@map("holidays")
 }
 
