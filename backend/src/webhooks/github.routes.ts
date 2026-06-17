@@ -7,6 +7,15 @@ export const githubWebhooksRouter = Router();
 
 githubWebhooksRouter.post("/", async (req, res, next) => {
   try {
+    const event = req.headers["x-github-event"];
+    if (event === "ping") {
+      return ok(res, null, "Zen");
+    }
+
+    if (event && event !== "push") {
+      return ok(res, null, `Event "${event}" received`);
+    }
+
     const payload = req.body;
     if (!payload || !payload.repository || !payload.commits) {
       throw BadRequest("Invalid webhook payload");
