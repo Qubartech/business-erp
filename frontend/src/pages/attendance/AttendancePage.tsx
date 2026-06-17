@@ -25,6 +25,34 @@ const getLeaveAbbreviation = (type: LeaveType): string => {
   }
 };
 
+const getAvatarColor = (name: string) => {
+  const colors = [
+    "bg-indigo-500 text-white",
+    "bg-emerald-500 text-white",
+    "bg-sky-500 text-white",
+    "bg-amber-500 text-white",
+    "bg-rose-500 text-white",
+    "bg-violet-500 text-white",
+    "bg-pink-500 text-white",
+    "bg-teal-500 text-white",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
+
 type UserAttendanceRow = {
   user: UserType;
   entries: AttendanceEntry[];
@@ -275,13 +303,13 @@ export default function AttendancePage() {
       key: "user",
       header: "Team Member",
       render: (r) => (
-        <div className="flex items-center gap-2">
-          <div className="bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-lg text-slate-500 dark:text-zinc-400">
-            <User className="h-4 w-4" />
+        <div className="flex items-center gap-2.5">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs ${getAvatarColor(r.user.name)}`}>
+            {getInitials(r.user.name)}
           </div>
           <div>
-            <div className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">{r.user.name}</div>
-            <div className="text-xs text-slate-400 dark:text-zinc-500 font-medium">{r.user.email}</div>
+            <div className="font-bold text-slate-850 dark:text-zinc-100 text-sm leading-tight">{r.user.name}</div>
+            <div className="text-xs text-slate-400 dark:text-zinc-500 font-semibold">{r.user.email}</div>
           </div>
         </div>
       ),
@@ -304,7 +332,7 @@ export default function AttendancePage() {
         if (r.entries.length === 0) {
           if (isLeaveToday) {
             return (
-              <span className="badge bg-violet-50 text-violet-750 ring-violet-200/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-800/30 flex items-center gap-1 w-fit font-semibold">
+              <span className="badge bg-violet-50 text-violet-750 ring-violet-100/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-900/30 flex items-center gap-1 w-fit font-bold shadow-2xs">
                 <Plane className="h-3.5 w-3.5" />
                 {getLeaveAbbreviation(isLeaveToday.type)} Leave
               </span>
@@ -312,7 +340,7 @@ export default function AttendancePage() {
           }
 
           return (
-            <span className="badge bg-rose-50 text-rose-700 ring-rose-200/50 dark:bg-rose-950/30 dark:text-rose-450 dark:ring-rose-800/30 flex items-center gap-1 w-fit font-semibold">
+            <span className="badge bg-rose-50 text-rose-700 ring-rose-100/50 dark:bg-rose-950/30 dark:text-rose-450 dark:ring-rose-900/30 flex items-center gap-1 w-fit font-bold shadow-2xs">
               <XCircle className="h-3.5 w-3.5" />
               Absent
             </span>
@@ -320,12 +348,12 @@ export default function AttendancePage() {
         }
         const hasActive = r.entries.some((e) => !e.checkOut);
         const statusBadge = hasActive ? (
-          <span className="badge bg-amber-50 text-amber-700 ring-amber-200/50 dark:bg-amber-950/30 dark:text-amber-400 dark:ring-amber-800/30 flex items-center gap-1 w-fit animate-pulse font-semibold">
+          <span className="badge bg-amber-55/60 text-amber-700 ring-amber-200/55 dark:bg-amber-950/30 dark:text-amber-400 dark:ring-amber-900/30 flex items-center gap-1 w-fit animate-pulse font-bold shadow-2xs">
             <Clock className="h-3.5 w-3.5" />
             Checked In
           </span>
         ) : (
-          <span className="badge bg-emerald-50 text-emerald-700 ring-emerald-200/50 dark:bg-emerald-950/30 dark:text-emerald-450 dark:ring-emerald-800/30 flex items-center gap-1 w-fit font-semibold">
+          <span className="badge bg-emerald-50 text-emerald-700 ring-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-450 dark:ring-emerald-900/30 flex items-center gap-1 w-fit font-bold shadow-2xs">
             <UserCheck className="h-3.5 w-3.5" />
             Present
           </span>
@@ -335,7 +363,7 @@ export default function AttendancePage() {
           return (
             <div className="flex flex-col gap-1">
               {statusBadge}
-              <span className="badge bg-violet-50 text-violet-750 ring-violet-200/50 dark:bg-violet-950/30 dark:text-violet-400 dark:ring-violet-800/30 flex items-center gap-1 w-fit text-[10px] font-bold">
+              <span className="badge bg-violet-50 text-violet-750 ring-violet-100/50 dark:bg-violet-950/20 dark:text-violet-400 dark:ring-violet-900/30 flex items-center gap-1 w-fit text-[10px] font-bold">
                 <Plane className="h-3 w-3" />
                 Leave: {getLeaveAbbreviation(isLeaveToday.type)}
               </span>
@@ -362,7 +390,7 @@ export default function AttendancePage() {
             return checkDate >= sDate && checkDate <= eDate;
           });
           return (
-            <span className="text-slate-400 dark:text-zinc-500 italic text-xs font-medium">
+            <span className="text-slate-400 dark:text-zinc-550 italic text-xs font-medium">
               {isLeaveToday ? "Approved time-off" : "Did not attend office on this day"}
             </span>
           );
@@ -372,15 +400,15 @@ export default function AttendancePage() {
             {r.entries.map((entry, idx) => (
               <div key={entry.id} className="flex items-center gap-1.5 text-xs text-slate-650 dark:text-zinc-400">
                 {r.entries.length > 1 && (
-                  <span className="font-bold text-slate-400 dark:text-zinc-500 text-[10px] bg-slate-100 dark:bg-zinc-800 px-1 py-0.2 rounded font-mono">
+                  <span className="font-bold text-slate-400 dark:text-zinc-550 text-[10px] bg-slate-100 dark:bg-zinc-800 px-1 py-0.2 rounded font-mono">
                     #{idx + 1}
                   </span>
                 )}
-                <span className="font-semibold text-slate-700 dark:text-zinc-350 font-mono">
+                <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {formatDateTime(entry.checkIn)}
                 </span>
-                <span className="text-slate-400 dark:text-zinc-550">→</span>
-                <span className="font-semibold text-slate-700 dark:text-zinc-350 font-mono">
+                <span className="text-slate-400 dark:text-zinc-555">→</span>
+                <span className="font-mono text-xs text-slate-550 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {entry.checkOut ? formatDateTime(entry.checkOut) : "Active Check-In"}
                 </span>
               </div>
@@ -397,13 +425,13 @@ export default function AttendancePage() {
         return (
           <div className="space-y-1.5 py-0.5">
             {r.entries.map((entry) => {
-              if (!entry.checkOut) return <span key={entry.id} className="text-xs text-amber-600 dark:text-amber-500 font-bold font-mono">Active</span>;
+              if (!entry.checkOut) return <span key={entry.id} className="text-xs text-amber-600 dark:text-amber-500 font-bold font-mono animate-pulse">Active</span>;
               const diffMs = new Date(entry.checkOut).getTime() - new Date(entry.checkIn).getTime();
               const mins = Math.max(0, Math.round(diffMs / 60000));
               const h = Math.floor(mins / 60);
               const m = mins % 60;
               return (
-                <div key={entry.id} className="text-xs font-bold font-mono text-slate-600 dark:text-zinc-400 bg-slate-55/60 dark:bg-zinc-900/60 border border-slate-200 dark:border-white/[0.04] px-1.5 py-0.5 rounded w-fit">
+                <div key={entry.id} className="badge bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-slate-350 ring-slate-200/50 dark:ring-white/[0.04] font-semibold text-xs font-mono">
                   {h > 0 ? `${h}h ` : ""}{m}m
                 </div>
               );
@@ -420,13 +448,13 @@ export default function AttendancePage() {
       key: "user",
       header: "Team Member",
       render: (r) => (
-        <div className="flex items-center gap-2 pr-2">
-          <div className="bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 shrink-0">
-            <User className="h-4 w-4" />
+        <div className="flex items-center gap-2.5 pr-2">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs ${getAvatarColor(r.user.name)}`}>
+            {getInitials(r.user.name)}
           </div>
           <div>
-            <div className="font-semibold text-slate-800 dark:text-zinc-100 text-sm whitespace-nowrap">{r.user.name}</div>
-            <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium whitespace-nowrap">{r.user.email}</div>
+            <div className="font-bold text-slate-850 dark:text-zinc-100 text-sm whitespace-nowrap">{r.user.name}</div>
+            <div className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold whitespace-nowrap">{r.user.email}</div>
           </div>
         </div>
       ),
@@ -677,18 +705,21 @@ export default function AttendancePage() {
         title="Time & Attendance"
         description="Monitor office logs, submit leave requests, and manage public holidays."
         actions={
-          <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-lg border border-slate-200/60 dark:border-white/[0.06] shadow-sm">
+          <div className="flex bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-xs">
             {(["logs", "leaves", "holidays"] as const).map((tab) => (
               <button
                 key={tab}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all capitalize ${
+                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                   activeTab === tab
-                    ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    ? "bg-white dark:bg-zinc-700 text-slate-850 dark:text-slate-100 shadow-xs font-bold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === "logs" ? "Attendance Logs" : tab === "leaves" ? "Leave Tracker" : "Holiday List"}
+                {tab === "logs" && <Clock className="h-3.5 w-3.5" />}
+                {tab === "leaves" && <Plane className="h-3.5 w-3.5" />}
+                {tab === "holidays" && <Palmtree className="h-3.5 w-3.5" />}
+                <span>{tab === "logs" ? "Attendance Logs" : tab === "leaves" ? "Leave Tracker" : "Holiday List"}</span>
               </button>
             ))}
           </div>
@@ -701,70 +732,70 @@ export default function AttendancePage() {
         {/* TAB 1: ATTENDANCE LOGS */}
         {activeTab === "logs" && (
           <>
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900/60 backdrop-blur-md p-4 rounded-xl shadow-xs border border-slate-200/80 dark:border-white/[0.06]">
+            <div className="card-premium p-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 shadow-xs border border-slate-200/80 dark:border-white/[0.06]">
               {/* Left Side Navigation */}
               {viewMode === "daily" ? (
                 <div className="flex items-center gap-2">
-                  <button className="btn-secondary !p-2" onClick={() => shiftDay(-1)}>
+                  <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftDay(-1)}>
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <div className="relative">
                     <input
                       type="date"
-                      className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 dark:text-zinc-250 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer rounded-lg border-slate-200 dark:border-white/[0.04]"
+                      className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/40 hover:bg-slate-100 dark:hover:bg-zinc-800/50 cursor-pointer rounded-lg border-slate-200 dark:border-white/[0.08]"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                     />
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-550 pointer-events-none" />
                   </div>
-                  <button className="btn-secondary !p-2" onClick={() => shiftDay(1)}>
+                  <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftDay(1)}>
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <button className="btn-secondary !p-2" onClick={() => shiftMonth(-1)}>
+                  <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftMonth(-1)}>
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <div className="relative">
                     <input
                       type="month"
-                      className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 dark:text-zinc-250 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer rounded-lg border-slate-200 dark:border-white/[0.04]"
+                      className="input !py-1.5 !pl-8 !pr-3 font-semibold text-slate-700 dark:text-zinc-200 bg-slate-50 dark:bg-zinc-900/40 hover:bg-slate-100 dark:hover:bg-zinc-800/50 cursor-pointer rounded-lg border-slate-200 dark:border-white/[0.08]"
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
                     />
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-550 pointer-events-none" />
                   </div>
-                  <button className="btn-secondary !p-2" onClick={() => shiftMonth(1)}>
+                  <button className="btn-secondary !p-2 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200" onClick={() => shiftMonth(1)}>
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               )}
 
               {/* View Toggle */}
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-slate-400 dark:text-zinc-550 hidden md:inline font-medium">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-xs text-slate-550 dark:text-zinc-400 hidden md:inline font-semibold">
                   {viewMode === "daily"
                     ? `Showing logs for ${getDayName(selectedDate)}, ${formatDate(selectedDate)}`
                     : `Showing monthly grid for ${selectedMonth}`}
                 </span>
 
-                <div className="flex bg-slate-100 dark:bg-zinc-900 p-0.5 rounded-lg border border-slate-200/60 dark:border-white/[0.06]">
+                <div className="flex bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-xs shrink-0">
                   <button
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                       viewMode === "daily"
-                        ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-slate-100 shadow-xs font-bold"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
                     }`}
                     onClick={() => setViewMode("daily")}
                   >
                     Daily
                   </button>
                   <button
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                       viewMode === "monthly"
-                        ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        ? "bg-white dark:bg-zinc-700 text-slate-800 dark:text-slate-100 shadow-xs font-bold"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
                     }`}
                     onClick={() => setViewMode("monthly")}
                   >
@@ -803,44 +834,49 @@ export default function AttendancePage() {
         {/* TAB 2: LEAVE TRACKER */}
         {activeTab === "leaves" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Left Column: Form & Limits */}
+                 {/* Left Column: Form & Limits */}
             <div className="lg:col-span-1 space-y-6">
               {/* Leave Balances */}
-              <div className="card p-5 space-y-4">
-                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-2">
+              <div className="card-premium p-5 space-y-4">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-3 flex items-center gap-2">
+                  <Plane className="h-4.5 w-4.5 text-brand-600 dark:text-brand-400" />
                   My Leave Balance
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50/50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/[0.04] rounded-xl p-3.5 text-center">
+                  <div className="bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/50 dark:border-white/[0.04] rounded-xl p-3.5 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500" />
                     <span className="block text-xl font-extrabold text-slate-900 dark:text-zinc-50">{leaveStats.casual}/15</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-450 dark:text-zinc-500 tracking-wider">Casual Leaves</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 tracking-wider">Casual (CL)</span>
                   </div>
-                  <div className="bg-slate-50/50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/[0.04] rounded-xl p-3.5 text-center">
+                  <div className="bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/50 dark:border-white/[0.04] rounded-xl p-3.5 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
                     <span className="block text-xl font-extrabold text-slate-900 dark:text-zinc-50">{leaveStats.sick}/10</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-450 dark:text-zinc-500 tracking-wider">Sick Leaves</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 tracking-wider">Sick (SL)</span>
                   </div>
-                  <div className="bg-slate-50/50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/[0.04] rounded-xl p-3.5 text-center">
+                  <div className="bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/50 dark:border-white/[0.04] rounded-xl p-3.5 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-sky-500" />
                     <span className="block text-xl font-extrabold text-slate-900 dark:text-zinc-50">{leaveStats.annual}/20</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-450 dark:text-zinc-500 tracking-wider">Annual Leaves</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 tracking-wider">Annual (AL)</span>
                   </div>
-                  <div className="bg-slate-50/50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/[0.04] rounded-xl p-3.5 text-center">
+                  <div className="bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/50 dark:border-white/[0.04] rounded-xl p-3.5 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />
                     <span className="block text-xl font-extrabold text-slate-900 dark:text-zinc-50">{leaveStats.unpaid}</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-450 dark:text-zinc-500 tracking-wider">Unpaid Days</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 tracking-wider">Unpaid (UL)</span>
                   </div>
                 </div>
               </div>
 
               {/* Leave Request Form */}
-              <div className="card p-5">
-                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-2 mb-4">
+              <div className="card-premium p-5">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-3 mb-4 flex items-center gap-2">
+                  <Calendar className="h-4.5 w-4.5 text-brand-600 dark:text-brand-400" />
                   Request Time-Off
                 </h3>
                 <form onSubmit={handleRequestLeave} className="space-y-4">
                   <div>
                     <label className="label">Leave Type</label>
                     <select
-                      className="input cursor-pointer font-medium"
+                      className="input cursor-pointer font-semibold"
                       value={leaveType}
                       onChange={(e) => setLeaveType(e.target.value as LeaveType)}
                     >
@@ -885,7 +921,7 @@ export default function AttendancePage() {
                   <button
                     type="submit"
                     disabled={createLeave.isPending}
-                    className="btn-primary w-full py-2 flex items-center justify-center gap-1.5"
+                    className="btn-primary w-full py-2 flex items-center justify-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
                   >
                     {createLeave.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                     Submit Leave Request
@@ -898,9 +934,11 @@ export default function AttendancePage() {
             <div className="lg:col-span-2 space-y-6">
               {/* Admin Approval Queue */}
               {isAdminOrManager && pendingLeaves.length > 0 && (
-                <div className="card p-5 border-amber-250/30 bg-amber-500/[0.01]">
-                  <h3 className="font-bold text-sm text-amber-800 dark:text-amber-400 uppercase tracking-wide border-b border-amber-100 dark:border-amber-900/30 pb-2 mb-4 flex items-center gap-1.5">
-                    <AlertCircle className="h-4 w-4" />
+                <div className="card-premium p-5 border-amber-250/35 dark:border-amber-900/30 bg-gradient-to-r from-amber-500/[0.02] to-transparent">
+                  <h3 className="font-bold text-sm text-amber-800 dark:text-amber-400 uppercase tracking-wide border-b border-amber-100/50 dark:border-amber-900/30 pb-3 mb-4 flex items-center gap-2">
+                    <span className="p-1 bg-amber-50 dark:bg-amber-500/15 rounded text-amber-600 dark:text-amber-400 animate-pulse">
+                      <AlertCircle className="h-4.5 w-4.5" />
+                    </span>
                     Pending Leaves Approval Queue ({pendingLeaves.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -911,27 +949,33 @@ export default function AttendancePage() {
                       return (
                         <div
                           key={leave.id}
-                          className="bg-white dark:bg-zinc-900/80 border border-slate-200 dark:border-white/[0.04] p-4 rounded-xl flex flex-col justify-between gap-3 shadow-xs relative"
+                          className="bg-white/80 dark:bg-zinc-900/70 border border-slate-200/60 dark:border-white/[0.04] p-4 rounded-xl flex flex-col justify-between gap-3 shadow-sm relative overflow-hidden"
                         >
+                          <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-bl-full pointer-events-none" />
                           <div>
                             <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <h4 className="font-semibold text-sm text-slate-800 dark:text-zinc-100">{leave.user?.name}</h4>
-                                <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">{leave.user?.email}</span>
+                              <div className="flex items-center gap-2">
+                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs ${getAvatarColor(leave.user?.name || "")}`}>
+                                  {getInitials(leave.user?.name || "")}
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-bold text-sm text-slate-850 dark:text-zinc-100 truncate">{leave.user?.name}</h4>
+                                  <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold truncate block">{leave.user?.email}</span>
+                                </div>
                               </div>
-                              <span className="badge uppercase tracking-wider text-[9px] px-1.5 bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400 border-amber-250/30">
+                              <span className="badge uppercase tracking-wider text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border-amber-250/30 shrink-0 font-bold shadow-2xs">
                                 {leave.type}
                               </span>
                             </div>
                             
-                            <div className="text-xs font-semibold text-slate-600 dark:text-zinc-400 mt-2 flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-slate-400" />
-                              {formatDate(leave.startDate)} — {formatDate(leave.endDate)}
-                              <span className="text-slate-400 font-normal">({daysCount} {daysCount === 1 ? "day" : "days"})</span>
+                            <div className="text-xs font-semibold text-slate-655 dark:text-zinc-400 mt-3 flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                              <span className="bg-slate-50 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-slate-650 dark:text-slate-350">{formatDate(leave.startDate)} — {formatDate(leave.endDate)}</span>
+                              <span className="text-slate-400 dark:text-zinc-500 font-semibold">({daysCount} {daysCount === 1 ? "day" : "days"})</span>
                             </div>
 
                             {leave.reason && (
-                              <p className="text-xs text-slate-500 dark:text-zinc-500 italic mt-2 bg-slate-50 dark:bg-zinc-950/40 p-2 rounded border border-slate-100 dark:border-white/[0.02] break-words">
+                              <p className="text-xs text-slate-550 dark:text-zinc-500 italic mt-2.5 bg-slate-50 dark:bg-zinc-950/40 p-2.5 rounded-lg border border-slate-100/60 dark:border-white/[0.02] break-words">
                                 "{leave.reason}"
                               </p>
                             )}
@@ -941,16 +985,16 @@ export default function AttendancePage() {
                             <button
                               onClick={() => updateLeaveStatus.mutate({ id: leave.id, status: "approved" })}
                               disabled={updateLeaveStatus.isPending}
-                              className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex-1 py-1 text-xs font-semibold flex items-center justify-center gap-1"
+                              className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-1 shadow-sm shadow-emerald-500/10 transition-all cursor-pointer rounded-lg"
                             >
-                              <Check className="h-3 w-3" /> Approve
+                              <Check className="h-3.5 w-3.5" /> Approve
                             </button>
                             <button
                               onClick={() => updateLeaveStatus.mutate({ id: leave.id, status: "rejected" })}
                               disabled={updateLeaveStatus.isPending}
-                              className="btn bg-rose-600 hover:bg-rose-700 text-white flex-1 py-1 text-xs font-semibold flex items-center justify-center gap-1"
+                              className="btn bg-rose-600 hover:bg-rose-700 text-white flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-1 shadow-sm shadow-rose-500/10 transition-all cursor-pointer rounded-lg"
                             >
-                              <X className="h-3 w-3" /> Reject
+                              <X className="h-3.5 w-3.5" /> Reject
                             </button>
                           </div>
                         </div>
@@ -961,8 +1005,9 @@ export default function AttendancePage() {
               )}
 
               {/* My Requests (Non-Admin View or general summary) */}
-              <div className="card p-5">
-                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-2 mb-4">
+              <div className="card-premium p-5">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-zinc-150 uppercase tracking-wide border-b border-slate-100 dark:border-white/[0.04] pb-3 mb-4 flex items-center gap-2">
+                  <FileText className="h-4.5 w-4.5 text-brand-650 dark:text-brand-400" />
                   {isAdminOrManager ? "Leaves Log Database" : "My Leave History"}
                 </h3>
                 <div className="overflow-x-auto">
@@ -986,16 +1031,31 @@ export default function AttendancePage() {
                         return (
                           <tr key={leave.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors">
                             {isAdminOrManager && (
-                              <td className="py-3 px-3 font-semibold text-slate-800 dark:text-zinc-200">
-                                {leave.user?.name}
+                              <td className="py-3 px-3 font-semibold text-slate-850 dark:text-zinc-200">
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0 ${getAvatarColor(leave.user?.name || "")}`}>
+                                    {getInitials(leave.user?.name || "")}
+                                  </div>
+                                  <span>{leave.user?.name}</span>
+                                </div>
                               </td>
                             )}
-                            <td className="py-3 px-3 capitalize font-medium text-slate-650 dark:text-zinc-400">
-                              {leave.type}
+                            <td className="py-3 px-3 capitalize font-semibold text-slate-655 dark:text-zinc-400">
+                              <span className={`badge uppercase text-[9px] font-bold ${
+                                leave.type === "sick"
+                                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 ring-emerald-100"
+                                  : leave.type === "casual"
+                                  ? "bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 ring-indigo-100"
+                                  : leave.type === "annual"
+                                  ? "bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400 ring-sky-100"
+                                  : "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 ring-amber-100"
+                              }`}>
+                                {leave.type}
+                              </span>
                             </td>
-                            <td className="py-3 px-3 font-medium text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                            <td className="py-3 px-3 font-semibold text-slate-600 dark:text-zinc-400 whitespace-nowrap">
                               {formatDate(leave.startDate)} — {formatDate(leave.endDate)}
-                              <span className="text-[10px] text-slate-450 dark:text-zinc-500 ml-1 font-semibold">({days}d)</span>
+                              <span className="text-[10px] text-slate-400 dark:text-zinc-500 ml-1 font-bold">({days}d)</span>
                             </td>
                             <td className="py-3 px-3 text-slate-500 dark:text-zinc-500 italic max-w-xs truncate" title={leave.reason || ""}>
                               {leave.reason || "—"}
@@ -1004,10 +1064,10 @@ export default function AttendancePage() {
                               <span
                                 className={`badge uppercase text-[9px] font-bold tracking-wider ${
                                   leave.status === "approved"
-                                    ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-450 border-emerald-100"
+                                    ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-450 ring-emerald-100/50"
                                     : leave.status === "rejected"
-                                    ? "bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400 border-rose-100"
-                                    : "bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400 border-amber-100"
+                                    ? "bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-450 ring-rose-100/50"
+                                    : "bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400 ring-amber-100/50"
                                 }`}
                               >
                                 {leave.status}
@@ -1021,7 +1081,7 @@ export default function AttendancePage() {
                                       cancelLeaveRequest.mutate(leave.id);
                                     }
                                   }}
-                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 font-semibold hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors"
+                                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 font-bold hover:bg-red-55/60 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                                   title="Cancel Leave Request"
                                 >
                                   Cancel
@@ -1051,20 +1111,21 @@ export default function AttendancePage() {
         {activeTab === "holidays" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-slate-800 dark:text-zinc-150">
+              <h3 className="font-bold text-base text-slate-800 dark:text-zinc-150 flex items-center gap-2">
+                <Palmtree className="h-5 w-5 text-brand-650 dark:text-brand-400" />
                 Public Holidays Calendar {new Date().getFullYear()}
               </h3>
               
               {isAdminOrManager && (
                 <button
                   onClick={() => setHolidayModalOpen(true)}
-                  className="btn-primary flex items-center gap-1.5 shadow-md shadow-brand-500/10 hover:translate-y-[-1px] active:translate-y-0 transition-all text-xs"
+                  className="btn-primary flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer text-xs"
                 >
                   <Plus className="h-4 w-4" /> Add Public Holiday
                 </button>
               )}
             </div>
-
+                  
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {(holidaysData?.items ?? []).map((holiday) => {
                 const date = new Date(holiday.date);
@@ -1075,24 +1136,25 @@ export default function AttendancePage() {
                 return (
                   <div
                     key={holiday.id}
-                    className="card-premium overflow-hidden p-5 flex flex-col justify-between border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/60"
+                    className="card-premium overflow-hidden p-5 flex flex-col justify-between border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900/60 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative group"
                   >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-brand-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
                     <div>
                       {/* Top Date Box */}
                       <div className="flex items-center gap-3">
-                        <div className="bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 border border-brand-100 dark:border-brand-500/10 rounded-xl px-3 py-1.5 text-center shrink-0">
+                        <div className="bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 border border-brand-100 dark:border-brand-500/10 rounded-xl px-3 py-1.5 text-center shrink-0 animate-float-slow">
                           <span className="block text-lg font-black leading-none">{day}</span>
                           <span className="text-[10px] uppercase font-bold leading-none">{monthName}</span>
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-slate-800 dark:text-zinc-100 leading-tight">{holiday.name}</h4>
-                          <span className="text-[10px] text-slate-400 dark:text-zinc-550 font-semibold uppercase tracking-wider">{weekday}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">{weekday}</span>
                         </div>
                       </div>
 
                       {/* Description */}
                       {holiday.description && (
-                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-4 leading-relaxed bg-slate-50/50 dark:bg-zinc-950/30 p-2.5 rounded-lg border border-slate-100/50 dark:border-white/[0.02] break-words">
+                        <p className="text-xs text-slate-550 dark:text-zinc-550 mt-4 leading-relaxed bg-slate-50/50 dark:bg-zinc-950/30 p-2.5 rounded-lg border border-slate-100/50 dark:border-white/[0.02] break-words">
                           {holiday.description}
                         </p>
                       )}
@@ -1107,7 +1169,7 @@ export default function AttendancePage() {
                               removeHoliday.mutate(holiday.id);
                             }
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
+                          className="p-1 rounded text-slate-400 hover:text-red-500 dark:text-zinc-650 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-955/20 transition-all cursor-pointer"
                           title="Delete Holiday"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1138,15 +1200,16 @@ export default function AttendancePage() {
             onClick={() => setHolidayModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden transition-all duration-300 transform scale-100 z-10 p-6">
+          <div className="relative w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden transition-all duration-300 transform scale-100 z-10 p-6 animate-dropdown-in">
             <button
               onClick={() => setHolidayModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors z-20"
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-655 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors z-20 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
 
-            <h3 className="font-bold text-base text-slate-900 dark:text-zinc-50 border-b border-slate-100 dark:border-white/[0.04] pb-2 mb-4">
+            <h3 className="font-bold text-base text-slate-900 dark:text-zinc-50 border-b border-slate-100 dark:border-white/[0.04] pb-3 mb-4 flex items-center gap-2">
+              <Palmtree className="h-5 w-5 text-brand-655 dark:text-brand-400" />
               Add Public Holiday
             </h3>
 
@@ -1155,7 +1218,7 @@ export default function AttendancePage() {
                 <label className="label">Holiday Date</label>
                 <input
                   type="date"
-                  className="input"
+                  className="input cursor-pointer"
                   required
                   value={holidayDate}
                   onChange={(e) => setHolidayDate(e.target.value)}
@@ -1189,16 +1252,20 @@ export default function AttendancePage() {
                 <button
                   type="button"
                   onClick={() => setHolidayModalOpen(false)}
-                  className="btn-secondary text-xs px-4"
+                  className="btn-secondary text-xs px-4 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createHoliday.isPending}
-                  className="btn-primary text-xs px-4 flex items-center gap-1"
+                  className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
                 >
-                  {createHoliday.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {createHoliday.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5" />
+                  )}
                   Add Holiday
                 </button>
               </div>
