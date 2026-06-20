@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Folder, Activity, Briefcase, CheckCircle, Search, 
   SlidersHorizontal, Users, CheckSquare, Calendar, 
-  LayoutGrid, List, Loader2 
+  LayoutGrid, List, Loader2, ArrowUpDown
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/Badges";
@@ -113,6 +113,7 @@ export default function ProjectsListPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"" | ProjectStatus>("");
+  const [sortBy, setSortBy] = useState<string>("name-asc");
   const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [formModalOpen, setFormModalOpen] = useState(false);
 
@@ -126,7 +127,45 @@ export default function ProjectsListPage() {
       }),
   });
 
-  const allProjects = data?.items ?? [];
+  const allProjects = useMemo(() => {
+    const projects = [...(data?.items ?? [])];
+    return projects.sort((a, b) => {
+      switch (sortBy) {
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "startDate-desc": {
+          const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+          const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+          return dateB - dateA;
+        }
+        case "startDate-asc": {
+          const dateA = a.startDate ? new Date(a.startDate).getTime() : Infinity;
+          const dateB = b.startDate ? new Date(b.startDate).getTime() : Infinity;
+          return dateA - dateB;
+        }
+        case "endDate-desc": {
+          const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
+          const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
+          return dateB - dateA;
+        }
+        case "members-desc": {
+          const countA = a.members?.length ?? 0;
+          const countB = b.members?.length ?? 0;
+          return countB - countA;
+        }
+        case "tasks-desc": {
+          const countA = a._count?.tasks ?? 0;
+          const countB = b._count?.tasks ?? 0;
+          return countB - countA;
+        }
+        default:
+          return 0;
+      }
+    });
+  }, [data?.items, sortBy]);
+
   const totalProjects = allProjects.length;
   const activeProjects = allProjects.filter((p) => p.status === "active").length;
   const clientProjectsCount = allProjects.filter((p) => p.category === "client").length;
@@ -245,22 +284,23 @@ export default function ProjectsListPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-sm">
             <SlidersHorizontal className="h-4 w-4 text-brand-500" />
-            <span>Filter Projects</span>
+            <span>Filter & Sort Projects</span>
           </div>
-          {(search || status) && (
+          {(search || status || sortBy !== "name-asc") && (
             <button
               onClick={() => {
                 setSearch("");
                 setStatus("");
+                setSortBy("name-asc");
               }}
               className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-350 font-semibold hover:underline cursor-pointer"
             >
-              Clear filters
+              Clear filters & sort
             </button>
           )}
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-550">
@@ -290,6 +330,26 @@ export default function ProjectsListPage() {
                   {s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-555">
+              <ArrowUpDown className="h-4 w-4" />
+            </div>
+            <select
+              className="input pl-9 w-full appearance-none cursor-pointer"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="startDate-desc">Start Date (Newest first)</option>
+              <option value="startDate-asc">Start Date (Oldest first)</option>
+              <option value="endDate-desc">End Date (Newest first)</option>
+              <option value="members-desc">Most Members</option>
+              <option value="tasks-desc">Most Tasks</option>
             </select>
           </div>
         </div>
