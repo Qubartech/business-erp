@@ -146,14 +146,14 @@ export function AppLayout() {
                     isActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400"
                   )} />
                   {!desktopCollapsed && <span className="truncate animate-fade-in">{item.label}</span>}
-                  
+
                   {/* Custom Tooltip for collapsed state */}
                   {desktopCollapsed && (
                     <div className={clsx(
-                      "absolute left-full top-0 bottom-0 pl-3 pr-5 flex items-center rounded-r-xl border-y border-r opacity-0 translate-x-[-5px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 text-sm font-semibold",
+                      "absolute left-[calc(100%-1px)] top-0 bottom-0 pl-3 pr-5 flex items-center rounded-r-xl border-y border-r opacity-0 translate-x-[-2px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 pointer-events-none whitespace-nowrap z-50 text-sm font-semibold",
                       isActive
-                        ? "bg-brand-50/90 dark:bg-brand-900/40 text-brand-700 dark:text-brand-400 border-brand-650/40 dark:border-brand-500/40"
-                        : "bg-slate-100/90 dark:bg-zinc-800/70 text-slate-900 dark:text-slate-100 border-slate-200/60 dark:border-white/[0.06]"
+                        ? "bg-brand-50/80 dark:bg-brand-900/35 text-brand-700 dark:text-brand-400 border-brand-200 dark:border-brand-900/60"
+                        : "bg-slate-100/70 dark:bg-zinc-800/50 text-slate-900 dark:text-slate-100 border-slate-200/60 dark:border-white/[0.06]"
                     )}>
                       {item.label}
                     </div>
@@ -179,11 +179,11 @@ export function AppLayout() {
                   <span className="truncate font-bold text-xs text-slate-800 dark:text-slate-200 leading-tight">{user?.name}</span>
                   <span className={clsx(
                     "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
-                    user?.role === "admin" 
-                      ? "bg-red-55 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
+                    user?.role === "admin"
+                      ? "bg-red-55 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                       : user?.role === "manager"
-                      ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
-                      : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
+                        ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
+                        : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
                   )}>
                     {user?.role}
                   </span>
@@ -194,7 +194,7 @@ export function AppLayout() {
 
             {/* Custom Tooltip for profile when collapsed */}
             {desktopCollapsed && (
-              <div className="absolute left-full top-0 bottom-0 pl-3 pr-5 flex items-center rounded-r-xl border-y border-r opacity-0 translate-x-[-5px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 text-sm font-semibold bg-slate-100/90 dark:bg-zinc-800/70 text-slate-900 dark:text-slate-100 border-slate-200/60 dark:border-white/[0.06] shadow-sm">
+              <div className="absolute left-[calc(100%-1px)] top-0 bottom-0 pl-3 pr-5 flex items-center rounded-r-xl opacity-0 translate-x-[-2px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 pointer-events-none whitespace-nowrap z-50 text-sm font-semibold bg-slate-100/70 dark:bg-zinc-800/50 text-slate-900 dark:text-slate-100 border-slate-200/60 dark:border-white/[0.06] shadow-sm">
                 {user?.name || "User"}
               </div>
             )}
@@ -273,8 +273,8 @@ export function AppLayout() {
                       <Loader2 className="h-3 w-3 animate-spin text-rose-600 dark:text-rose-455" />
                     ) : (
                       <span className="relative flex h-2 w-2">
-                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                       </span>
                     )}
                     {checkOut.isPending ? "Checking Out..." : "Check Out"}
@@ -332,11 +332,11 @@ export function AppLayout() {
                           <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate leading-tight">{user.name}</span>
                           <span className={clsx(
                             "inline-flex items-center rounded-md px-1.5 py-0.2 text-[8px] font-extrabold uppercase tracking-wider border shrink-0 select-none",
-                            user.role === "admin" 
-                              ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40" 
+                            user.role === "admin"
+                              ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                               : user.role === "manager"
-                              ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
-                              : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
+                                ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
+                                : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
                           )}>
                             {user.role}
                           </span>
