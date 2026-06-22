@@ -11,7 +11,8 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { attendanceApi } from "@/services/featureApis";
+import { attendanceApi, dashboardApi, tasksApi, documentsApi } from "@/services/featureApis";
+import { projectsApi, usersApi } from "@/services/api";
 import { toast } from "@/lib/toast";
 import { clsx } from "clsx";
 import { useTheme } from "@/features/theme/ThemeContext";
@@ -107,6 +108,46 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const prefetchLink = (to: string) => {
+    if (to === "/") {
+      qc.prefetchQuery({
+        queryKey: ["dashboard", "summary"],
+        queryFn: () => dashboardApi.summary(),
+      });
+    } else if (to === "/projects") {
+      qc.prefetchQuery({
+        queryKey: ["projects", "", ""],
+        queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+      qc.prefetchQuery({
+        queryKey: ["projects", "all"],
+        queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+    } else if (to === "/tasks") {
+      qc.prefetchQuery({
+        queryKey: ["tasks", { projectId: "", status: "", priority: "", assignedTo: "" }],
+        queryFn: () => tasksApi.list({ pageSize: 100 }),
+      });
+      qc.prefetchQuery({
+        queryKey: ["projects", "all"],
+        queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+      qc.prefetchQuery({
+        queryKey: ["users", "all"],
+        queryFn: () => usersApi.list({ pageSize: 100 }),
+      });
+    } else if (to === "/documents") {
+      qc.prefetchQuery({
+        queryKey: ["documents", ""],
+        queryFn: () => documentsApi.list({ pageSize: 100 }),
+      });
+      qc.prefetchQuery({
+        queryKey: ["projects", "all"],
+        queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+    }
+  };
+
   return (
     <div className="flex h-full bg-slate-50/50 dark:bg-zinc-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Sidebar Section */}
@@ -140,6 +181,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 href={item.to}
                 onClick={() => setOpen(false)}
+                onMouseEnter={() => prefetchLink(item.to)}
                 className={clsx(
                   "flex items-center text-sm font-semibold transition-all duration-200 group border-l-[4px] relative py-2.5",
                   desktopCollapsed ? "justify-center pl-0 pr-0 rounded-none" : "gap-3 pr-4 pl-3 rounded-r-xl rounded-l-none",
