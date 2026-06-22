@@ -1,66 +1,76 @@
-# ERP System
+# Qubartech ERP System
 
-Internal ERP built per the included `ERP_System_Development_Plan.pdf` spec.
+Internal ERP built per the `ERP_System_Development_Plan.pdf` specification, consolidated and migrated into a unified Next.js App Router application.
 
-- **Backend**: Node 22 + Express + TypeScript + Prisma + JWT (modular monolith).
-- **Frontend**: React 19 + Vite + TypeScript + React Router + TanStack Query + RHF + Zod + Tailwind.
-- **Database**: hosted Supabase PostgreSQL (no local Postgres container).
+- **Stack**: Next.js 16 + React 19 + TypeScript + Prisma + Tailwind CSS v4 + TanStack Query + Supabase.
+- **Database**: Supabase PostgreSQL (or any compatible Postgres database).
 - **Storage**: Supabase Storage for document uploads.
-- **Runtime**: Docker Compose with `backend`, `frontend`, `nginx` services.
+- **Application Structure**: Next.js workspace is located inside the `web/` folder.
+- **Orchestration**: Root-level script forwarding allows running and compiling the project directly from the root directory.
+- **Runtime**: Docker Compose with `db`, `web` (Next.js), and `nginx` services.
 
-> The scaffold at the repo root is unused by this app. Run the app via Docker Compose only.
+---
 
-## First-run setup
+## First-Run Setup
 
-1. Copy env and fill in values:
+1. **Configure Environment Variables**:
+   Copy `.env.example` to `.env` inside the `web/` directory and configure the environment values (database URLs, Supabase tokens, JWT secret):
    ```bash
-   cp .env.example .env
+   cp web/.env.example web/.env
    ```
-2. Bring up services:
+
+2. **Start Services via Docker Compose**:
+   Bring up the database and services:
    ```bash
    docker compose up -d
    ```
-3. Install deps inside the containers:
-   ```bash
-   docker compose exec backend npm install
-   docker compose exec frontend npm install
-   ```
-4. Apply database schema and seed the initial admin user:
-   
-   > [!NOTE]
-   > If your `DATABASE_URL` uses a connection pooler (e.g. port `6543` with `?pgbouncer=true`), Prisma migrations will hang. You must override `DATABASE_URL` to connect directly via port `5432` without `pgbouncer=true`:
-   
-   ```bash
-   # Replace with your direct connection URL (port 5432)
-   docker compose exec -e DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>" backend npx prisma migrate deploy
-   docker compose exec -e DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<db>" backend npm run seed
-   ```
-5. Open <http://localhost:8080>. Default admin: `admin@example.com` / `admin1234` (change it immediately).
 
-## Day-to-day commands
+3. **Install Dependencies**:
+   Install dependencies from the root directory (automatically delegates to the `web` workspace):
+   ```bash
+   npm install --prefix web
+   ```
+
+4. **Apply Database Migrations & Seed Data**:
+   Ensure migrations are applied and the default admin user is seeded:
+   ```bash
+   # Generates Prisma clients
+   npm run prisma:generate
+   
+   # Applies pending migrations to the database
+   npm run prisma:deploy
+   
+   # Seeds the initial administrator
+   npm run seed
+   ```
+
+5. **Open the Application**:
+   Navigate to <http://localhost:8080>.
+   - **Default Admin Account**: `admin@example.com` / `admin1234` (Please change this immediately).
+
+---
+
+## Day-to-Day Development Commands
+
+All npm commands can be run directly from the root workspace:
 
 ```bash
-docker compose up -d
-docker compose exec backend npm run dev
-docker compose exec backend npm test
-docker compose exec frontend npm run dev
-docker compose exec frontend npm run build
-docker compose exec frontend npm test
+# Run Next.js in development mode
+npm run dev
+
+# Run Next.js in production build mode
+npm run build
+
+# Start the built production server locally
+npm run start
 ```
 
-## Modules (per phase)
+---
 
-- **Phase 1**: Auth (JWT + refresh tokens, RBAC) · Dashboard summary cards · User management.
-- **Phase 2**: Projects · Tasks (statuses, priorities, filters).
-- **Phase 3**: Notes (rich text + search) · Time tracking (timer + manual entries).
-- **Phase 4**: Documents (Supabase Storage).
-- **Phase 5**: Settings (key/value, admin-only).
+## Architecture & Project Structure
 
-## API
-
-Base URL: `/api`. All responses follow:
-
-```json
-{ "success": true,  "message": "...", "data": { } }
-{ "success": false, "message": "...", "errors": { } }
-```
+- `web/src/app/`: Next.js Page routes and backend `/api/` route handlers.
+- `web/src/views/`: Reusable page layouts and dashboard/tasks/projects/profile screens.
+- `web/src/components/`: Shared UI components (Modals, Tooltips, Loading indicators, Buttons).
+- `web/src/features/`: Custom React hooks, providers, and state contexts (auth, theme, time tracking).
+- `web/prisma/`: Prisma database schema definitions, migrations, and seeding scripts.
