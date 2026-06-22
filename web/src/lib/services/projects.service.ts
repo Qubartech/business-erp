@@ -21,9 +21,14 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
         ...(q.category ? { category: q.category } : {}),
         ...(q.search ? { name: { contains: q.search, mode: "insensitive" as const } } : {}),
       };
+      const listInclude = {
+        members: { select: { id: true, userId: true } },
+        creator: { select: { id: true, name: true, email: true } },
+        _count: { select: { tasks: true } },
+      };
       const [items, total] = await Promise.all([
         prisma.project.findMany({
-          where, include, orderBy: { createdAt: "desc" },
+          where, include: listInclude, orderBy: { createdAt: "desc" },
           skip: (q.page - 1) * q.pageSize, take: q.pageSize,
         }),
         prisma.project.count({ where }),

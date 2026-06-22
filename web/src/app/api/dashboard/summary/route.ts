@@ -8,23 +8,20 @@ export const GET = apiHandler(async () => {
   endOfToday.setHours(23, 59, 59, 999);
 
   const [
-    totalProjects,
-    activeProjects,
-    totalTasks,
-    completedTasks,
     teamMembers,
-    statusCounts,
+    projectStatusCounts,
+    taskStatusCounts,
     totalTimeResult,
     latestCommits,
     activeAttendance,
     leavesToday
   ] = await Promise.all([
-    prisma.project.count(),
-    prisma.project.count({ where: { status: "active" } }),
-    prisma.task.count(),
-    prisma.task.count({ where: { status: "done" } }),
     prisma.user.count({ where: { isActive: true } }),
     prisma.project.groupBy({
+      by: ["status"],
+      _count: { id: true },
+    }),
+    prisma.task.groupBy({
       by: ["status"],
       _count: { id: true },
     }),
@@ -94,10 +91,23 @@ export const GET = apiHandler(async () => {
     }),
   ]);
 
-  const projectsByStatus = statusCounts.reduce((acc, curr) => {
+  // Aggregate project metrics from status counts
+  const projectsByStatus = projectStatusCounts.reduce((acc, curr) => {
     acc[curr.status] = curr._count.id;
     return acc;
   }, {} as Record<string, number>);
+
+  const totalProjects = projectStatusCounts.reduce((sum, curr) => sum + curr._count.id, 0);
+  const activeProjects = projectsByStatus["active"] ?? 0;
+
+  // Aggregate task metrics from status counts
+  const tasksByStatus = taskStatusCounts.reduce((acc, curr) => {
+    acc[curr.status] = curr._count.id;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalTasks = taskStatusCounts.reduce((sum, curr) => sum + curr._count.id, 0);
+  const completedTasks = tasksByStatus["done"] ?? 0;
 
   return {
     totalProjects,
