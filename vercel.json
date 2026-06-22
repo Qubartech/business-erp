@@ -1,6 +1,6 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "if [ -d web ]; then npm run --prefix web build && mv web/.next .next; else npm run build; fi",
+  "buildCommand": "if [ -d web ]; then npm run --prefix web prisma:generate && npm run --prefix web build && mv web/.next .next; else npm run prisma:generate && npm run build; fi",
   "outputDirectory": ".next"
 }
