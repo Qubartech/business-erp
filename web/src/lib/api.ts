@@ -1,5 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export type ApiEnvelope<T> =
   | { success: true; message: string; data: T }

@@ -12,7 +12,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { attendanceApi } from "@/services/featureApis";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { clsx } from "clsx";
 import { useTheme } from "@/features/theme/ThemeContext";
 import type { Role } from "@/types";
@@ -145,7 +145,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   desktopCollapsed ? "justify-center pl-0 pr-0 rounded-none" : "gap-3 pr-4 pl-3 rounded-r-xl rounded-l-none",
                   isActive
                     ? "bg-brand-50/80 dark:bg-brand-900/35 text-brand-700 dark:text-brand-400 border-brand-600 dark:border-brand-500"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-slate-105 dark:hover:bg-zinc-800/50",
+                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-zinc-800/50",
                 )}
               >
                 <item.icon className={clsx(

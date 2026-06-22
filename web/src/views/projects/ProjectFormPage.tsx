@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { projectsApi, usersApi } from "@/services/api";
 import { Loader2, FolderKanban, Calendar, Github, Check, FileText, UserPlus } from "lucide-react";
 import { clsx } from "clsx";
@@ -279,7 +279,7 @@ export function ProjectFormModal({ open, onClose, projectId, onSuccess }: {
         </div>
 
         {/* Action Buttons */}
-        <div className="sm:col-span-2 flex justify-end gap-2 mt-4 border-t border-slate-105 dark:border-slate-800 pt-3">
+        <div className="sm:col-span-2 flex justify-end gap-2 mt-4 border-t border-slate-200 dark:border-slate-800 pt-3">
           <button 
             type="button" 
             className="btn-secondary px-4 py-1.5 rounded-xl text-xs" 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { Loader2, Mail, Lock, Eye, EyeOff, Building2 } from "lucide-react";
 
