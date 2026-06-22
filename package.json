@@ -1,6 +1,9 @@
 {
   "name": "qubartech-erp-root",
   "private": true,
+  "workspaces": [
+    "web"
+  ],
   "scripts": {
     "dev": "npm run --prefix web dev",
     "build": "npm run --prefix web build",
