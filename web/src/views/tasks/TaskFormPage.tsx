@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { tasksApi } from "@/services/featureApis";
 import { projectsApi, usersApi } from "@/services/api";
 import { Loader2, Briefcase, User, Type, FileText, Calendar, Check } from "lucide-react";
@@ -284,7 +284,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
         </div>
 
         {/* Actions */}
-        <div className="sm:col-span-2 flex justify-end gap-2 mt-4 border-t border-slate-105 dark:border-slate-800 pt-3 w-full">
+        <div className="sm:col-span-2 flex justify-end gap-2 mt-4 border-t border-slate-200 dark:border-slate-800 pt-3 w-full">
           <button 
             type="button" 
             className="btn-secondary px-4 py-1.5 rounded-xl text-xs" 

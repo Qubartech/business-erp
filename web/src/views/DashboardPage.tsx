@@ -4,8 +4,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
 import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play, Calendar, Palmtree } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { DashboardSkeleton } from "@/components/Skeleton";
 
 interface CardProps {
   label: string;
@@ -123,7 +124,7 @@ function UserAttendanceCard({ group, type, now }: UserAttendanceCardProps) {
             {durationStr}
           </span>
         ) : (
-          <span className="text-[10px] font-extrabold font-mono bg-slate-105 dark:bg-zinc-800 text-slate-650 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 select-none">
+          <span className="text-[10px] font-extrabold font-mono bg-slate-100 dark:bg-zinc-800 text-slate-650 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 select-none">
             {durationStr}
           </span>
         )}
@@ -304,6 +305,10 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
   const [webhookModalOpen, setWebhookModalOpen] = useState(false);
   const [officeTab, setOfficeTab] = useState<"active" | "checked-out">("active");
 
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
   const activeAttendance = data?.activeAttendance?.filter((entry: any) => !entry.checkOut) || [];
   const checkedOutAttendance = data?.activeAttendance?.filter((entry: any) => entry.checkOut !== null) || [];
 
@@ -369,8 +374,8 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
         <div className="lg:col-span-2 space-y-6">
           
           {/* Who is checked in */}
-          <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
-            <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
+          <div className="card-premium p-6 flex flex-col h-fit">
+            <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-600" />
                 Who's in the Office
@@ -406,7 +411,7 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
           </div>
 
           {/* Projects Status Distribution */}
-          <div className="card-premium p-6 bg-white border border-slate-200/50">
+          <div className="card-premium p-6">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-5">Projects Status Distribution</h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
               {(["active", "on_hold", "draft", "completed", "archived"] as const).map((status) => {
@@ -425,7 +430,7 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
           </div>
 
           {/* Time & Task Completion Overview */}
-          <div className="card-premium p-6 bg-white border border-slate-200/50 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="card-premium p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Total Hours Tracked</h3>
               <p className="text-xs text-slate-400 dark:text-slate-500">All registered developer hours for the current cycle.</p>
@@ -465,9 +470,9 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
 
           {/* Who is on leave today (Only show if > 0) */}
           {!isLoading && data?.leavesToday && data.leavesToday.length > 0 && (
-            <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
-              <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <div className="card-premium p-6 flex flex-col h-fit">
+              <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 text-slate-400">
                   <Palmtree className="w-4 h-4 text-violet-600" />
                   On Leave Today
                 </h3>
@@ -478,8 +483,8 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
           )}
 
           {/* Commits timeline card */}
-          <div className="card-premium p-6 bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] flex flex-col h-fit">
-            <div className="flex items-center justify-between mb-5 border-b border-slate-105 dark:border-white/[0.06] pb-3">
+          <div className="card-premium p-6 flex flex-col h-fit">
+            <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <GitCommit className="w-4 h-4 text-blue-600" />
                 Latest Commits
@@ -517,11 +522,11 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {commit.project && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-105 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200/40 dark:border-white/[0.06] px-1.5 py-0.5 rounded-md">
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200/40 dark:border-white/[0.06] px-1.5 py-0.5 rounded-md">
                             {commit.project.name}
                           </span>
                         )}
-                        <a href={commit.url} target="_blank" rel="noopener noreferrer" className="text-[9px] font-bold font-mono text-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-55 dark:hover:bg-blue-900/30 border border-blue-105/30 dark:border-blue-900/40 px-1.5 py-0.5 rounded-md transition-all">
+                        <a href={commit.url} target="_blank" rel="noopener noreferrer" className="text-[9px] font-bold font-mono text-blue-500 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-55 dark:hover:bg-blue-900/30 border border-blue-100/30 dark:border-blue-900/40 px-1.5 py-0.5 rounded-md transition-all">
                           SHA: {commit.sha.slice(0, 7)}
                         </a>
                       </div>

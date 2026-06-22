@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { 
   Loader2, Play, Square, Trash2, Edit2, 
