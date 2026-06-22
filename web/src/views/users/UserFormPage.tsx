@@ -30,7 +30,7 @@ export default function UserFormPage() {
   const { data: existing } = useQuery({ queryKey: ["users", id], queryFn: () => usersApi.get(id!), enabled: editing });
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: { name: "", email: "", password: "", role: "member", isActive: true },
   });
 
