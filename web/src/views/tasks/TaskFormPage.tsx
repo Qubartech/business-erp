@@ -42,7 +42,7 @@ export function TaskFormModal({ open, onClose, taskId, projectId, onSuccess }: {
   });
 
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: { projectId: projectId ?? "", title: "", status: "todo", priority: "medium", assignedTo: "" },
   });
 

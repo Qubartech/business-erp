@@ -56,7 +56,7 @@ export default function ProfilePage() {
   const router = useRouter(); const nav = (path: any) => { if (path === -1) router.back(); else router.push(path); };
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: { name: "", email: "", password: "" },
   });
 

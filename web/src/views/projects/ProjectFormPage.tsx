@@ -35,7 +35,7 @@ export function ProjectFormModal({ open, onClose, projectId, onSuccess }: {
   const { data: existing } = useQuery({ queryKey: ["projects", projectId], queryFn: () => projectsApi.get(projectId!), enabled: open && editing });
 
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: { name: "", description: "", status: "draft", category: "client", githubRepo: "", memberIds: [] },
   });
 
