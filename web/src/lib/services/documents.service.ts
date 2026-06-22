@@ -59,7 +59,11 @@ export function createDocumentsService({ prisma, supabase }: Container) {
       const doc = await prisma.document.findUnique({ where: { id } });
       if (!doc) throw NotFound("Document not found");
       const client = supabase();
-      const { data, error } = await client.storage.from(env.supabaseBucket).createSignedUrl(doc.filePath, 60 * 10);
+      const ext = doc.filePath.includes(".") ? doc.filePath.slice(doc.filePath.lastIndexOf(".")) : "";
+      const downloadFilename = doc.title.toLowerCase().replace(/[^a-z0-9]/g, "_") + ext;
+      const { data, error } = await client.storage.from(env.supabaseBucket).createSignedUrl(doc.filePath, 60 * 10, {
+        download: downloadFilename
+      });
       if (error || !data) throw BadRequest("Could not create download URL");
       return { url: data.signedUrl, document: doc };
     },
