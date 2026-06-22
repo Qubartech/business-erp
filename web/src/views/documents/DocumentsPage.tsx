@@ -50,7 +50,23 @@ export default function DocumentsPage() {
     setDownloadingId(d.id);
     try {
       const res = await documentsApi.download(d.id);
-      window.open(res.url, "_blank", "noopener");
+      try {
+        const response = await fetch(res.url);
+        if (!response.ok) throw new Error("Fetch failed");
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        const ext = d.filePath.includes(".") ? d.filePath.slice(d.filePath.lastIndexOf(".")) : "";
+        const downloadFilename = d.title.toLowerCase().replace(/[^a-z0-9]/g, "_") + ext;
+        link.download = downloadFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (fetchErr) {
+        window.location.href = res.url;
+      }
     } catch (e) { toast.error((e as Error).message); }
     finally { setDownloadingId(null); }
   }

@@ -35,9 +35,10 @@ export async function POST(req: Request) {
     
     // Parse metadata fields
     const metadata = {
-      projectId: formData.get("projectId") || undefined,
-      taskId: formData.get("taskId") || undefined,
-      category: formData.get("category") || undefined,
+      title: (formData.get("title") as string) || undefined,
+      projectId: (formData.get("projectId") as string) || undefined,
+      taskId: (formData.get("taskId") as string) || undefined,
+      category: (formData.get("category") as string) || undefined,
     };
     
     // Validate metadata using schemas

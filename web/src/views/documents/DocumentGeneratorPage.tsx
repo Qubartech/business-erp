@@ -9,7 +9,7 @@ import { projectsApi } from "@/services/api";
 import { documentsApi, settingsApi } from "@/services/featureApis";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { 
-  Loader2, ArrowLeft, FileText, Plus, Trash2, Printer, Save, 
+  Loader2, ArrowLeft, FileText, Plus, Trash2, Printer, Save, Download,
   Building2, Users, FileCheck, DollarSign, Calendar, Info
 } from "lucide-react";
 import { clsx } from "clsx";
@@ -496,6 +496,25 @@ Representative: ${clientSignee || "—"} (${clientSigneeTitle || "—"})
     window.print();
   };
 
+  const handleDownloadHtml = () => {
+    try {
+      const htmlContent = generateHTMLContent();
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const filename = `${docTitle.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${docId.toLowerCase()}.html`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("HTML downloaded successfully!");
+    } catch (e) {
+      toast.error(`Failed to download HTML: ${(e as Error).message}`);
+    }
+  };
+
   // Reset form or clear Client Details
   const resetClientForm = () => {
     setClientName("");
@@ -507,7 +526,7 @@ Representative: ${clientSignee || "—"} (${clientSigneeTitle || "—"})
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Page Header with Back Navigation */}
       <div className="flex items-center gap-2 mb-2 no-print">
         <button 
@@ -524,7 +543,7 @@ Representative: ${clientSignee || "—"} (${clientSigneeTitle || "—"})
       </div>
 
       {/* Main Grid View */}
-      <div className="grid grid-cols-1 lg:grid-cols-[450px,1fr] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         
         {/* Left Control Panel (Forms) */}
         <form onSubmit={(e) => e.preventDefault()} className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-200/50 dark:border-white/[0.08] shadow-md space-y-6 no-print overflow-y-auto max-h-[85vh] scrollbar-thin">
@@ -884,25 +903,33 @@ Representative: ${clientSignee || "—"} (${clientSigneeTitle || "—"})
           {/* Action Bar */}
           <div className="w-full flex justify-between items-center no-print bg-white dark:bg-zinc-900/60 dark:backdrop-blur-md p-3.5 rounded-xl border border-slate-200/50 dark:border-white/[0.08] shadow-sm">
             <div className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">Live Print Preview</div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleDownloadHtml}
+                className="btn-secondary text-xs flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                title="Download standalone HTML document"
+              >
+                <Download className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
+                Download HTML
+              </button>
               <button
                 onClick={handlePrint}
-                className="btn-secondary text-xs flex items-center gap-1.5"
+                className="btn-secondary text-xs flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                 title="Print or Save to PDF via Browser"
               >
-                <Printer className="w-3.5 h-3.5" />
-                Print / PDF
+                <Printer className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
+                Download PDF
               </button>
               <button
                 onClick={() => saveToErp.mutate()}
                 disabled={saveToErp.isPending}
-                className="btn-primary text-xs flex items-center gap-1.5"
+                className="btn-primary text-xs flex items-center gap-1.5 cursor-pointer transition-all"
                 title="Upload HTML document to ERP Database"
               >
                 {saveToErp.isPending ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="w-3.5 h-3.5 text-emerald-100 dark:text-emerald-300" />
                 )}
                 Save to ERP
               </button>
