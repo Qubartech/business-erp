@@ -9,5 +9,8 @@
     "prisma:migrate": "npm run --prefix web prisma:migrate",
     "prisma:deploy": "npm run --prefix web prisma:deploy",
     "seed": "npm run --prefix web seed"
+  },
+  "dependencies": {
+    "next": "16.2.9"
   }
 }
