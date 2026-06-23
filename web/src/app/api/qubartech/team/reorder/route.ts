@@ -16,7 +16,7 @@ export const POST = apiHandler(
     const { orders } = body;
 
     await prisma.$transaction(
-      orders.map((o) =>
+      orders.map((o: { id: string; order: number }) =>
         prisma.qubartechTeamMember.update({
           where: { id: o.id },
           data: { order: o.order },
