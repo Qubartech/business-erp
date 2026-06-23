@@ -1,6 +1,6 @@
 {
-  "name": "qubartech-erp",
-  "version": "1.0.0",
+  "name": "qubartech-buisness-erp",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "scripts": {
