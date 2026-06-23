@@ -12,7 +12,9 @@ enum Role {
   admin
   manager
   member
+  account
 }
+
 
 enum ProjectStatus {
   draft
@@ -57,6 +59,8 @@ model User {
   documents       Document[]
   attendanceEntries Attendance[]
   leaves          Leave[]
+  createdTransactions Transaction[] @relation("TransactionCreatedBy")
+  spentTransactions   Transaction[] @relation("TransactionSpentBy")
 
   @@map("users")
 }
@@ -93,6 +97,7 @@ model Project {
   tasks     Task[]
   documents Document[]
   commits   Commit[]
+  transactions Transaction[] @relation("ProjectTransactions")
 
   @@index([status])
   @@map("projects")
@@ -270,4 +275,65 @@ model Holiday {
 
   @@map("holidays")
 }
+
+enum AccountType {
+  asset
+  liability
+  equity
+  revenue
+  expense
+}
+
+enum TransactionType {
+  deposit
+  withdrawal
+  transfer
+}
+
+model Account {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String
+  code        String      @unique
+  type        AccountType
+  description String?
+  balance     Float       @default(0)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt      @map("updated_at")
+
+  transactions   Transaction[] @relation("AccountTransactions")
+  toTransactions Transaction[] @relation("TransferToAccount")
+
+  @@map("accounts")
+}
+
+model Transaction {
+  id           String          @id @default(uuid()) @db.Uuid
+  accountId    String          @map("account_id") @db.Uuid
+  toAccountId  String?         @map("to_account_id") @db.Uuid
+  type         TransactionType
+  amount       Float
+  date         DateTime
+  description  String?
+  reference    String?
+  category     String?
+  spentById    String?         @map("spent_by_id") @db.Uuid
+  projectId    String?         @map("project_id") @db.Uuid
+  createdById  String          @map("created_by_id") @db.Uuid
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt      @map("updated_at")
+
+  account      Account         @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+  toAccount    Account?        @relation("TransferToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+  createdBy    User            @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  spentBy      User?           @relation("TransactionSpentBy", fields: [spentById], references: [id], onDelete: SetNull)
+  project      Project?        @relation("ProjectTransactions", fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([toAccountId])
+  @@index([date])
+  @@index([spentById])
+  @@index([projectId])
+  @@map("transactions")
+}
+
 

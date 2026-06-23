@@ -1,0 +1,320 @@
+import { Conflict, NotFound } from "../errors";
+import type { Container } from "../container";
+import type { z } from "zod";
+import type {
+  createAccountSchema,
+  updateAccountSchema,
+  createTransactionSchema,
+  listTransactionsQuerySchema,
+} from "./accounts.schemas";
+
+type CreateAccountInput = z.infer<typeof createAccountSchema>;
+type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
+type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+type ListTransactionsQuery = z.infer<typeof listTransactionsQuerySchema>;
+
+export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
+  return {
+    // ACCOUNT SERVICES
+    async listAccounts() {
+      return prisma.account.findMany({
+        orderBy: { code: "asc" },
+      });
+    },
+
+    async getAccount(id: string) {
+      const account = await prisma.account.findUnique({
+        where: { id },
+      });
+      if (!account) throw NotFound("Account not found");
+      return account;
+    },
+
+    async createAccount(input: CreateAccountInput, userId: string) {
+      const existing = await prisma.account.findUnique({
+        where: { code: input.code },
+      });
+      if (existing) throw Conflict("Account code already in use");
+
+      return prisma.$transaction(async (tx) => {
+        const account = await tx.account.create({
+          data: {
+            name: input.name,
+            code: input.code,
+            type: input.type,
+            description: input.description,
+            balance: input.initialBalance,
+          },
+        });
+
+        // Record a transaction for the initial balance if it is non-zero
+        if (input.initialBalance !== 0) {
+          await tx.transaction.create({
+            data: {
+              accountId: account.id,
+              type: input.initialBalance > 0 ? "deposit" : "withdrawal",
+              amount: Math.abs(input.initialBalance),
+              date: new Date(),
+              description: "Opening Balance",
+              createdById: userId,
+            },
+          });
+        }
+
+        return account;
+      });
+    },
+
+    async updateAccount(id: string, input: UpdateAccountInput) {
+      const exists = await prisma.account.findUnique({ where: { id } });
+      if (!exists) throw NotFound("Account not found");
+
+      return prisma.account.update({
+        where: { id },
+        data: {
+          name: input.name,
+          description: input.description,
+        },
+      });
+    },
+
+    async deleteAccount(id: string) {
+      const exists = await prisma.account.findUnique({ where: { id } });
+      if (!exists) throw NotFound("Account not found");
+
+      // Running balance will cascade delete transactions because of DB setup,
+      // but let's just delete the account directly.
+      return prisma.account.delete({
+        where: { id },
+      });
+    },
+
+    // TRANSACTION SERVICES
+    async listTransactions(q: ListTransactionsQuery) {
+      const where: any = {};
+
+      if (q.accountId) {
+        where.OR = [
+          { accountId: q.accountId },
+          { toAccountId: q.accountId },
+        ];
+      }
+
+      if (q.type) {
+        where.type = q.type;
+      }
+
+      if (q.projectId) {
+        where.projectId = q.projectId;
+      }
+
+      if (q.spentById) {
+        where.spentById = q.spentById;
+      }
+
+      if (q.search) {
+        where.OR = [
+          ...(where.OR || []),
+          { description: { contains: q.search, mode: "insensitive" } },
+          { reference: { contains: q.search, mode: "insensitive" } },
+          { category: { contains: q.search, mode: "insensitive" } },
+          { account: { name: { contains: q.search, mode: "insensitive" } } },
+          { toAccount: { name: { contains: q.search, mode: "insensitive" } } },
+        ];
+      }
+
+      const [items, total] = await Promise.all([
+        prisma.transaction.findMany({
+          where,
+          include: {
+            account: {
+              select: { id: true, name: true, code: true, type: true },
+            },
+            toAccount: {
+              select: { id: true, name: true, code: true, type: true },
+            },
+            createdBy: {
+              select: { id: true, name: true, email: true },
+            },
+            spentBy: {
+              select: { id: true, name: true, email: true },
+            },
+            project: {
+              select: { id: true, name: true },
+            },
+          },
+          orderBy: { date: "desc" },
+          skip: (q.page - 1) * q.pageSize,
+          take: q.pageSize,
+        }),
+        prisma.transaction.count({ where }),
+      ]);
+
+      return { items, total, page: q.page, pageSize: q.pageSize };
+    },
+
+    async createTransaction(input: CreateTransactionInput, userId: string) {
+      const account = await prisma.account.findUnique({ where: { id: input.accountId } });
+      if (!account) throw NotFound("Primary account not found");
+
+      if (input.type === "transfer") {
+        if (!input.toAccountId) {
+          throw Conflict("Destination account is required for transfers");
+        }
+        if (input.accountId === input.toAccountId) {
+          throw Conflict("Source and destination accounts must be different");
+        }
+        const toAccount = await prisma.account.findUnique({ where: { id: input.toAccountId } });
+        if (!toAccount) throw NotFound("Destination account not found");
+      }
+
+      return prisma.$transaction(async (tx) => {
+        // Create the transaction
+        const transaction = await tx.transaction.create({
+          data: {
+            accountId: input.accountId,
+            toAccountId: input.toAccountId || null,
+            type: input.type,
+            amount: input.amount,
+            date: input.date,
+            description: input.description,
+            reference: input.reference,
+            category: input.category || null,
+            spentById: input.spentById || null,
+            projectId: input.projectId || null,
+            createdById: userId,
+          },
+          include: {
+            account: true,
+            toAccount: true,
+          },
+        });
+
+        // Update running balances
+        if (input.type === "deposit") {
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { increment: input.amount } },
+          });
+        } else if (input.type === "withdrawal") {
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { decrement: input.amount } },
+          });
+        } else if (input.type === "transfer") {
+          // Withdraw from source
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { decrement: input.amount } },
+          });
+          // Deposit to destination
+          await tx.account.update({
+            where: { id: input.toAccountId! },
+            data: { balance: { increment: input.amount } },
+          });
+        }
+
+        return transaction;
+      });
+    },
+
+    async deleteTransaction(id: string) {
+      const transaction = await prisma.transaction.findUnique({
+        where: { id },
+      });
+      if (!transaction) throw NotFound("Transaction not found");
+
+      return prisma.$transaction(async (tx) => {
+        // Reverse balance updates
+        if (transaction.type === "deposit") {
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { decrement: transaction.amount } },
+          });
+        } else if (transaction.type === "withdrawal") {
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { increment: transaction.amount } },
+          });
+        } else if (transaction.type === "transfer") {
+          // Re-deposit to source
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { increment: transaction.amount } },
+          });
+          // Re-withdraw from destination
+          if (transaction.toAccountId) {
+            await tx.account.update({
+              where: { id: transaction.toAccountId },
+              data: { balance: { decrement: transaction.amount } },
+            });
+          }
+        }
+
+        // Delete the transaction
+        return tx.transaction.delete({
+          where: { id },
+        });
+      });
+    },
+
+    // REPORT SERVICES
+    async getFinancialReport() {
+      const accounts = await prisma.account.findMany({
+        orderBy: { code: "asc" },
+      });
+
+      const assets = accounts.filter(a => a.type === "asset");
+      const liabilities = accounts.filter(a => a.type === "liability");
+      const equity = accounts.filter(a => a.type === "equity");
+      const revenue = accounts.filter(a => a.type === "revenue");
+      const expense = accounts.filter(a => a.type === "expense");
+
+      const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
+      const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
+      const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+      const totalRevenue = revenue.reduce((sum, a) => sum + a.balance, 0);
+      const totalExpense = expense.reduce((sum, a) => sum + a.balance, 0);
+
+      const netIncome = totalRevenue - totalExpense;
+
+      // Project revenue calculation
+      const projects = await prisma.project.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+
+      const projectTransactions = await prisma.transaction.findMany({
+        where: { projectId: { not: null } },
+        select: { projectId: true, type: true, amount: true },
+      });
+
+      const projectBalances = projects.map(p => {
+        const txs = projectTransactions.filter(t => t.projectId === p.id);
+        const inflow = txs.filter(t => t.type === "deposit").reduce((sum, t) => sum + t.amount, 0);
+        const outflow = txs.filter(t => t.type === "withdrawal").reduce((sum, t) => sum + t.amount, 0);
+        return {
+          id: p.id,
+          name: p.name,
+          inflow,
+          outflow,
+          net: inflow - outflow,
+        };
+      }).filter(p => p.inflow > 0 || p.outflow > 0);
+
+      return {
+        balanceSheet: {
+          assets: { items: assets, total: totalAssets },
+          liabilities: { items: liabilities, total: totalLiabilities },
+          equity: { items: equity, total: totalEquity },
+        },
+        incomeStatement: {
+          revenue: { items: revenue, total: totalRevenue },
+          expense: { items: expense, total: totalExpense },
+          netIncome,
+        },
+        projectRevenue: projectBalances,
+      };
+    },
+  };
+}

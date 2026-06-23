@@ -5,3 +5,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+// Force Next.js dev server reload to pick up new Prisma Client schema definitions
+
