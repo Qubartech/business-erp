@@ -336,4 +336,44 @@ model Transaction {
   @@map("transactions")
 }
 
+model QubartechTeamMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  position  String
+  image     String?
+  facebook  String?
+  linkedin  String?
+  github    String?
+  portfolio String?
+  x         String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  @@map("qubartech_team_members")
+}
+
+model QubartechProduct {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String   @unique
+  category      String?
+  description   String?
+  features      String?
+  icon          String?
+  color         String?
+  tags          String?
+  image         String?
+  link          String?
+  status        String   @default("live")
+  privacyPolicy String?  @map("privacy_policy") @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+
+  @@map("qubartech_products")
+}
+
+
 

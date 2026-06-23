@@ -139,3 +139,39 @@ export type Holiday = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type QubartechTeamMember = {
+  id: string;
+  name: string;
+  position: string;
+  image: string | null;
+  facebook: string | null;
+  linkedin: string | null;
+  github: string | null;
+  portfolio: string | null;
+  x: string | null;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QubartechProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string | null;
+  description: string | null;
+  features: string | null;
+  icon: string | null;
+  color: string | null;
+  tags: string | null;
+  image: string | null;
+  link: string | null;
+  status: string;
+  privacyPolicy: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
