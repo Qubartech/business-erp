@@ -161,3 +161,76 @@ export function ProjectDetailSkeleton() {
     </div>
   );
 }
+
+export function TasksListSkeleton({ viewMode }: { viewMode: "list" | "kanban" }) {
+  if (viewMode === "list") {
+    return (
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-zinc-900 overflow-hidden shadow-xs">
+        {/* Table Header Skeleton */}
+        <div className="grid grid-cols-6 gap-4 p-4 border-b border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-zinc-900/50">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-4 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+          ))}
+        </div>
+        {/* Table Rows Skeleton */}
+        {[...Array(5)].map((_, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-6 gap-4 p-4 border-b border-slate-100 dark:border-white/[0.04] items-center">
+            <div className="h-4 w-4/5 bg-slate-200 dark:bg-zinc-850 rounded animate-pulse" />
+            <div className="h-5 w-24 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+            <div className="h-5 w-16 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+            <div className="h-5 w-20 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-3 w-16 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+            </div>
+            <div className="h-4 w-20 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse justify-self-end" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Kanban view
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+      {[...Array(4)].map((_, colIndex) => (
+        <div key={colIndex} className="flex flex-col rounded-2xl p-4 bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/60 dark:border-white/[0.04] min-h-[600px] space-y-4">
+          {/* Column Header Skeleton */}
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-white/[0.04]">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-slate-350 dark:bg-zinc-750 animate-pulse" />
+              <div className="h-4 w-20 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+            </div>
+            <div className="h-5 w-8 bg-slate-200 dark:bg-zinc-805 rounded-full animate-pulse" />
+          </div>
+
+          {/* Column Task Cards Skeleton */}
+          {[...Array(colIndex === 0 ? 3 : colIndex === 1 ? 2 : colIndex === 2 ? 1 : 0)].map((_, cardIndex) => (
+            <div key={cardIndex} className="relative rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 space-y-3 shadow-xs">
+              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-3 w-16 bg-slate-200 dark:bg-zinc-850 rounded animate-pulse" />
+              <div className="h-4 w-5/6 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+              <div className="flex gap-2">
+                <div className="h-5 w-12 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+                <div className="h-5 w-16 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+                  <div className="h-3 w-12 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                </div>
+                <div className="h-6 w-14 bg-slate-200 dark:bg-zinc-800 rounded-md animate-pulse" />
+              </div>
+            </div>
+          ))}
+          {colIndex === 3 && (
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-zinc-850 rounded-2xl p-6 text-slate-400 dark:text-slate-600 text-xs italic text-center h-28">
+              Drag tasks here
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
