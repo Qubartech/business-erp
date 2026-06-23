@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/Badges";
 import { projectsApi } from "@/services/api";
 import type { Project, ProjectStatus } from "@/types";
 import { formatDate } from "@/lib/format";
-import { LoadingPage } from "@/components/Loading";
+import { ProjectsListSkeleton } from "@/components/Skeletons";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { ProjectFormModal } from "./ProjectFormPage";
 
@@ -392,7 +392,7 @@ export default function ProjectsListPage() {
       </div>
 
       {isLoading ? (
-        <LoadingPage message="Loading Projects..." />
+        <ProjectsListSkeleton />
       ) : viewMode === "board" ? (
         /* ── Board view: two columns side by side ── */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

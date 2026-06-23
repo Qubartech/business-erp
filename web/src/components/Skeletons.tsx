@@ -1,0 +1,163 @@
+import React from "react";
+
+export function ProjectsListSkeleton() {
+  return (
+    <div className="space-y-6 w-full">
+      {/* Page Header Skeleton */}
+      <div className="flex items-center justify-between pb-5 border-b border-slate-200/50 dark:border-white/[0.04]">
+        <div className="space-y-2">
+          <div className="h-8 w-48 bg-slate-250 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-slate-200 dark:bg-zinc-850 rounded animate-pulse" />
+        </div>
+        <div className="h-10 w-32 bg-slate-250 dark:bg-zinc-800 rounded-lg animate-pulse" />
+      </div>
+
+      {/* Metrics Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.015)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.15)] flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-slate-200 dark:bg-zinc-850 animate-pulse shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-3 w-20 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse" />
+              <div className="h-6 w-12 bg-slate-250 dark:bg-zinc-750 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filters Bar Skeleton */}
+      <div className="rounded-2xl p-4 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xs space-y-4">
+        <div className="h-4 w-36 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-10 rounded-lg bg-slate-100 dark:bg-zinc-850 border border-slate-200/50 dark:border-white/[0.04] animate-pulse" />
+          ))}
+        </div>
+      </div>
+
+      {/* View Toggle Bar Skeleton */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-9 w-48 bg-slate-200 dark:bg-zinc-855 rounded-lg animate-pulse" />
+        <div className="h-6 w-24 bg-slate-100 dark:bg-zinc-855 rounded-md animate-pulse" />
+      </div>
+
+      {/* Board View Columns Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, colIndex) => (
+          <div key={colIndex} className="rounded-2xl p-4 bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/60 dark:border-white/[0.04] min-h-[400px] space-y-4">
+            {/* Column Header Skeleton */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-white/[0.04]">
+              <div className="flex items-center gap-2">
+                <div className="h-2.5 w-2.5 rounded-full bg-slate-350 dark:bg-zinc-750 animate-pulse" />
+                <div className="h-4 w-32 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+              </div>
+              <div className="h-5 w-8 bg-slate-200 dark:bg-zinc-805 rounded-full animate-pulse" />
+            </div>
+            
+            {/* Column Cards Skeleton */}
+            {[...Array(2)].map((_, cardIndex) => (
+              <div key={cardIndex} className="relative rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 space-y-3 shadow-xs">
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="h-4 w-40 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-5 w-14 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <div className="h-3 w-full bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                  <div className="h-5 w-16 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-10 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                    <div className="h-4 w-10 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ProjectDetailSkeleton() {
+  return (
+    <div className="space-y-6 w-full">
+      {/* Page Header Skeleton */}
+      <div className="flex items-center justify-between pb-5 border-b border-slate-200/50 dark:border-white/[0.04]">
+        <div className="space-y-2 flex-1 mr-4">
+          <div className="h-8 w-64 bg-slate-250 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          <div className="h-4 w-full max-w-xl bg-slate-200 dark:bg-zinc-850 rounded animate-pulse" />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-10 w-24 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+
+      {/* Info Cards Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.015)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.15)] flex items-center gap-4">
+            <div className="h-11 w-11 rounded-xl bg-slate-200 dark:bg-zinc-850 animate-pulse shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-3 w-16 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse" />
+              <div className="h-5 w-24 bg-slate-250 dark:bg-zinc-750 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tasks Header Section Skeleton */}
+      <div className="flex items-center justify-between mt-6">
+        <div className="h-6 w-20 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+        <div className="h-10 w-24 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse" />
+      </div>
+
+      {/* View Toggle Bar Skeleton */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-9 w-48 bg-slate-200 dark:bg-zinc-850 rounded-lg animate-pulse" />
+        <div className="h-6 w-24 bg-slate-100 dark:bg-zinc-850 rounded-md animate-pulse" />
+      </div>
+
+      {/* Kanban Board Columns Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, colIndex) => (
+          <div key={colIndex} className="rounded-2xl p-4 bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200/60 dark:border-white/[0.04] min-h-[400px] space-y-4">
+            {/* Column Header Skeleton */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-white/[0.04]">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-slate-350 dark:bg-zinc-750 animate-pulse" />
+                <div className="h-4 w-16 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+              </div>
+              <div className="h-5 w-8 bg-slate-200 dark:bg-zinc-805 rounded-full animate-pulse" />
+            </div>
+
+            {/* Column Task Cards Skeleton */}
+            {[...Array(colIndex % 2 === 0 ? 2 : 1)].map((_, cardIndex) => (
+              <div key={cardIndex} className="relative rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 space-y-3 shadow-xs">
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="h-3 w-16 bg-slate-200 dark:bg-zinc-850 rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-5 w-12 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+                  <div className="h-5 w-16 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+                    <div className="h-3 w-10 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                  </div>
+                  <div className="h-6 w-14 bg-slate-200 dark:bg-zinc-800 rounded-md animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

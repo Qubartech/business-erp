@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import React from "react";
 import { clsx } from "clsx";
 
 export function LoadingSpinner({ size = "md", className }: { size?: "xs" | "sm" | "md" | "lg"; className?: string }) {
@@ -20,33 +20,39 @@ export function LoadingSpinner({ size = "md", className }: { size?: "xs" | "sm" 
   );
 }
 
-export function LoadingPage({ message = "Loading page...", fullScreen = false }: { message?: string; fullScreen?: boolean }) {
+export function LoadingPage({ message = "Loading...", fullScreen = false }: { message?: string; fullScreen?: boolean }) {
   return (
     <div className={clsx(
-      "flex flex-col items-center justify-center transition-all duration-300",
-      fullScreen ? "fixed inset-0 bg-slate-50/60 dark:bg-zinc-950/60 backdrop-blur-md z-50 h-screen w-screen" : "min-h-[40vh] w-full py-12"
+      "flex flex-col items-center justify-center transition-all duration-500",
+      fullScreen 
+        ? "fixed inset-0 bg-slate-50/70 dark:bg-zinc-950/80 backdrop-blur-md z-50 h-screen w-screen" 
+        : "min-h-[30vh] w-full py-10"
     )}>
-      <div className="relative flex items-center justify-center h-20 w-20">
-        {/* Glowing backdrop reflection */}
-        <div className="absolute h-20 w-20 rounded-full bg-brand-500/10 dark:bg-brand-500/5 blur-xl animate-pulse" />
+      <div className="relative flex items-center justify-center h-24 w-24">
+        {/* Premium multi-layered glow */}
+        <div className="absolute inset-0 rounded-full bg-brand-500/10 dark:bg-brand-500/5 blur-xl animate-pulse" />
+        <div className="absolute h-16 w-16 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-md animate-pulse [animation-delay:0.5s]" />
         
-        {/* Spinning & pulsing dual outer rings */}
-        <div className="absolute h-12 w-12 rounded-full border-t-2 border-r-2 border-brand-600 dark:border-brand-500 animate-spin" />
-        <div className="absolute h-16 w-16 rounded-full border-b-2 border-l-2 border-indigo-500/30 dark:border-indigo-400/20 animate-spin [animation-duration:2.5s]" />
+        {/* Sleek outer rotating dashed border */}
+        <div className="absolute inset-2 rounded-full border border-dashed border-brand-500/30 dark:border-brand-400/25 animate-spin [animation-duration:8s]" />
         
-        {/* Center icon */}
-        <div className="h-6 w-6 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-500 shadow-md shadow-brand-500/20 flex items-center justify-center relative z-10 animate-pulse">
-          <Loader2 className="h-4 w-4 text-white animate-spin [animation-duration:3s]" />
+        {/* Concentric rotating arcs */}
+        <div className="absolute inset-3 rounded-full border-2 border-transparent border-t-brand-600 dark:border-t-brand-500 animate-spin [animation-duration:1.2s]" />
+        <div className="absolute inset-4 rounded-full border border-transparent border-b-indigo-500 dark:border-b-indigo-400 animate-spin [animation-duration:1.8s] [animation-direction:reverse]" />
+        
+        {/* Premium center capsule */}
+        <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 shadow-lg shadow-brand-500/20 flex items-center justify-center relative z-10">
+          <div className="h-2.5 w-2.5 rounded-full bg-white animate-ping [animation-duration:1.5s]" />
         </div>
       </div>
       
-      {/* Loading text */}
-      <div className="mt-6 flex flex-col items-center space-y-1 select-none">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-gradient-to-r from-brand-600 to-indigo-500 dark:from-brand-400 dark:to-indigo-400 bg-clip-text text-transparent">
+      {/* Sleek micro-animated text */}
+      <div className="mt-5 flex flex-col items-center space-y-1 select-none">
+        <span className="text-[10px] font-black uppercase tracking-[0.25em] bg-gradient-to-r from-brand-600 to-indigo-500 dark:from-brand-400 dark:to-indigo-400 bg-clip-text text-transparent">
           Qubartech ERP
         </span>
-        <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest animate-pulse">
-          {message || "Loading Page..."}
+        <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-widest animate-pulse">
+          {message}
         </span>
       </div>
     </div>

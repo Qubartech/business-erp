@@ -23,6 +23,7 @@ services:
     volumes:
       - .:/app
       - web_node_modules:/app/web/node_modules
+      - /app/web/.next
     env_file:
       - web/.env
     environment:
