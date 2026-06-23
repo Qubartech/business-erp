@@ -232,7 +232,7 @@ export default function PrivacyManagementPage() {
         <div className="flex justify-end gap-1.5">
           {p.isActive && (
             <a
-              href={`/products/${p.slug}/privacy`}
+              href={`http://localhost:3000/products/${p.slug}/privecy`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary p-2 flex items-center justify-center"

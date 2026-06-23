@@ -4,10 +4,10 @@ import { NotFound } from "@/lib/errors";
 
 export const GET = apiHandler(
   async (req, { params }) => {
-    const { slug } = params;
+    const { id } = params; // This is the product slug passed in the URL
     const product = await prisma.qubartechProduct.findFirst({
       where: {
-        slug: slug.toLowerCase().trim(),
+        slug: id.toLowerCase().trim(),
         isActive: true,
       },
       select: {
