@@ -35,6 +35,16 @@ export const qubartechTeamApi = {
   create: (data: QubartechTeamMemberInput) => unwrap<QubartechTeamMember>(api.post<ApiEnvelope<QubartechTeamMember>>("/qubartech/team", data)),
   update: (id: string, data: Partial<QubartechTeamMemberInput>) => unwrap<QubartechTeamMember>(api.patch<ApiEnvelope<QubartechTeamMember>>(`/qubartech/team/${id}`, data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/qubartech/team/${id}`)),
+  uploadImage: (file: File, oldUrl?: string | null) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (oldUrl) fd.append("oldUrl", oldUrl);
+    return unwrap<{ url: string }>(api.post<ApiEnvelope<{ url: string }>>("/qubartech/team/upload", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }));
+  },
+  reorder: (orders: { id: string; order: number }[]) =>
+    unwrap<{ success: boolean }>(api.post<ApiEnvelope<{ success: boolean }>>("/qubartech/team/reorder", { orders })),
 };
 
 export const qubartechProductsApi = {

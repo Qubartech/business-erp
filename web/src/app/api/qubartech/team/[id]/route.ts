@@ -43,6 +43,21 @@ export const DELETE = apiHandler(
     });
     if (!exists) throw NotFound("Team member not found");
 
+    // Delete image from Supabase if it was hosted there
+    if (exists.image) {
+      const { getSupabase } = await import("@/lib/container");
+      const { env } = await import("@/lib/env");
+      const bucketPrefix = `/storage/v1/object/public/${env.supabaseBucket}/`;
+      if (exists.image.includes(bucketPrefix)) {
+        const path = exists.image.slice(exists.image.indexOf(bucketPrefix) + bucketPrefix.length);
+        try {
+          await getSupabase().storage.from(env.supabaseBucket).remove([path]);
+        } catch (err) {
+          console.error("Failed to delete member image on deletion:", err);
+        }
+      }
+    }
+
     await prisma.qubartechTeamMember.delete({
       where: { id },
     });
