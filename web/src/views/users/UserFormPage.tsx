@@ -16,7 +16,7 @@ const schema = z.object({
   name: z.string().min(1, "Required"),
   email: z.string().email(),
   password: z.string().min(8).or(z.literal("")).optional(),
-  role: z.enum(["admin", "manager", "member"]),
+  role: z.enum(["admin", "manager", "member", "account"]),
   isActive: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
@@ -67,7 +67,12 @@ export default function UserFormPage() {
         <TextField label="Email" type="email" {...register("email")} error={errors.email?.message} />
         <TextField label={editing ? "New password (optional)" : "Password"} type="password" {...register("password")} error={errors.password?.message} />
         <SelectField label="Role" {...register("role")} error={errors.role?.message}
-          options={[{ value: "admin", label: "Admin" }, { value: "manager", label: "Manager" }, { value: "member", label: "Member" }]} />
+          options={[
+            { value: "admin", label: "Admin" },
+            { value: "manager", label: "Manager" },
+            { value: "member", label: "Member" },
+            { value: "account", label: "Accountant" }
+          ]} />
         <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
           <input type="checkbox" {...register("isActive")} /> Active
         </label>

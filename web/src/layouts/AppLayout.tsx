@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
   Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar, Building2,
-  Sun, Moon, User, ChevronLeft, ChevronRight
+  Sun, Moon, User, ChevronLeft, ChevronRight, CircleDollarSign
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -27,6 +27,7 @@ const items: NavItem[] = [
   { to: "/time", label: "Time", icon: Clock },
   { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/accounts", label: "Accounts", icon: CircleDollarSign, roles: ["admin", "account"] },
   { to: "/users", label: "Users", icon: Users, roles: ["admin"] },
   { to: "/settings", label: "Settings", icon: Cog },
 ];

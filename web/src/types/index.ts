@@ -1,4 +1,40 @@
-export type Role = "admin" | "manager" | "member";
+export type Role = "admin" | "manager" | "member" | "account";
+
+export type AccountType = "asset" | "liability" | "equity" | "revenue" | "expense";
+export type TransactionType = "deposit" | "withdrawal" | "transfer";
+
+export type Account = {
+  id: string;
+  name: string;
+  code: string;
+  type: AccountType;
+  description: string | null;
+  balance: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Transaction = {
+  id: string;
+  accountId: string;
+  toAccountId: string | null;
+  type: TransactionType;
+  amount: number;
+  date: string;
+  description: string | null;
+  reference: string | null;
+  category: string | null;
+  spentById: string | null;
+  projectId: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  account?: Pick<Account, "id" | "name" | "code" | "type">;
+  toAccount?: Pick<Account, "id" | "name" | "code" | "type"> | null;
+  createdBy?: Pick<User, "id" | "name" | "email">;
+  spentBy?: Pick<User, "id" | "name" | "email"> | null;
+  project?: Pick<Project, "id" | "name"> | null;
+};
 
 export type User = {
   id: string; name: string; email: string; role: Role; isActive: boolean;

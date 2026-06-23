@@ -7,8 +7,10 @@ import type { Container } from "../container";
 import type { LoginInput, UpdateProfileInput } from "./auth.schemas.js";
 import crypto from "node:crypto";
 
+import type { Role } from "@prisma/client";
+
 export function createAuthService({ prisma }: Pick<Container, "prisma">) {
-  async function issueTokens(user: { id: string; email: string; role: "admin" | "manager" | "member" }) {
+  async function issueTokens(user: { id: string; email: string; role: Role }) {
     const jti = crypto.randomUUID();
     const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
     const refreshToken = signRefreshToken({ sub: user.id, jti });
