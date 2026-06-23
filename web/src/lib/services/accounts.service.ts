@@ -218,6 +218,98 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
       });
     },
 
+    async updateTransaction(id: string, input: CreateTransactionInput, userId: string) {
+      const existingTx = await prisma.transaction.findUnique({ where: { id } });
+      if (!existingTx) throw NotFound("Transaction not found");
+
+      const account = await prisma.account.findUnique({ where: { id: input.accountId } });
+      if (!account) throw NotFound("Primary account not found");
+
+      if (input.type === "transfer") {
+        if (!input.toAccountId) {
+          throw Conflict("Destination account is required for transfers");
+        }
+        if (input.accountId === input.toAccountId) {
+          throw Conflict("Source and destination accounts must be different");
+        }
+        const toAccount = await prisma.account.findUnique({ where: { id: input.toAccountId } });
+        if (!toAccount) throw NotFound("Destination account not found");
+      }
+
+      return prisma.$transaction(async (tx) => {
+        // 1. REVERSE old balance updates
+        if (existingTx.type === "deposit") {
+          await tx.account.update({
+            where: { id: existingTx.accountId },
+            data: { balance: { decrement: existingTx.amount } },
+          });
+        } else if (existingTx.type === "withdrawal") {
+          await tx.account.update({
+            where: { id: existingTx.accountId },
+            data: { balance: { increment: existingTx.amount } },
+          });
+        } else if (existingTx.type === "transfer") {
+          await tx.account.update({
+            where: { id: existingTx.accountId },
+            data: { balance: { increment: existingTx.amount } },
+          });
+          if (existingTx.toAccountId) {
+            await tx.account.update({
+              where: { id: existingTx.toAccountId },
+              data: { balance: { decrement: existingTx.amount } },
+            });
+          }
+        }
+
+        // 2. UPDATE the transaction
+        const updatedTx = await tx.transaction.update({
+          where: { id },
+          data: {
+            accountId: input.accountId,
+            toAccountId: input.toAccountId || null,
+            type: input.type,
+            amount: input.amount,
+            date: input.date,
+            description: input.description,
+            reference: input.reference,
+            category: input.category || null,
+            spentById: input.spentById || null,
+            projectId: input.projectId || null,
+          },
+          include: {
+            account: true,
+            toAccount: true,
+          },
+        });
+
+        // 3. APPLY new balance updates
+        if (input.type === "deposit") {
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { increment: input.amount } },
+          });
+        } else if (input.type === "withdrawal") {
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { decrement: input.amount } },
+          });
+        } else if (input.type === "transfer") {
+          // Withdraw from source
+          await tx.account.update({
+            where: { id: input.accountId },
+            data: { balance: { decrement: input.amount } },
+          });
+          // Deposit to destination
+          await tx.account.update({
+            where: { id: input.toAccountId! },
+            data: { balance: { increment: input.amount } },
+          });
+        }
+
+        return updatedTx;
+      });
+    },
+
     async deleteTransaction(id: string) {
       const transaction = await prisma.transaction.findUnique({
         where: { id },
@@ -264,35 +356,77 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
         orderBy: { code: "asc" },
       });
 
-      const assets = accounts.filter(a => a.type === "asset");
-      const liabilities = accounts.filter(a => a.type === "liability");
-      const equity = accounts.filter(a => a.type === "equity");
-      const revenue = accounts.filter(a => a.type === "revenue");
-      const expense = accounts.filter(a => a.type === "expense");
+      const assets = accounts.filter((a: any) => a.type === "asset");
+      const liabilities = accounts.filter((a: any) => a.type === "liability");
+      const equity = accounts.filter((a: any) => a.type === "equity");
 
-      const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
-      const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
-      const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
-      const totalRevenue = revenue.reduce((sum, a) => sum + a.balance, 0);
-      const totalExpense = expense.reduce((sum, a) => sum + a.balance, 0);
+      const totalAssets = assets.reduce((sum: number, a: any) => sum + a.balance, 0);
+      const totalLiabilities = liabilities.reduce((sum: number, a: any) => sum + a.balance, 0);
+      const totalEquity = equity.reduce((sum: number, a: any) => sum + a.balance, 0);
 
+      // Fetch all transactions to calculate dynamic revenues/expenses
+      const allTransactions = await prisma.transaction.findMany({
+        select: { type: true, amount: true, category: true, projectId: true },
+      });
+
+      // Group deposits as revenue
+      const depositTxs = allTransactions.filter((t: any) => t.type === "deposit");
+      const revenueGroups: { [key: string]: number } = {};
+      depositTxs.forEach((t: any) => {
+        const cat = t.category || "General Revenue";
+        revenueGroups[cat] = (revenueGroups[cat] || 0) + t.amount;
+      });
+
+      const revenueItems = Object.keys(revenueGroups).map((name, index) => ({
+        id: `rev-${index}`,
+        code: `REV-${String(index + 1).padStart(3, "0")}`,
+        name,
+        balance: revenueGroups[name],
+      }));
+
+      // Group withdrawals as expense
+      const withdrawalTxs = allTransactions.filter((t: any) => t.type === "withdrawal");
+      const expenseGroups: { [key: string]: number } = {};
+      withdrawalTxs.forEach((t: any) => {
+        const cat = t.category || "General Expense";
+        expenseGroups[cat] = (expenseGroups[cat] || 0) + t.amount;
+      });
+
+      const expenseItems = Object.keys(expenseGroups).map((name, index) => ({
+        id: `exp-${index}`,
+        code: `EXP-${String(index + 1).padStart(3, "0")}`,
+        name,
+        balance: expenseGroups[name],
+      }));
+
+      // Merge any explicit revenue/expense accounts with our transaction-based ones
+      const explicitRevenues = accounts.filter((a: any) => a.type === "revenue");
+      const explicitExpenses = accounts.filter((a: any) => a.type === "expense");
+
+      const finalRevenueItems = [
+        ...explicitRevenues.map((a: any) => ({ id: a.id, code: a.code, name: a.name, balance: a.balance })),
+        ...revenueItems,
+      ];
+
+      const finalExpenseItems = [
+        ...explicitExpenses.map((a: any) => ({ id: a.id, code: a.code, name: a.name, balance: a.balance })),
+        ...expenseItems,
+      ];
+
+      const totalRevenue = finalRevenueItems.reduce((sum, item) => sum + item.balance, 0);
+      const totalExpense = finalExpenseItems.reduce((sum, item) => sum + item.balance, 0);
       const netIncome = totalRevenue - totalExpense;
 
-      // Project revenue calculation
+      // Project revenue calculation (including general non-project operations)
       const projects = await prisma.project.findMany({
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       });
 
-      const projectTransactions = await prisma.transaction.findMany({
-        where: { projectId: { not: null } },
-        select: { projectId: true, type: true, amount: true },
-      });
-
-      const projectBalances = projects.map(p => {
-        const txs = projectTransactions.filter(t => t.projectId === p.id);
-        const inflow = txs.filter(t => t.type === "deposit").reduce((sum, t) => sum + t.amount, 0);
-        const outflow = txs.filter(t => t.type === "withdrawal").reduce((sum, t) => sum + t.amount, 0);
+      const projectBalances: any[] = projects.map((p: any) => {
+        const txs = allTransactions.filter((t: any) => t.projectId === p.id);
+        const inflow = txs.filter((t: any) => t.type === "deposit").reduce((sum: number, t: any) => sum + t.amount, 0);
+        const outflow = txs.filter((t: any) => t.type === "withdrawal").reduce((sum: number, t: any) => sum + t.amount, 0);
         return {
           id: p.id,
           name: p.name,
@@ -300,7 +434,22 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
           outflow,
           net: inflow - outflow,
         };
-      }).filter(p => p.inflow > 0 || p.outflow > 0);
+      }).filter((p: any) => p.inflow > 0 || p.outflow > 0);
+
+      // Add general operations (transactions with no linked project)
+      const nonProjectTxs = allTransactions.filter((t: any) => !t.projectId);
+      const generalInflow = nonProjectTxs.filter((t: any) => t.type === "deposit").reduce((sum: number, t: any) => sum + t.amount, 0);
+      const generalOutflow = nonProjectTxs.filter((t: any) => t.type === "withdrawal").reduce((sum: number, t: any) => sum + t.amount, 0);
+
+      if (generalInflow > 0 || generalOutflow > 0) {
+        projectBalances.push({
+          id: "general",
+          name: "General Operations (No Project)",
+          inflow: generalInflow,
+          outflow: generalOutflow,
+          net: generalInflow - generalOutflow,
+        });
+      }
 
       return {
         balanceSheet: {
@@ -309,8 +458,8 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
           equity: { items: equity, total: totalEquity },
         },
         incomeStatement: {
-          revenue: { items: revenue, total: totalRevenue },
-          expense: { items: expense, total: totalExpense },
+          revenue: { items: finalRevenueItems, total: totalRevenue },
+          expense: { items: finalExpenseItems, total: totalExpense },
           netIncome,
         },
         projectRevenue: projectBalances,

@@ -49,7 +49,7 @@ export default function AccountReports() {
 
   const totalAssets = bs?.assets.total || 0;
   const totalLiabilities = bs?.liabilities.total || 0;
-  const totalEquity = bs?.equity.total || 0;
+  const totalEquity = (bs?.equity.total || 0) + (is?.netIncome || 0);
   const liabilitiesAndEquity = totalLiabilities + totalEquity;
   const balancesEquation = Math.abs(totalAssets - liabilitiesAndEquity) < 0.01;
 
@@ -260,18 +260,27 @@ export default function AccountReports() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/30">
-                      {bs.equity.items.length === 0 ? (
+                      {bs.equity.items.length === 0 && (!is || is.netIncome === 0) ? (
                         <tr>
                           <td colSpan={3} className="px-5 py-4 text-center text-slate-400">No Equity accounts found</td>
                         </tr>
                       ) : (
-                        bs.equity.items.map((acc) => (
-                          <tr key={acc.id} className="hover:bg-slate-50/30 dark:hover:bg-zinc-800/10">
-                            <td className="px-5 py-3 font-mono text-slate-400 font-semibold">{acc.code}</td>
-                            <td className="px-5 py-3 font-bold text-slate-700 dark:text-zinc-200">{acc.name}</td>
-                            <td className="px-5 py-3 text-right font-mono font-bold text-slate-800 dark:text-zinc-100">{formatCurrency(acc.balance)}</td>
-                          </tr>
-                        ))
+                        <>
+                          {bs.equity.items.map((acc) => (
+                            <tr key={acc.id} className="hover:bg-slate-50/30 dark:hover:bg-zinc-800/10">
+                              <td className="px-5 py-3 font-mono text-slate-400 font-semibold">{acc.code}</td>
+                              <td className="px-5 py-3 font-bold text-slate-700 dark:text-zinc-200">{acc.name}</td>
+                              <td className="px-5 py-3 text-right font-mono font-bold text-slate-800 dark:text-zinc-100">{formatCurrency(acc.balance)}</td>
+                            </tr>
+                          ))}
+                          {is && is.netIncome !== 0 && (
+                            <tr className="hover:bg-slate-50/30 dark:hover:bg-zinc-800/10">
+                              <td className="px-5 py-3 font-mono text-slate-400 font-semibold">RE</td>
+                              <td className="px-5 py-3 font-bold text-slate-700 dark:text-zinc-200">Retained Earnings (Net Profit)</td>
+                              <td className="px-5 py-3 text-right font-mono font-bold text-slate-800 dark:text-zinc-100">{formatCurrency(is.netIncome)}</td>
+                            </tr>
+                          )}
+                        </>
                       )}
                     </tbody>
                   </table>
@@ -411,19 +420,19 @@ export default function AccountReports() {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card p-5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/[0.04] flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Total Project Inflow</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-zinc-550 uppercase tracking-wider">Total Inflow</span>
               <span className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-2">
                 {formatCurrency(reportData.projectRevenue.reduce((sum, p) => sum + p.inflow, 0))}
               </span>
             </div>
             <div className="card p-5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/[0.04] flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-wider">Total Project Outflow</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-wider">Total Outflow</span>
               <span className="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 mt-2">
                 {formatCurrency(reportData.projectRevenue.reduce((sum, p) => sum + p.outflow, 0))}
               </span>
             </div>
             <div className="card p-5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/[0.04] flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-wider">Net Project Profit</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-zinc-555 uppercase tracking-wider">Net Balance</span>
               <span className="text-2xl font-black font-mono text-brand-600 dark:text-brand-400 mt-2">
                 {formatCurrency(reportData.projectRevenue.reduce((sum, p) => sum + p.net, 0))}
               </span>

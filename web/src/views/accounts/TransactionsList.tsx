@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   Plus, Calendar, Landmark, ArrowUpRight, ArrowDownLeft,
-  ArrowLeftRight, ArrowRight, Search, ChevronLeft, ChevronRight, Ban
+  ArrowLeftRight, ArrowRight, Search, ChevronLeft, ChevronRight, Ban, Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -65,6 +65,7 @@ export default function TransactionsList() {
 
   const [openNew, setOpenNew] = useState(false);
   const [voidingTx, setVoidingTx] = useState<Transaction | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   // Fetch accounts for form dropdowns
   const { data: accounts } = useQuery({
@@ -117,27 +118,78 @@ export default function TransactionsList() {
 
   const txType = watch("type");
 
+  const handleClose = () => {
+    setOpenNew(false);
+    setEditingTx(null);
+    reset({
+      accountId: "",
+      toAccountId: "",
+      type: "withdrawal",
+      amount: 0,
+      date: new Date().toISOString().split("T")[0],
+      description: "",
+      reference: "",
+      category: "",
+      spentById: "",
+      projectId: "",
+    });
+  };
+
+  const handleEditClick = (t: Transaction) => {
+    setEditingTx(t);
+    reset({
+      accountId: t.accountId,
+      toAccountId: t.toAccountId || "",
+      type: t.type,
+      amount: t.amount,
+      date: new Date(t.date).toISOString().split("T")[0],
+      description: t.description || "",
+      reference: t.reference || "",
+      category: t.category || "",
+      spentById: t.spentById || "",
+      projectId: t.projectId || "",
+    });
+    setOpenNew(true);
+  };
+
+  const handleNewClick = () => {
+    setEditingTx(null);
+    reset({
+      accountId: "",
+      toAccountId: "",
+      type: "withdrawal",
+      amount: 0,
+      date: new Date().toISOString().split("T")[0],
+      description: "",
+      reference: "",
+      category: "",
+      spentById: "",
+      projectId: "",
+    });
+    setOpenNew(true);
+  };
+
   const createMutation = useMutation({
     mutationFn: accountsApi.createTransaction,
     onSuccess: () => {
       toast.success("Transaction recorded successfully");
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
-      setOpenNew(false);
-      reset({
-        accountId: "",
-        toAccountId: "",
-        type: "withdrawal",
-        amount: 0,
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-        reference: "",
-        category: "",
-        spentById: "",
-        projectId: "",
-      });
+      handleClose();
     },
     onError: (e: any) => toast.error(e.message || "Failed to record transaction"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: TransactionInput }) =>
+      accountsApi.updateTransaction(id, data),
+    onSuccess: () => {
+      toast.success("Transaction updated successfully");
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["accounts"] });
+      handleClose();
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to update transaction"),
   });
 
   const voidMutation = useMutation({
@@ -286,7 +338,14 @@ export default function TransactionsList() {
       key: "actions",
       header: "",
       render: (t) => (
-        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => handleEditClick(t)}
+            className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950/20 rounded-lg transition-colors"
+            title="Edit transaction"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
           <button
             onClick={() => setVoidingTx(t)}
             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
@@ -309,7 +368,7 @@ export default function TransactionsList() {
         description="View and log deposits, withdrawals, and internal transfers"
         actions={
           <button
-            onClick={() => setOpenNew(true)}
+            onClick={handleNewClick}
             className="btn-primary flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="h-4 w-4" /> Record Transaction
@@ -474,14 +533,14 @@ export default function TransactionsList() {
         </div>
       )}
 
-      {/* Record Transaction Modal */}
+      {/* Record/Edit Transaction Modal */}
       <Modal
         open={openNew}
-        onClose={() => setOpenNew(false)}
+        onClose={handleClose}
         title={
           <div className="flex items-center gap-2 font-bold text-lg">
             <Landmark className="h-5 w-5 text-brand-600" />
-            <span>Record Office Transaction</span>
+            <span>{editingTx ? "Edit Office Transaction" : "Record Office Transaction"}</span>
           </div>
         }
       >
@@ -501,7 +560,11 @@ export default function TransactionsList() {
                 if (val.type !== "transfer") {
                   inputData.toAccountId = null;
                 }
-                await createMutation.mutateAsync(inputData);
+                if (editingTx) {
+                  await updateMutation.mutateAsync({ id: editingTx.id, data: inputData });
+                } else {
+                  await createMutation.mutateAsync(inputData);
+                }
               } catch {}
             },
             (err) => {
@@ -628,16 +691,19 @@ export default function TransactionsList() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => setOpenNew(false)}
+              onClick={handleClose}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
               className="btn-primary cursor-pointer"
             >
-              {createMutation.isPending ? "Recording..." : "Record Transaction"}
+              {editingTx
+                ? (updateMutation.isPending ? "Saving..." : "Save Changes")
+                : (createMutation.isPending ? "Recording..." : "Record Transaction")
+              }
             </button>
           </div>
         </form>

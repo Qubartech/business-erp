@@ -58,6 +58,8 @@ export const accountsApi = {
     unwrap<Paged<Transaction>>(api.get<ApiEnvelope<Paged<Transaction>>>("/accounts/transactions", { params: q })),
   createTransaction: (data: TransactionInput) =>
     unwrap<Transaction>(api.post<ApiEnvelope<Transaction>>("/accounts/transactions", data)),
+  updateTransaction: (id: string, data: TransactionInput) =>
+    unwrap<Transaction>(api.put<ApiEnvelope<Transaction>>(`/accounts/transactions/${id}`, data)),
   deleteTransaction: (id: string) =>
     unwrap<Transaction>(api.delete<ApiEnvelope<Transaction>>(`/accounts/transactions/${id}`)),
 
