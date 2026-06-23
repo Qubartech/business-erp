@@ -10,6 +10,7 @@ import { usersApi } from "@/services/api";
 import type { User } from "@/types";
 import { formatDate } from "@/lib/format";
 import { Loader2 } from "lucide-react";
+import { UsersListPageSkeleton } from "@/components/Skeletons";
 
 export default function UsersListPage() {
   const router = useRouter(); const nav = (path: any) => { if (path === -1) router.back(); else router.push(path); };
@@ -52,10 +53,16 @@ export default function UsersListPage() {
     <>
       <PageHeader title="Users" description="Manage team members and roles"
         actions={<button className="btn-primary" onClick={() => nav("/users/new")}>New user</button>} />
-      <div className="mb-3">
-        <input className="input w-full md:max-w-sm" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
-      <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(u) => u.id} onRowClick={(u) => nav(`/users/${u.id}`)} />
+      {isLoading ? (
+        <UsersListPageSkeleton />
+      ) : (
+        <>
+          <div className="mb-3">
+            <input className="input w-full md:max-w-sm" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(u) => u.id} onRowClick={(u) => nav(`/users/${u.id}`)} />
+        </>
+      )}
     </>
   );
 }

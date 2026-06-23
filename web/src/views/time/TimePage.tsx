@@ -8,6 +8,7 @@ import { timeApi, tasksApi } from "@/services/featureApis";
 import type { TimeEntry, Task } from "@/types";
 import { formatDateTime, formatMinutes } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { TimePageSkeleton } from "@/components/Skeletons";
 import { Clock, Calendar, ChevronLeft, ChevronRight, Edit2, Trash2, User, Play, Square, Loader2, SlidersHorizontal, List } from "lucide-react";
 import * as Slider from "@radix-ui/react-slider";
 
@@ -335,8 +336,12 @@ export default function TimePage() {
         }
       />
 
-      {/* Active running timer bar */}
-      {current ? (
+      {isLoading ? (
+        <TimePageSkeleton />
+      ) : (
+        <>
+          {/* Active running timer bar */}
+          {current ? (
         <div className="card-premium p-5 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-l-4 border-amber-500 relative overflow-hidden bg-gradient-to-r from-amber-500/[0.03] to-transparent dark:from-amber-500/[0.02]">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none" />
           <div>
@@ -588,6 +593,8 @@ export default function TimePage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* Manual Entry Modal */}

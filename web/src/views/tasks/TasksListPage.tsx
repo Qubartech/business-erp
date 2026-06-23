@@ -19,6 +19,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { LoadingPage } from "@/components/Loading";
+import { TasksListSkeleton } from "@/components/Skeletons";
 import { TaskFormModal } from "./TaskFormPage";
 import { Tooltip } from "@/components/Tooltip";
 
@@ -521,10 +522,10 @@ export default function TasksListPage() {
         </div>
       </div>
 
-      {viewMode === "list" ? (
-        <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(t) => t.id} onRowClick={(t) => nav(`/tasks/${t.id}`)} />
-      ) : isLoading ? (
-        <LoadingPage message="Loading Kanban Board..." />
+      {isLoading ? (
+        <TasksListSkeleton viewMode={viewMode} />
+      ) : viewMode === "list" ? (
+        <DataTable rows={data?.items} columns={cols} rowKey={(t) => t.id} onRowClick={(t) => nav(`/tasks/${t.id}`)} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
           {boardColumns.map((col) => {

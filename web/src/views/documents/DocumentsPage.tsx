@@ -12,6 +12,7 @@ import { projectsApi } from "@/services/api";
 import type { Document } from "@/types";
 import { formatDate } from "@/lib/format";
 import { Loader2 } from "lucide-react";
+import { DocumentsPageSkeleton } from "@/components/Skeletons";
 
 export default function DocumentsPage() {
   const router = useRouter(); const nav = (path: any) => { if (path === -1) router.back(); else router.push(path); };
@@ -118,13 +119,19 @@ export default function DocumentsPage() {
           </div>
         } 
       />
-      <div className="mb-3">
-        <select className="input w-full md:max-w-[240px]" value={filterProj} onChange={(e) => setFilterProj(e.target.value)}>
-          <option value="">All projects</option>
-          {projects?.items.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-      </div>
-      <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(d) => d.id} />
+      {isLoading ? (
+        <DocumentsPageSkeleton />
+      ) : (
+        <>
+          <div className="mb-3">
+            <select className="input w-full md:max-w-[240px]" value={filterProj} onChange={(e) => setFilterProj(e.target.value)}>
+              <option value="">All projects</option>
+              {projects?.items.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <DataTable rows={data?.items} loading={isLoading} columns={cols} rowKey={(d) => d.id} />
+        </>
+      )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Upload document"
         footer={<>

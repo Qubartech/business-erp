@@ -19,7 +19,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/types";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
-import { LoadingPage } from "@/components/Loading";
+import { ProjectDetailSkeleton } from "@/components/Skeletons";
 import { ProjectFormModal } from "./ProjectFormPage";
 import { TaskFormModal } from "../tasks/TaskFormPage";
 import { Tooltip } from "@/components/Tooltip";
@@ -272,7 +272,7 @@ export default function ProjectDetailPage() {
     }
   ];
 
-  if (isLoading || !project) return <LoadingPage message="Loading Project..." />;
+  if (isLoading || !project) return <ProjectDetailSkeleton />;
 
   return (
     <>
