@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
   Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar, Building2,
-  Sun, Moon, User, ChevronLeft, ChevronRight, CircleDollarSign
+  Sun, Moon, User, ChevronLeft, ChevronRight, CircleDollarSign, ChevronDown, Globe
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -18,7 +18,14 @@ import { clsx } from "clsx";
 import { useTheme } from "@/features/theme/ThemeContext";
 import type { Role } from "@/types";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: Role[] };
+type NavSubItem = { to: string; label: string };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: Role[];
+  children?: NavSubItem[];
+};
 const items: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
@@ -27,6 +34,16 @@ const items: NavItem[] = [
   { to: "/time", label: "Time", icon: Clock },
   { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
+  {
+    to: "/qubartech",
+    label: "Manage Qubartech",
+    icon: Globe,
+    roles: ["admin", "manager"],
+    children: [
+      { to: "/qubartech/team", label: "Our Team" },
+      { to: "/qubartech/privacy", label: "Project Privacy" },
+    ],
+  },
   { to: "/accounts", label: "Accounts", icon: CircleDollarSign, roles: ["admin", "account"] },
   { to: "/users", label: "Users", icon: Users, roles: ["admin"] },
   { to: "/settings", label: "Settings", icon: Cog },
@@ -43,6 +60,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  const toggleMenu = (label: string) => {
+    if (desktopCollapsed) {
+      setDesktopCollapsed(false);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("qubar_sidebar_collapsed", "false");
+      }
+      setOpenMenus((prev) => ({ ...prev, [label]: true }));
+    } else {
+      setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }));
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -176,7 +206,72 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           desktopCollapsed ? "overflow-visible px-2" : "overflow-y-auto px-3.5"
         )}>
           {visible.map((item) => {
-            const isActive = item.to === "/" ? pathname === "/" : pathname?.startsWith(item.to);
+            const hasChildren = !!item.children;
+            const isMenuOpen = !!openMenus[item.label];
+            const isActive = item.to === "/" ? pathname === "/" : (pathname?.startsWith(item.to) && !hasChildren);
+
+            if (hasChildren) {
+              const isChildActive = item.children?.some(c => pathname?.startsWith(c.to));
+              return (
+                <div key={item.label} className="space-y-1">
+                  <button
+                    onClick={() => toggleMenu(item.label)}
+                    className={clsx(
+                      "flex items-center text-sm font-semibold transition-all duration-200 group border-l-[4px] relative py-2.5 w-full text-left cursor-pointer",
+                      desktopCollapsed ? "justify-center pl-0 pr-0 rounded-none" : "gap-3 pr-4 pl-3 rounded-r-xl rounded-l-none",
+                      isChildActive
+                        ? "bg-brand-50/10 dark:bg-brand-900/10 text-brand-700 dark:text-brand-400 border-brand-500/55"
+                        : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-zinc-800/50",
+                    )}
+                  >
+                    <item.icon className={clsx(
+                      "h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
+                      isChildActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400"
+                    )} />
+                    {!desktopCollapsed && (
+                      <div className="flex items-center justify-between flex-1 pr-1">
+                        <span className="truncate animate-fade-in">{item.label}</span>
+                        <ChevronDown className={clsx("h-3 w-3 text-slate-450 transition-transform duration-200", isMenuOpen && "rotate-180")} />
+                      </div>
+                    )}
+                    {desktopCollapsed && (
+                      <div className={clsx(
+                        "absolute left-[calc(100%-1px)] top-0 bottom-0 pl-3 pr-5 flex items-center rounded-r-xl border-y border-r opacity-0 translate-x-[-2px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 pointer-events-none whitespace-nowrap z-50 text-sm font-semibold",
+                        isChildActive
+                          ? "bg-brand-50/80 dark:bg-brand-900/35 text-brand-700 dark:text-brand-400 border-brand-200 dark:border-brand-900/60"
+                          : "bg-slate-100/70 dark:bg-zinc-800/50 text-slate-900 dark:text-slate-100 border-slate-200/60 dark:border-white/[0.06]"
+                      )}>
+                        {item.label}
+                      </div>
+                    )}
+                  </button>
+
+                  {!desktopCollapsed && isMenuOpen && (
+                    <div className="pl-9 space-y-1 pr-3">
+                      {item.children?.map((child) => {
+                        const isChildPageActive = pathname === child.to;
+                        return (
+                          <Link
+                            key={child.to}
+                            href={child.to}
+                            onClick={() => setOpen(false)}
+                            className={clsx(
+                              "block py-1.5 px-3 rounded-lg text-xs font-semibold transition-all duration-150 border-l-2",
+                              isChildPageActive
+                                ? "bg-brand-50/80 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 border-brand-500"
+                                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100/40 dark:hover:bg-zinc-800/30"
+                            )}
+                          >
+                            {child.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.to}

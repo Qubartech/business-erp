@@ -5,12 +5,12 @@
     "web"
   ],
   "scripts": {
-    "dev": "npm run --prefix web dev",
-    "build": "npm run --prefix web build",
-    "start": "npm run --prefix web start",
-    "prisma:generate": "npm run --prefix web prisma:generate",
-    "prisma:migrate": "npm run --prefix web prisma:migrate",
-    "prisma:deploy": "npm run --prefix web prisma:deploy",
-    "seed": "npm run --prefix web seed"
+    "dev": "yarn --cwd web dev",
+    "build": "yarn --cwd web build",
+    "start": "yarn --cwd web start",
+    "prisma:generate": "yarn --cwd web prisma:generate",
+    "prisma:migrate": "yarn --cwd web prisma:migrate",
+    "prisma:deploy": "yarn --cwd web prisma:deploy",
+    "seed": "yarn --cwd web seed"
   }
 }
