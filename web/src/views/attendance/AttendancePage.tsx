@@ -10,6 +10,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { formatDateTime, formatDate } from "@/lib/format";
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import type { User as UserType, AttendanceEntry, Leave, Holiday, LeaveType, LeaveStatus } from "@/types";
+import { AttendancePageSkeleton } from "@/components/Skeletons";
 
 const getLeaveAbbreviation = (type: LeaveType): string => {
   switch (type) {
@@ -789,7 +790,10 @@ export default function AttendancePage() {
       />
 
       {/* TABS CONTAINER */}
-      <div className="space-y-6">
+      {pageIsLoading ? (
+        <AttendancePageSkeleton />
+      ) : (
+        <div className="space-y-6">
         
         {/* TAB 1: ATTENDANCE LOGS */}
         {activeTab === "logs" && (
@@ -1193,7 +1197,8 @@ export default function AttendancePage() {
           </div>
         )}
 
-      </div>
+        </div>
+      )}
 
       {/* HOLIDAY CREATE MODAL */}
       <Modal

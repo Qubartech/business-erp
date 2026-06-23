@@ -7,6 +7,7 @@ import { settingsApi, personalApiKeyApi } from "@/services/featureApis";
 import type { Setting } from "@/types";
 import { GitBranch, Loader2, Key, Copy, Eye, EyeOff, RefreshCw, Trash2, Check, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { SettingsPageSkeleton } from "@/components/Skeletons";
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -82,11 +83,17 @@ export default function SettingsPage() {
     }, className: "text-right" },
   ];
 
+  const isPageLoading = (user?.role === "admin" ? settingsLoading : false) || apiKeyLoading;
+
   return (
     <>
       <PageHeader title="Settings" description="Company preferences and developer API configuration" />
       
-      {user?.role === "admin" && (
+      {isPageLoading ? (
+        <SettingsPageSkeleton />
+      ) : (
+        <>
+          {user?.role === "admin" && (
         <>
           <div className="card p-4 mb-4 grid grid-cols-1 sm:grid-cols-[200px_1fr_auto] gap-3 items-end">
             <div><label className="label">Key</label><input className="input" value={key} onChange={(e) => setKey(e.target.value)} placeholder="company.name" /></div>
@@ -265,6 +272,8 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+        </>
+      )}
     </>
   );
 }
