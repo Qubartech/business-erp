@@ -6,6 +6,7 @@ import { notesApi } from "@/services/featureApis";
 import type { Note } from "@/types";
 import { Loader2, Plus, Search, Pin, Trash2, X, FileText } from "lucide-react";
 import { LoadingPage } from "@/components/Loading";
+import { NotesListSkeleton } from "@/components/Skeletons";
 
 interface NoteMeta {
   color?: string;
@@ -355,7 +356,7 @@ export default function NotesPage() {
       </div>
 
       {isLoading ? (
-        <LoadingPage message="Loading Notes..." />
+        <NotesListSkeleton />
       ) : (
         <div className="space-y-6">
           {pinnedNotes.length > 0 && (

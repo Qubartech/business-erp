@@ -234,3 +234,52 @@ export function TasksListSkeleton({ viewMode }: { viewMode: "list" | "kanban" })
   );
 }
 
+export function NotesListSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Pinned section header skeleton */}
+      <div className="flex items-center gap-2">
+        <div className="h-4 w-4 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse" />
+        <div className="h-3.5 w-20 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+      </div>
+
+      {/* Note cards grid skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="relative rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/[0.06] p-5 flex flex-col justify-between h-48 shadow-xs"
+          >
+            {/* Left strip skeleton */}
+            <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-slate-200 dark:bg-zinc-850 animate-pulse rounded-l-2xl" />
+
+            <div className="space-y-3">
+              {/* Note card header: Title */}
+              <div className="flex justify-between items-start gap-4">
+                <div className="h-4 w-36 bg-slate-250 dark:bg-zinc-800 rounded animate-pulse" />
+                {i < 2 && (
+                  <div className="h-3.5 w-3.5 bg-slate-255 dark:bg-zinc-800 rounded animate-pulse" />
+                )}
+              </div>
+
+              {/* Note card content lines */}
+              <div className="space-y-2 pt-1">
+                <div className="h-3 w-full bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                <div className="h-3 w-11/12 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+                <div className="h-3 w-3/4 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+              </div>
+            </div>
+
+            {/* Note card footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/[0.04] mt-4">
+              <div className="h-5 w-12 bg-slate-150 dark:bg-zinc-850 rounded-full animate-pulse" />
+              <div className="h-3.5 w-16 bg-slate-150 dark:bg-zinc-850 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
