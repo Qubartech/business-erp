@@ -12,10 +12,5 @@
     "prisma:migrate": "npm run --prefix web prisma:migrate",
     "prisma:deploy": "npm run --prefix web prisma:deploy",
     "seed": "npm run --prefix web seed"
-  },
-  "dependencies": {
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
   }
 }
