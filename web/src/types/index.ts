@@ -171,6 +171,8 @@ export type QubartechProduct = {
   status: string;
   privacyPolicy: string | null;
   isActive: boolean;
+  hasProjectManagement: boolean;
+  hasPrivacy: boolean;
   createdAt: string;
   updatedAt: string;
 };

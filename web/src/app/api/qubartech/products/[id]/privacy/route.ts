@@ -9,6 +9,7 @@ export const GET = apiHandler(
       where: {
         slug: id.toLowerCase().trim(),
         isActive: true,
+        hasPrivacy: true,
       },
       select: {
         id: true,

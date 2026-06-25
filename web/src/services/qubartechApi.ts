@@ -28,6 +28,8 @@ export type QubartechProductInput = {
   status?: string;
   privacyPolicy?: string | null;
   isActive?: boolean;
+  hasProjectManagement?: boolean;
+  hasPrivacy?: boolean;
 };
 
 export const qubartechTeamApi = {

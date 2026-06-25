@@ -38,6 +38,8 @@ const productSchema = z.object({
   status: z.string().default("live"),
   privacyPolicy: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
+  hasProjectManagement: z.boolean().default(true),
+  hasPrivacy: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof productSchema>;
@@ -46,13 +48,14 @@ export default function PrivacyManagementPage() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pm" | "privacy">("pm");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["qubartech", "products"],
     queryFn: qubartechProductsApi.list,
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(productSchema as any),
     defaultValues: {
       name: "",
@@ -68,8 +71,13 @@ export default function PrivacyManagementPage() {
       status: "live",
       privacyPolicy: "",
       isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
     },
   });
+
+  const watchProjectManagement = watch("hasProjectManagement", true);
+  const watchPrivacy = watch("hasPrivacy", true);
 
   const save = useMutation({
     mutationFn: (data: FormValues) => {
@@ -87,6 +95,8 @@ export default function PrivacyManagementPage() {
         status: data.status,
         privacyPolicy: data.privacyPolicy || null,
         isActive: data.isActive,
+        hasProjectManagement: data.hasProjectManagement,
+        hasPrivacy: data.hasPrivacy,
       };
       return editingId
         ? qubartechProductsApi.update(editingId, payload)
@@ -124,6 +134,7 @@ export default function PrivacyManagementPage() {
 
   const openAddModal = () => {
     setEditingId(null);
+    setActiveTab("pm");
     reset({
       name: "",
       slug: "",
@@ -138,12 +149,15 @@ export default function PrivacyManagementPage() {
       status: "live",
       privacyPolicy: "",
       isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
     });
     setModalOpen(true);
   };
 
   const openEditModal = (product: QubartechProduct) => {
     setEditingId(product.id);
+    setActiveTab("pm");
     reset({
       name: product.name,
       slug: product.slug,
@@ -158,6 +172,8 @@ export default function PrivacyManagementPage() {
       status: product.status,
       privacyPolicy: product.privacyPolicy ?? "",
       isActive: product.isActive,
+      hasProjectManagement: product.hasProjectManagement ?? true,
+      hasPrivacy: product.hasPrivacy ?? true,
     });
     setModalOpen(true);
   };
@@ -189,11 +205,31 @@ export default function PrivacyManagementPage() {
       render: (p) => <span className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-zinc-450">{p.category || "n/a"}</span>,
     },
     {
+      key: "options",
+      header: "Configured Features",
+      render: (p) => (
+        <div className="flex flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1">
+            <span className={`h-2 w-2 rounded-full ${p.hasProjectManagement ? "bg-emerald-500" : "bg-slate-300"}`} />
+            <span className={p.hasProjectManagement ? "font-semibold text-slate-700 dark:text-slate-300" : "text-slate-400"}>Project Mgmt</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className={`h-2 w-2 rounded-full ${p.hasPrivacy ? "bg-emerald-500" : "bg-slate-300"}`} />
+            <span className={p.hasPrivacy ? "font-semibold text-slate-700 dark:text-slate-300" : "text-slate-400"}>Privacy Policy</span>
+          </span>
+        </div>
+      ),
+    },
+    {
       key: "privacy",
       header: "Privacy Policy status",
       render: (p) => (
         <span className="flex items-center gap-1.5 text-xs">
-          {p.privacyPolicy ? (
+          {!p.hasPrivacy ? (
+            <span className="inline-flex items-center gap-1 font-semibold text-slate-400 bg-slate-50 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+              Disabled
+            </span>
+          ) : p.privacyPolicy ? (
             <span className="inline-flex items-center gap-1 font-semibold text-emerald-605 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md">
               <FileText className="h-3.5 w-3.5" /> Configured ({p.privacyPolicy.length} chars)
             </span>
@@ -230,9 +266,13 @@ export default function PrivacyManagementPage() {
       header: "",
       render: (p) => (
         <div className="flex justify-end gap-1.5">
-          {p.isActive && (
+          {p.isActive && p.hasPrivacy && (
             <a
-              href={`http://localhost:3000/products/${p.slug}/privecy`}
+              href={
+                typeof window !== "undefined" && (window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"))
+                  ? `http://localhost:3000/products/${p.slug}/privacy`
+                  : `https://qubartech.com/products/${p.slug}/privacy`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary p-2 flex items-center justify-center"
@@ -300,75 +340,176 @@ export default function PrivacyManagementPage() {
             {errors.slug && <p className="text-xs text-red-500 mt-1">{errors.slug.message}</p>}
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="label">Category</label>
-            <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+          {/* Tab Selector */}
+          <div className="sm:col-span-2 flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("pm")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "pm"
+                  ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-205"
+              }`}
+            >
+              <FolderKanban className="h-4 w-4" />
+              <span>Project Management</span>
+              {watchProjectManagement ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-slate-350" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("privacy")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "privacy"
+                  ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-205"
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Privacy Policy</span>
+              {watchPrivacy ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-slate-350" />
+              )}
+            </button>
           </div>
 
-          {/* Icon */}
-          <div>
-            <label className="label">Icon Emoji</label>
-            <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
-          </div>
+          {/* Project Management Tab Content */}
+          {activeTab === "pm" && (
+            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2 flex items-center gap-2.5 bg-slate-50 dark:bg-zinc-900/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80">
+                <input 
+                  type="checkbox" 
+                  id="hasProjectManagement" 
+                  className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 cursor-pointer"
+                  {...register("hasProjectManagement")} 
+                />
+                <div>
+                  <label htmlFor="hasProjectManagement" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                    Enable Project Management Features
+                  </label>
+                  <p className="text-xs text-slate-500">Configure category, short description, features, tags, and show on the products listing page.</p>
+                </div>
+              </div>
 
-          {/* Color Gradient config */}
-          <div>
-            <label className="label">Color Tailwind Gradient (Optional)</label>
-            <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
-          </div>
+              {watchProjectManagement ? (
+                <>
+                  {/* Category */}
+                  <div>
+                    <label className="label">Category</label>
+                    <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+                  </div>
 
-          {/* Status */}
-          <div>
-            <label className="label">Status</label>
-            <select className="input" {...register("status")}>
-              <option value="live">Live / Production</option>
-              <option value="beta">Beta Testing</option>
-              <option value="development">In Development</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
+                  {/* Icon */}
+                  <div>
+                    <label className="label">Icon Emoji</label>
+                    <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
+                  </div>
 
-          {/* External Link */}
-          <div>
-            <label className="label">Website / App Store URL Link</label>
-            <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
-          </div>
+                  {/* Color Gradient config */}
+                  <div>
+                    <label className="label">Color Tailwind Gradient (Optional)</label>
+                    <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
+                  </div>
 
-          {/* Image */}
-          <div>
-            <label className="label">Feature Image URL</label>
-            <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
-          </div>
+                  {/* Status */}
+                  <div>
+                    <label className="label">Status</label>
+                    <select className="input" {...register("status")}>
+                      <option value="live">Live / Production</option>
+                      <option value="beta">Beta Testing</option>
+                      <option value="development">In Development</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
 
-          {/* Tags */}
-          <div className="sm:col-span-2">
-            <label className="label">Tags (comma-separated)</label>
-            <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
-          </div>
+                  {/* External Link */}
+                  <div>
+                    <label className="label">Website / App Store URL Link</label>
+                    <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
+                  </div>
 
-          {/* Features list */}
-          <div className="sm:col-span-2">
-            <label className="label">Product Features (comma-separated)</label>
-            <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
-          </div>
+                  {/* Image */}
+                  <div>
+                    <label className="label">Feature Image URL</label>
+                    <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
+                  </div>
 
-          {/* Privacy Policy Content */}
-          <div className="sm:col-span-2">
-            <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
-            <textarea
-              className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
-              {...register("privacyPolicy")}
-              placeholder={`# Privacy Policy for Your Product
+                  {/* Tags */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Tags (comma-separated)</label>
+                    <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
+                  </div>
+
+                  {/* Features list */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Product Features (comma-separated)</label>
+                    <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
+                  </div>
+
+                  {/* Description */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Short Description</label>
+                    <textarea 
+                      className="input min-h-[100px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
+                      {...register("description")} 
+                      placeholder="Enter a short description of the product/project..."
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="sm:col-span-2 py-8 text-center text-slate-400 dark:text-zinc-500">
+                  Project Management listing is disabled for this product.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Privacy Policy Tab Content */}
+          {activeTab === "privacy" && (
+            <div className="sm:col-span-2 grid grid-cols-1 gap-4">
+              <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-zinc-900/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80">
+                <input 
+                  type="checkbox" 
+                  id="hasPrivacy" 
+                  className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 cursor-pointer"
+                  {...register("hasPrivacy")} 
+                />
+                <div>
+                  <label htmlFor="hasPrivacy" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                    Enable Privacy Policy Page
+                  </label>
+                  <p className="text-xs text-slate-500">Configure dynamic privacy policy content accessible under /products/[slug]/privacy.</p>
+                </div>
+              </div>
+
+              {watchPrivacy ? (
+                <div>
+                  <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
+                  <textarea
+                    className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
+                    {...register("privacyPolicy")}
+                    placeholder={`# Privacy Policy for Your Product
 Last updated: June 2026.
 
 ## 1. Information Collection
 We collect...`}
-            />
-          </div>
+                  />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-slate-400 dark:text-zinc-500">
+                  Privacy Policy page is disabled for this product.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Active Status */}
-          <div className="sm:col-span-2 flex items-center gap-3 py-1">
+          <div className="sm:col-span-2 flex items-center gap-3 py-1 border-t border-slate-100 dark:border-zinc-800 pt-4">
             <input className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5" type="checkbox" id="isActiveProduct" {...register("isActive")} />
             <label htmlFor="isActiveProduct" className="text-sm font-semibold text-slate-700 dark:text-slate-200 select-none cursor-pointer">Publish on Qubartech Website</label>
           </div>
