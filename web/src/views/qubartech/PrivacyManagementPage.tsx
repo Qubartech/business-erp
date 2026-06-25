@@ -48,6 +48,7 @@ export default function PrivacyManagementPage() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pm" | "privacy">("pm");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["qubartech", "products"],
@@ -133,6 +134,7 @@ export default function PrivacyManagementPage() {
 
   const openAddModal = () => {
     setEditingId(null);
+    setActiveTab("pm");
     reset({
       name: "",
       slug: "",
@@ -155,6 +157,7 @@ export default function PrivacyManagementPage() {
 
   const openEditModal = (product: QubartechProduct) => {
     setEditingId(product.id);
+    setActiveTab("pm");
     reset({
       name: product.name,
       slug: product.slug,
@@ -265,7 +268,11 @@ export default function PrivacyManagementPage() {
         <div className="flex justify-end gap-1.5">
           {p.isActive && p.hasPrivacy && (
             <a
-              href={`http://localhost:3000/products/${p.slug}/privecy`}
+              href={
+                typeof window !== "undefined" && (window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1"))
+                  ? `http://localhost:3000/products/${p.slug}/privacy`
+                  : `https://qubartech.com/products/${p.slug}/privacy`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary p-2 flex items-center justify-center"
@@ -333,114 +340,176 @@ export default function PrivacyManagementPage() {
             {errors.slug && <p className="text-xs text-red-500 mt-1">{errors.slug.message}</p>}
           </div>
 
-          {/* Feature Configuration Options */}
-          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 mb-2">
-            <div className="flex items-start gap-2.5">
-              <input 
-                type="checkbox" 
-                id="hasProjectManagement" 
-                className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 mt-0.5"
-                {...register("hasProjectManagement")} 
-              />
-              <div>
-                <label htmlFor="hasProjectManagement" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
-                  Project Management
-                </label>
-                <p className="text-xs text-slate-500">Add descriptions, features, tags, and show on the products listing page.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <input 
-                type="checkbox" 
-                id="hasPrivacy" 
-                className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 mt-0.5"
-                {...register("hasPrivacy")} 
-              />
-              <div>
-                <label htmlFor="hasPrivacy" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
-                  Privacy Policy
-                </label>
-                <p className="text-xs text-slate-500">Enable dynamic privacy policy content and details page.</p>
-              </div>
-            </div>
+          {/* Tab Selector */}
+          <div className="sm:col-span-2 flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("pm")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "pm"
+                  ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-205"
+              }`}
+            >
+              <FolderKanban className="h-4 w-4" />
+              <span>Project Management</span>
+              {watchProjectManagement ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-slate-350" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("privacy")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "privacy"
+                  ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm"
+                  : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-205"
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Privacy Policy</span>
+              {watchPrivacy ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-slate-350" />
+              )}
+            </button>
           </div>
 
-          {/* Project Management Fields */}
-          {watchProjectManagement && (
-            <>
-              {/* Category */}
-              <div>
-                <label className="label">Category</label>
-                <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+          {/* Project Management Tab Content */}
+          {activeTab === "pm" && (
+            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2 flex items-center gap-2.5 bg-slate-50 dark:bg-zinc-900/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80">
+                <input 
+                  type="checkbox" 
+                  id="hasProjectManagement" 
+                  className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 cursor-pointer"
+                  {...register("hasProjectManagement")} 
+                />
+                <div>
+                  <label htmlFor="hasProjectManagement" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                    Enable Project Management Features
+                  </label>
+                  <p className="text-xs text-slate-500">Configure category, short description, features, tags, and show on the products listing page.</p>
+                </div>
               </div>
 
-              {/* Icon */}
-              <div>
-                <label className="label">Icon Emoji</label>
-                <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
-              </div>
+              {watchProjectManagement ? (
+                <>
+                  {/* Category */}
+                  <div>
+                    <label className="label">Category</label>
+                    <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+                  </div>
 
-              {/* Color Gradient config */}
-              <div>
-                <label className="label">Color Tailwind Gradient (Optional)</label>
-                <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
-              </div>
+                  {/* Icon */}
+                  <div>
+                    <label className="label">Icon Emoji</label>
+                    <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
+                  </div>
 
-              {/* Status */}
-              <div>
-                <label className="label">Status</label>
-                <select className="input" {...register("status")}>
-                  <option value="live">Live / Production</option>
-                  <option value="beta">Beta Testing</option>
-                  <option value="development">In Development</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
+                  {/* Color Gradient config */}
+                  <div>
+                    <label className="label">Color Tailwind Gradient (Optional)</label>
+                    <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
+                  </div>
 
-              {/* External Link */}
-              <div>
-                <label className="label">Website / App Store URL Link</label>
-                <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
-              </div>
+                  {/* Status */}
+                  <div>
+                    <label className="label">Status</label>
+                    <select className="input" {...register("status")}>
+                      <option value="live">Live / Production</option>
+                      <option value="beta">Beta Testing</option>
+                      <option value="development">In Development</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
 
-              {/* Image */}
-              <div>
-                <label className="label">Feature Image URL</label>
-                <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
-              </div>
+                  {/* External Link */}
+                  <div>
+                    <label className="label">Website / App Store URL Link</label>
+                    <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
+                  </div>
 
-              {/* Tags */}
-              <div className="sm:col-span-2">
-                <label className="label">Tags (comma-separated)</label>
-                <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
-              </div>
+                  {/* Image */}
+                  <div>
+                    <label className="label">Feature Image URL</label>
+                    <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
+                  </div>
 
-              {/* Features list */}
-              <div className="sm:col-span-2">
-                <label className="label">Product Features (comma-separated)</label>
-                <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
-              </div>
-            </>
+                  {/* Tags */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Tags (comma-separated)</label>
+                    <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
+                  </div>
+
+                  {/* Features list */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Product Features (comma-separated)</label>
+                    <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
+                  </div>
+
+                  {/* Description */}
+                  <div className="sm:col-span-2">
+                    <label className="label">Short Description</label>
+                    <textarea 
+                      className="input min-h-[100px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
+                      {...register("description")} 
+                      placeholder="Enter a short description of the product/project..."
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="sm:col-span-2 py-8 text-center text-slate-400 dark:text-zinc-500">
+                  Project Management listing is disabled for this product.
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Privacy Policy Fields */}
-          {watchPrivacy && (
-            <div className="sm:col-span-2">
-              <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
-              <textarea
-                className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
-                {...register("privacyPolicy")}
-                placeholder={`# Privacy Policy for Your Product
+          {/* Privacy Policy Tab Content */}
+          {activeTab === "privacy" && (
+            <div className="sm:col-span-2 grid grid-cols-1 gap-4">
+              <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-zinc-900/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-zinc-800/80">
+                <input 
+                  type="checkbox" 
+                  id="hasPrivacy" 
+                  className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 cursor-pointer"
+                  {...register("hasPrivacy")} 
+                />
+                <div>
+                  <label htmlFor="hasPrivacy" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                    Enable Privacy Policy Page
+                  </label>
+                  <p className="text-xs text-slate-500">Configure dynamic privacy policy content accessible under /products/[slug]/privacy.</p>
+                </div>
+              </div>
+
+              {watchPrivacy ? (
+                <div>
+                  <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
+                  <textarea
+                    className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
+                    {...register("privacyPolicy")}
+                    placeholder={`# Privacy Policy for Your Product
 Last updated: June 2026.
 
 ## 1. Information Collection
 We collect...`}
-              />
+                  />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-slate-400 dark:text-zinc-500">
+                  Privacy Policy page is disabled for this product.
+                </div>
+              )}
             </div>
           )}
 
           {/* Active Status */}
-          <div className="sm:col-span-2 flex items-center gap-3 py-1">
+          <div className="sm:col-span-2 flex items-center gap-3 py-1 border-t border-slate-100 dark:border-zinc-800 pt-4">
             <input className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5" type="checkbox" id="isActiveProduct" {...register("isActive")} />
             <label htmlFor="isActiveProduct" className="text-sm font-semibold text-slate-700 dark:text-slate-200 select-none cursor-pointer">Publish on Qubartech Website</label>
           </div>
