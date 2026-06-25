@@ -38,6 +38,8 @@ const productSchema = z.object({
   status: z.string().default("live"),
   privacyPolicy: z.string().nullable().optional(),
   isActive: z.boolean().default(true),
+  hasProjectManagement: z.boolean().default(true),
+  hasPrivacy: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof productSchema>;
@@ -52,7 +54,7 @@ export default function PrivacyManagementPage() {
     queryFn: qubartechProductsApi.list,
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(productSchema as any),
     defaultValues: {
       name: "",
@@ -68,8 +70,13 @@ export default function PrivacyManagementPage() {
       status: "live",
       privacyPolicy: "",
       isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
     },
   });
+
+  const watchProjectManagement = watch("hasProjectManagement", true);
+  const watchPrivacy = watch("hasPrivacy", true);
 
   const save = useMutation({
     mutationFn: (data: FormValues) => {
@@ -87,6 +94,8 @@ export default function PrivacyManagementPage() {
         status: data.status,
         privacyPolicy: data.privacyPolicy || null,
         isActive: data.isActive,
+        hasProjectManagement: data.hasProjectManagement,
+        hasPrivacy: data.hasPrivacy,
       };
       return editingId
         ? qubartechProductsApi.update(editingId, payload)
@@ -138,6 +147,8 @@ export default function PrivacyManagementPage() {
       status: "live",
       privacyPolicy: "",
       isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
     });
     setModalOpen(true);
   };
@@ -158,6 +169,8 @@ export default function PrivacyManagementPage() {
       status: product.status,
       privacyPolicy: product.privacyPolicy ?? "",
       isActive: product.isActive,
+      hasProjectManagement: product.hasProjectManagement ?? true,
+      hasPrivacy: product.hasPrivacy ?? true,
     });
     setModalOpen(true);
   };
@@ -189,11 +202,31 @@ export default function PrivacyManagementPage() {
       render: (p) => <span className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-zinc-450">{p.category || "n/a"}</span>,
     },
     {
+      key: "options",
+      header: "Configured Features",
+      render: (p) => (
+        <div className="flex flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1">
+            <span className={`h-2 w-2 rounded-full ${p.hasProjectManagement ? "bg-emerald-500" : "bg-slate-300"}`} />
+            <span className={p.hasProjectManagement ? "font-semibold text-slate-700 dark:text-slate-300" : "text-slate-400"}>Project Mgmt</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className={`h-2 w-2 rounded-full ${p.hasPrivacy ? "bg-emerald-500" : "bg-slate-300"}`} />
+            <span className={p.hasPrivacy ? "font-semibold text-slate-700 dark:text-slate-300" : "text-slate-400"}>Privacy Policy</span>
+          </span>
+        </div>
+      ),
+    },
+    {
       key: "privacy",
       header: "Privacy Policy status",
       render: (p) => (
         <span className="flex items-center gap-1.5 text-xs">
-          {p.privacyPolicy ? (
+          {!p.hasPrivacy ? (
+            <span className="inline-flex items-center gap-1 font-semibold text-slate-400 bg-slate-50 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+              Disabled
+            </span>
+          ) : p.privacyPolicy ? (
             <span className="inline-flex items-center gap-1 font-semibold text-emerald-605 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md">
               <FileText className="h-3.5 w-3.5" /> Configured ({p.privacyPolicy.length} chars)
             </span>
@@ -230,7 +263,7 @@ export default function PrivacyManagementPage() {
       header: "",
       render: (p) => (
         <div className="flex justify-end gap-1.5">
-          {p.isActive && (
+          {p.isActive && p.hasPrivacy && (
             <a
               href={`http://localhost:3000/products/${p.slug}/privecy`}
               target="_blank"
@@ -300,72 +333,111 @@ export default function PrivacyManagementPage() {
             {errors.slug && <p className="text-xs text-red-500 mt-1">{errors.slug.message}</p>}
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="label">Category</label>
-            <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+          {/* Feature Configuration Options */}
+          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-zinc-800/80 mb-2">
+            <div className="flex items-start gap-2.5">
+              <input 
+                type="checkbox" 
+                id="hasProjectManagement" 
+                className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 mt-0.5"
+                {...register("hasProjectManagement")} 
+              />
+              <div>
+                <label htmlFor="hasProjectManagement" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                  Project Management
+                </label>
+                <p className="text-xs text-slate-500">Add descriptions, features, tags, and show on the products listing page.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <input 
+                type="checkbox" 
+                id="hasPrivacy" 
+                className="rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-brand-600 focus:ring-brand-500 h-4.5 w-4.5 mt-0.5"
+                {...register("hasPrivacy")} 
+              />
+              <div>
+                <label htmlFor="hasPrivacy" className="text-sm font-bold text-slate-800 dark:text-slate-200 select-none cursor-pointer">
+                  Privacy Policy
+                </label>
+                <p className="text-xs text-slate-500">Enable dynamic privacy policy content and details page.</p>
+              </div>
+            </div>
           </div>
 
-          {/* Icon */}
-          <div>
-            <label className="label">Icon Emoji</label>
-            <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
-          </div>
+          {/* Project Management Fields */}
+          {watchProjectManagement && (
+            <>
+              {/* Category */}
+              <div>
+                <label className="label">Category</label>
+                <input className="input" type="text" {...register("category")} placeholder="e.g. productivity" />
+              </div>
 
-          {/* Color Gradient config */}
-          <div>
-            <label className="label">Color Tailwind Gradient (Optional)</label>
-            <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
-          </div>
+              {/* Icon */}
+              <div>
+                <label className="label">Icon Emoji</label>
+                <input className="input" type="text" {...register("icon")} placeholder="e.g. 📺" />
+              </div>
 
-          {/* Status */}
-          <div>
-            <label className="label">Status</label>
-            <select className="input" {...register("status")}>
-              <option value="live">Live / Production</option>
-              <option value="beta">Beta Testing</option>
-              <option value="development">In Development</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
+              {/* Color Gradient config */}
+              <div>
+                <label className="label">Color Tailwind Gradient (Optional)</label>
+                <input className="input font-mono text-xs" type="text" {...register("color")} placeholder="from-purple-500 to-pink-500" />
+              </div>
 
-          {/* External Link */}
-          <div>
-            <label className="label">Website / App Store URL Link</label>
-            <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
-          </div>
+              {/* Status */}
+              <div>
+                <label className="label">Status</label>
+                <select className="input" {...register("status")}>
+                  <option value="live">Live / Production</option>
+                  <option value="beta">Beta Testing</option>
+                  <option value="development">In Development</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
 
-          {/* Image */}
-          <div>
-            <label className="label">Feature Image URL</label>
-            <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
-          </div>
+              {/* External Link */}
+              <div>
+                <label className="label">Website / App Store URL Link</label>
+                <input className="input" type="text" {...register("link")} placeholder="e.g. https://playque.com" />
+              </div>
 
-          {/* Tags */}
-          <div className="sm:col-span-2">
-            <label className="label">Tags (comma-separated)</label>
-            <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
-          </div>
+              {/* Image */}
+              <div>
+                <label className="label">Feature Image URL</label>
+                <input className="input" type="text" {...register("image")} placeholder="e.g. https://i.ibb.co/..." />
+              </div>
 
-          {/* Features list */}
-          <div className="sm:col-span-2">
-            <label className="label">Product Features (comma-separated)</label>
-            <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
-          </div>
+              {/* Tags */}
+              <div className="sm:col-span-2">
+                <label className="label">Tags (comma-separated)</label>
+                <input className="input" type="text" {...register("tags")} placeholder="e.g. Productivity, Playlists, Tracker" />
+              </div>
 
-          {/* Privacy Policy Content */}
-          <div className="sm:col-span-2">
-            <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
-            <textarea
-              className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
-              {...register("privacyPolicy")}
-              placeholder={`# Privacy Policy for Your Product
+              {/* Features list */}
+              <div className="sm:col-span-2">
+                <label className="label">Product Features (comma-separated)</label>
+                <input className="input" type="text" {...register("features")} placeholder="e.g. Add playlists via URL, Track completed videos, Daily reminders" />
+              </div>
+            </>
+          )}
+
+          {/* Privacy Policy Fields */}
+          {watchPrivacy && (
+            <div className="sm:col-span-2">
+              <label className="label font-bold text-slate-800 dark:text-slate-200">Privacy Policy Text (Markdown / Text supported)</label>
+              <textarea
+                className="input font-mono text-xs min-h-[300px] leading-relaxed p-3.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl"
+                {...register("privacyPolicy")}
+                placeholder={`# Privacy Policy for Your Product
 Last updated: June 2026.
 
 ## 1. Information Collection
 We collect...`}
-            />
-          </div>
+              />
+            </div>
+          )}
 
           {/* Active Status */}
           <div className="sm:col-span-2 flex items-center gap-3 py-1">

@@ -124,6 +124,100 @@ async function main() {
       console.log(`[seed] qubartech team member already exists: ${member.name}`);
     }
   }
+
+  const websiteProducts = [
+    {
+      name: "PlayQue - Track Playlists",
+      slug: "playque",
+      category: "productivity",
+      description: "A productivity app to track your long list of favorite playlists. Get motivated to watch/complete educational and tech playlists while tracking your progress.",
+      features: "Add playlists via URL or search, Track completed videos, Daily and custom reminders, Progress monitoring, Multi-platform support",
+      icon: "📺",
+      color: "from-purple-500 to-pink-500",
+      tags: "Productivity, Playlist, Tracker, Motivation",
+      image: "https://i.ibb.co/30n0hm9/playque-productivity-app-image.png",
+      link: "#",
+      status: "live",
+      privacyPolicy: `# Privacy Policy for PlayQue
+Last updated: June 2026.
+
+## 1. Information Collection
+We do not collect personal information unless you explicitly provide it. Playlists tracked are stored locally or via your account sync.
+
+## 2. Contact Us
+For any questions regarding this policy, contact us.`,
+      isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
+    },
+    {
+      name: "DIU Results",
+      slug: "diu-results",
+      category: "education",
+      description: "A comprehensive result tracking system for DIU students. Easily access and monitor academic performance.",
+      features: "Real-time result tracking, GPA calculation, Course analytics, Performance insights, Grade history",
+      icon: "🎓",
+      color: "from-blue-500 to-cyan-500",
+      tags: "Education, Results, Academic, Tracking",
+      image: "https://i.ibb.co.com/N2fhkTgj/diu-results-feature.png",
+      link: "#",
+      status: "live",
+      privacyPolicy: `# Privacy Policy for DIU Results
+Last updated: June 2026.
+
+## 1. Information Collection
+DIU Results reads and presents academic results. All calculations are performed on the device.
+
+## 2. Contact Us
+For support or inquiries, contact us.`,
+      isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
+    },
+    {
+      name: "CV/Resume Version Manager",
+      slug: "cv-version-manager",
+      category: "productivity",
+      description: "A powerful Google Docs add-on to manage different versions of your CV or Resume tailored for various jobs. Save named snapshots, organize them by category, export to PDF or DOC, and checkout any version directly from history.",
+      features: "Categorized snapshots for specific jobs, Instant checkout to revert to any historical version, Automatic PDF and DOC export generation, Fully stored inside your personal Google Drive, Version index persistently saved in Google Spreadsheets",
+      icon: "📄",
+      color: "from-emerald-500 to-teal-500",
+      tags: "Google Docs, Resume, CV, Version Control, Productivity",
+      image: "https://i.ibb.co/ycFdFH1f/Screenshot-2026-05-31-at-1-07-34-PM.png",
+      link: "/cv-version-manager",
+      status: "live",
+      privacyPolicy: `# Privacy Policy for CV/Resume Version Manager
+Last updated: June 2026.
+
+## 1. Information Collection
+This Google Docs add-on stores snapshots in your personal Google Drive and indexes them in Google Spreadsheets. We do not access, transmit, or share your resume files with third parties.
+
+## 2. Google OAuth Scope Usage
+We request access to read/write specific Google Sheets/Docs to manage snapshots.
+
+## 3. Contact Us
+If you have questions about the add-on's data practices, please contact Tahir Ahmad.`,
+      isActive: true,
+      hasProjectManagement: true,
+      hasPrivacy: true,
+    }
+  ];
+
+  for (const product of websiteProducts) {
+    const existing = await prisma.qubartechProduct.findUnique({
+      where: { slug: product.slug },
+    });
+    if (!existing) {
+      await prisma.qubartechProduct.create({
+        data: product,
+      });
+      // eslint-disable-next-line no-console
+      console.log(`[seed] created qubartech product: ${product.name}`);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log(`[seed] qubartech product already exists: ${product.name}`);
+    }
+  }
 }
 
 main().finally(() => prisma.$disconnect());

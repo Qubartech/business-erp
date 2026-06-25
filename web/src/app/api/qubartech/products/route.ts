@@ -16,6 +16,8 @@ const createProductSchema = z.object({
   status: z.string().optional(),
   privacyPolicy: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
+  hasProjectManagement: z.boolean().optional(),
+  hasPrivacy: z.boolean().optional(),
 });
 
 export const GET = apiHandler(
@@ -46,6 +48,8 @@ export const POST = apiHandler(
         status: body.status ?? "live",
         privacyPolicy: body.privacyPolicy ?? null,
         isActive: body.isActive ?? true,
+        hasProjectManagement: body.hasProjectManagement ?? true,
+        hasPrivacy: body.hasPrivacy ?? true,
       },
     });
   },

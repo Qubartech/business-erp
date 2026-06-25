@@ -17,6 +17,8 @@ const updateProductSchema = z.object({
   status: z.string().optional(),
   privacyPolicy: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
+  hasProjectManagement: z.boolean().optional(),
+  hasPrivacy: z.boolean().optional(),
 });
 
 export const PATCH = apiHandler(

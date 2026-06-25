@@ -369,6 +369,8 @@ model QubartechProduct {
   status        String   @default("live")
   privacyPolicy String?  @map("privacy_policy") @db.Text
   isActive      Boolean  @default(true) @map("is_active")
+  hasProjectManagement Boolean  @default(true) @map("has_project_management")
+  hasPrivacy            Boolean  @default(true) @map("has_privacy")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt      @map("updated_at")
 
