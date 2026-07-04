@@ -19,13 +19,13 @@ interface CardProps {
 
 function Card({ label, value, icon, colorClass = "text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60", gradientClass = "from-brand-500/5 to-indigo-500/5", children }: CardProps) {
   return (
-    <div className={`card-premium p-6 flex items-center justify-between bg-gradient-to-br ${gradientClass} border border-slate-200/50 dark:border-slate-800/60 hover:shadow-lg transition-all duration-300`}>
+    <div className={`card-premium p-6 flex items-start justify-between bg-gradient-to-br ${gradientClass} border border-slate-200/50 dark:border-slate-800/60 hover:shadow-lg transition-all duration-300`}>
       <div className="space-y-2 min-w-0 flex-1 mr-4">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</span>
         <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{value}</div>
         {children && <div className="pt-2 flex flex-wrap gap-1.5">{children}</div>}
       </div>
-      <div className={`p-3.5 rounded-2xl border ${colorClass} shadow-sm transition-transform duration-200 hover:scale-105 shrink-0 self-start`}>
+      <div className={`p-3.5 rounded-2xl border ${colorClass} shadow-sm transition-transform duration-200 hover:scale-105 shrink-0`}>
         {icon}
       </div>
     </div>
