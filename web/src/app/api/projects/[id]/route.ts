@@ -10,8 +10,8 @@ export const GET = apiHandler(async (req, { params }) => {
 });
 
 export const PATCH = apiHandler(
-  async (req, { params, body }) => {
-    return service.update(params.id, body);
+  async (req, { params, body, user }) => {
+    return service.update(params.id, body, user.sub);
   },
   {
     roles: ["admin", "manager"],

@@ -2,6 +2,7 @@ import { NotFound } from "../errors";
 import type { Container } from "../container";
 import type { z } from "zod";
 import type { createTaskSchema, listTasksQuerySchema, updateTaskSchema } from "./tasks.schemas.js";
+import { createActivityService } from "./activity.service";
 
 type CreateInput = z.infer<typeof createTaskSchema>;
 type UpdateInput = z.infer<typeof updateTaskSchema>;
@@ -14,6 +15,8 @@ const include = {
 } as const;
 
 export function createTasksService({ prisma }: Pick<Container, "prisma">) {
+  const activityService = createActivityService({ prisma });
+
   return {
     async list(q: ListQuery) {
       const where = {
@@ -43,7 +46,7 @@ export function createTasksService({ prisma }: Pick<Container, "prisma">) {
     },
 
     async create(input: CreateInput, createdBy: string) {
-      return prisma.task.create({
+      const res = await prisma.task.create({
         data: {
           projectId: input.projectId,
           title: input.title,
@@ -56,18 +59,62 @@ export function createTasksService({ prisma }: Pick<Container, "prisma">) {
         },
         include,
       });
+
+      const project = await prisma.project.findUnique({ where: { id: res.projectId } });
+      await activityService.log({
+        type: "task",
+        action: "create",
+        userId: createdBy,
+        projectId: res.projectId,
+        description: `created task '${res.title}'${project ? ` in project '${project.name}'` : ""}`,
+      });
+
+      return res;
     },
 
-    async update(id: string, input: UpdateInput) {
+    async update(id: string, input: UpdateInput, userId?: string) {
       const exists = await prisma.task.findUnique({ where: { id } });
       if (!exists) throw NotFound("Task not found");
-      return prisma.task.update({ where: { id }, data: input, include });
+      const res = await prisma.task.update({ where: { id }, data: input, include });
+
+      if (userId) {
+        if (input.status && input.status !== exists.status) {
+          await activityService.log({
+            type: "task",
+            action: "status_change",
+            userId,
+            projectId: res.projectId,
+            description: `changed status of task '${res.title}' to '${input.status}'`,
+          });
+        } else {
+          await activityService.log({
+            type: "task",
+            action: "update",
+            userId,
+            projectId: res.projectId,
+            description: `updated task '${res.title}'`,
+          });
+        }
+      }
+
+      return res;
     },
 
-    async remove(id: string) {
+    async remove(id: string, userId?: string) {
       const exists = await prisma.task.findUnique({ where: { id } });
       if (!exists) throw NotFound("Task not found");
       await prisma.task.delete({ where: { id } });
+
+      if (userId) {
+        await activityService.log({
+          type: "task",
+          action: "delete",
+          userId,
+          projectId: exists.projectId,
+          description: `deleted task '${exists.title}'`,
+        });
+      }
+
       return { id };
     },
   };

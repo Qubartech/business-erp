@@ -1,5 +1,5 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
-import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry, Leave, LeaveType, LeaveStatus, Holiday } from "@/types";
+import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry, Leave, LeaveType, LeaveStatus, Holiday, Activity } from "@/types";
 
 export type ListTasksQuery = {
   projectId?: string; status?: TaskStatus; priority?: TaskPriority;
@@ -121,4 +121,8 @@ export const holidaysApi = {
   create: (data: { date: string; name: string; description?: string | null }) =>
     unwrap<Holiday>(api.post<ApiEnvelope<Holiday>>("/holidays", data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/holidays/${id}`)),
+};
+
+export const activitiesApi = {
+  list: () => unwrap<Activity[]>(api.get<ApiEnvelope<Activity[]>>("/activities")),
 };

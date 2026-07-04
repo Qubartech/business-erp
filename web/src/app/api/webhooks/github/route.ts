@@ -1,6 +1,9 @@
 import { apiHandler } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
 import { BadRequest } from "@/lib/errors";
+import { createActivityService } from "@/lib/services/activity.service";
+
+const activityService = createActivityService({ prisma });
 
 export const POST = apiHandler(
   async (req) => {
@@ -72,6 +75,16 @@ export const POST = apiHandler(
 
     for (const project of projects) {
       for (const commit of commitsData) {
+        // Check if the commit already exists before creating/logging
+        const exists = await prisma.commit.findUnique({
+          where: {
+            projectId_sha: {
+              projectId: project.id,
+              sha: commit.id,
+            },
+          },
+        });
+
         // Idempotent upsert by project_id and sha
         await prisma.commit.upsert({
           where: {
@@ -91,6 +104,17 @@ export const POST = apiHandler(
             committedAt: commit.timestamp ? new Date(commit.timestamp) : new Date(),
           },
         });
+
+        if (!exists) {
+          await activityService.log({
+            type: "commit",
+            action: "create",
+            userId: null,
+            projectId: project.id,
+            description: `${commit.author?.name || "Unknown"} pushed commit '${commit.message || "No message"}' to project '${project.name}'`,
+          });
+        }
+
         createdCount++;
       }
     }

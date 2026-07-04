@@ -177,3 +177,16 @@ export type QubartechProduct = {
   updatedAt: string;
 };
 
+export type Activity = {
+  id: string;
+  type: "attendance" | "project" | "task" | "note" | "document" | "commit" | "transaction";
+  action: string;
+  userId: string | null;
+  projectId: string | null;
+  description: string;
+  metadata?: any;
+  createdAt: string;
+  user?: Pick<User, "id" | "name" | "email"> | null;
+  project?: Pick<Project, "id" | "name"> | null;
+};
+

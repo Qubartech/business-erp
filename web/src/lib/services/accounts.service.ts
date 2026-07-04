@@ -8,12 +8,15 @@ import type {
   listTransactionsQuerySchema,
 } from "./accounts.schemas";
 
+import { createActivityService } from "./activity.service";
+
 type CreateAccountInput = z.infer<typeof createAccountSchema>;
 type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
 type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 type ListTransactionsQuery = z.infer<typeof listTransactionsQuerySchema>;
 
 export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
+  const activityService = createActivityService({ prisma });
   return {
     // ACCOUNT SERVICES
     async listAccounts() {
@@ -168,7 +171,7 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
         if (!toAccount) throw NotFound("Destination account not found");
       }
 
-      return prisma.$transaction(async (tx) => {
+      const res = await prisma.$transaction(async (tx) => {
         // Create the transaction
         const transaction = await tx.transaction.create({
           data: {
@@ -216,6 +219,16 @@ export function createAccountsService({ prisma }: Pick<Container, "prisma">) {
 
         return transaction;
       });
+
+      await activityService.log({
+        type: "transaction",
+        action: "create",
+        userId,
+        projectId: input.projectId || null,
+        description: `logged transaction of $${res.amount} (${res.type}) for '${res.account.name}'`,
+      });
+
+      return res;
     },
 
     async updateTransaction(id: string, input: CreateTransactionInput, userId: string) {

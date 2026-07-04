@@ -19,7 +19,11 @@ function getLocalDayRange(now = new Date()) {
   return { startOfDay, endOfDay };
 }
 
+import { createActivityService } from "./activity.service";
+
 export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
+  const activityService = createActivityService({ prisma });
+
   async function findLatestEntryForToday(userId: string) {
     const { startOfDay, endOfDay } = getLocalDayRange();
 
@@ -43,13 +47,22 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         throw Conflict("You are already checked in");
       }
 
-      return prisma.attendance.create({
+      const res = await prisma.attendance.create({
         data: {
           userId,
           checkIn: new Date(),
         },
         include,
       });
+
+      await activityService.log({
+        type: "attendance",
+        action: "check_in",
+        userId,
+        description: "checked in",
+      });
+
+      return res;
     },
 
     async checkOut(userId: string) {
@@ -61,13 +74,22 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
         throw NotFound("No active check-in found");
       }
 
-      return prisma.attendance.update({
+      const res = await prisma.attendance.update({
         where: { id: active.id },
         data: {
           checkOut: new Date(),
         },
         include,
       });
+
+      await activityService.log({
+        type: "attendance",
+        action: "check_out",
+        userId,
+        description: "checked out",
+      });
+
+      return res;
     },
 
     async getTodayStatus(userId: string) {

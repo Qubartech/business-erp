@@ -4,6 +4,7 @@ import type { Container } from "../container";
 import type { z } from "zod";
 import type { documentMetadataSchema, listDocumentsQuerySchema } from "./documents.schemas.js";
 import crypto from "node:crypto";
+import { createActivityService } from "./activity.service";
 
 type ListQuery = z.infer<typeof listDocumentsQuerySchema>;
 type Metadata = z.infer<typeof documentMetadataSchema>;
@@ -14,6 +15,8 @@ const include = {
 } as const;
 
 export function createDocumentsService({ prisma, supabase }: Container) {
+  const activityService = createActivityService({ prisma });
+
   return {
     async list(q: ListQuery) {
       const where = {
@@ -41,7 +44,7 @@ export function createDocumentsService({ prisma, supabase }: Container) {
         contentType: file.mimetype, upsert: false,
       });
       if (error) throw BadRequest(`Upload failed: ${error.message}`);
-      return prisma.document.create({
+      const res = await prisma.document.create({
         data: {
           title: meta.title,
           category: meta.category ?? null,
@@ -53,6 +56,16 @@ export function createDocumentsService({ prisma, supabase }: Container) {
         },
         include,
       });
+
+      await activityService.log({
+        type: "document",
+        action: "upload",
+        userId: uploadedBy,
+        projectId: meta.projectId ?? null,
+        description: `uploaded document '${res.title}'`,
+      });
+
+      return res;
     },
 
     async getDownloadUrl(id: string) {
@@ -68,11 +81,22 @@ export function createDocumentsService({ prisma, supabase }: Container) {
       return { url: data.signedUrl, document: doc };
     },
 
-    async remove(id: string) {
+    async remove(id: string, userId?: string) {
       const doc = await prisma.document.findUnique({ where: { id } });
       if (!doc) throw NotFound("Document not found");
       try { await supabase().storage.from(env.supabaseBucket).remove([doc.filePath]); } catch { /* ignore */ }
       await prisma.document.delete({ where: { id } });
+
+      if (userId) {
+        await activityService.log({
+          type: "document",
+          action: "delete",
+          userId,
+          projectId: doc.projectId,
+          description: `deleted document '${doc.title}'`,
+        });
+      }
+
       return { id };
     },
   };
