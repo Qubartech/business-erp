@@ -29,16 +29,16 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   // Calculate active duration string
   let durationStr = "";
   if (activeDays < 30) {
-    durationStr = `${activeDays} day${activeDays === 1 ? "" : "s"}`;
+    durationStr = `${activeDays}d`;
   } else {
     const months = Math.floor(activeDays / 30);
     const remainingDays = activeDays % 30;
-    durationStr = `${months} month${months === 1 ? "" : "s"}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : ""}`;
+    durationStr = `${months}m ${remainingDays}d`;
   }
 
   const lastCommit = project.commits?.[0];
   let commitDaysAgo = -1;
-  let lastCommitStr = "No commits yet";
+  let lastCommitStr = "No commits";
   
   if (lastCommit) {
     const commitDate = new Date(lastCommit.committedAt);
@@ -48,37 +48,30 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
     } else if (commitDaysAgo === 1) {
       lastCommitStr = "yesterday";
     } else {
-      lastCommitStr = `${commitDaysAgo} days ago`;
+      lastCommitStr = `${commitDaysAgo}d ago`;
     }
   }
 
   // Determine warning level
-  let statusColor = "text-slate-500 dark:text-slate-450";
-  let warningText = "";
+  let statusColor = "text-slate-500 dark:text-slate-400";
   let isAlert = false;
 
   if (lastCommit) {
     if (commitDaysAgo >= 60) {
-      statusColor = "text-rose-600 dark:text-rose-400 font-bold";
-      warningText = "Delayed / Inactive > 2m";
+      statusColor = "text-rose-600 dark:text-rose-455 font-bold";
       isAlert = true;
     } else if (commitDaysAgo >= 30) {
-      statusColor = "text-amber-600 dark:text-amber-450 font-bold";
-      warningText = "Delayed / Inactive > 1m";
+      statusColor = "text-amber-600 dark:text-amber-455 font-bold";
       isAlert = true;
-    } else if (commitDaysAgo >= 7) {
-      statusColor = "text-slate-600 dark:text-slate-400";
-    } else {
+    } else if (commitDaysAgo < 7) {
       statusColor = "text-emerald-600 dark:text-emerald-450 font-bold";
     }
   } else {
     if (activeDays >= 60) {
-      statusColor = "text-rose-600 dark:text-rose-450 font-bold";
-      warningText = "No commits & active > 2m";
+      statusColor = "text-rose-600 dark:text-rose-455 font-bold";
       isAlert = true;
     } else if (activeDays >= 30) {
-      statusColor = "text-amber-600 dark:text-amber-450 font-bold";
-      warningText = "No commits & active > 1m";
+      statusColor = "text-amber-600 dark:text-amber-455 font-bold";
       isAlert = true;
     }
   }
@@ -86,22 +79,22 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   return (
     <div
       onClick={onClick}
-      className="relative flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 cursor-pointer hover:-translate-y-0.5 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.015)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] group overflow-hidden"
+      className="relative flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 cursor-pointer hover:-translate-y-0.5 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.015)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group overflow-hidden"
     >
       {/* Category accent line on left */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${categoryColorClass}`} />
 
       <div className="pl-1.5 flex flex-col h-full justify-between">
         <div>
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2 leading-snug">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-1 leading-snug">
               {project.name}
             </span>
             <span
-              className={`badge shrink-0 text-[10px] font-bold ${
+              className={`badge shrink-0 text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.2 rounded-md ${
                 isClient
-                  ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30"
-                  : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200/50 dark:border-purple-900/30"
+                  ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/30"
+                  : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200/30"
               }`}
             >
               {isClient ? "Client" : "Internal"}
@@ -109,57 +102,40 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
           </div>
           
           {project.description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">
+            <p className="text-xs text-slate-450 dark:text-slate-400 line-clamp-1 mb-3 leading-relaxed">
               {project.description}
             </p>
           )}
 
           {/* Continuation & Commit details */}
-          <div className="space-y-1.5 mb-3 bg-slate-50/50 dark:bg-zinc-800/40 border border-slate-100 dark:border-white/[0.04] p-2 rounded-xl text-[10px]">
-            <div className="flex items-center justify-between font-semibold">
-              <span className="text-slate-450 dark:text-slate-500 flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Duration:
-              </span>
-              <span className="text-slate-700 dark:text-slate-300">{durationStr} active</span>
+          <div className="grid grid-cols-2 gap-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border-t border-b border-slate-100 dark:border-white/[0.04] py-2 mb-3 select-none">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{durationStr} active</span>
             </div>
-            <div className="flex items-center justify-between font-semibold">
-              <span className="text-slate-450 dark:text-slate-500 flex items-center gap-1">
-                <Activity className="h-3 w-3" /> Last Commit:
+            <div className="flex items-center gap-1.5 justify-end min-w-0">
+              <Activity className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className={`truncate flex items-center gap-1 ${statusColor}`}>
+                {isAlert && <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
+                {lastCommitStr}
               </span>
-              <span className={statusColor}>{lastCommitStr}</span>
             </div>
-            {isAlert && warningText && (
-              <div className="mt-1 text-[9px] font-bold text-center bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40 py-0.5 rounded-lg">
-                ⚠️ {warningText}
-              </div>
-            )}
           </div>
         </div>
         
-        <div>
-          <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
-            <StatusBadge kind="project" status={project.status} />
-            
-            <div className="flex items-center gap-3 text-xs text-slate-450 dark:text-slate-500 font-semibold">
-              <span className="flex items-center gap-1" title="Members">
-                <Users className="h-3.5 w-3.5" />
-                <span>{project.members?.length ?? 0}</span>
-              </span>
-              <span className="flex items-center gap-1" title="Tasks">
-                <CheckSquare className="h-3.5 w-3.5" />
-                <span>{project._count?.tasks ?? 0}</span>
-              </span>
-            </div>
+        <div className="flex items-center justify-between mt-0.5">
+          <StatusBadge kind="project" status={project.status} />
+          
+          <div className="flex items-center gap-3 text-xs text-slate-450 dark:text-slate-500 font-bold">
+            <span className="flex items-center gap-1" title="Members">
+              <Users className="h-3.5 w-3.5 text-slate-400" />
+              <span>{project.members?.length ?? 0}</span>
+            </span>
+            <span className="flex items-center gap-1" title="Tasks">
+              <CheckSquare className="h-3.5 w-3.5 text-slate-400" />
+              <span>{project._count?.tasks ?? 0}</span>
+            </span>
           </div>
-
-          {(project.startDate || project.endDate) && (
-            <div className="mt-2 pt-2 border-t border-dashed border-slate-100 dark:border-white/[0.04] text-[10px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-              <Calendar className="h-3 w-3 shrink-0" />
-              <span>{formatDate(project.startDate)}</span>
-              {project.startDate && project.endDate && <span className="text-slate-350 dark:text-slate-700">→</span>}
-              <span>{formatDate(project.endDate)}</span>
-            </div>
-          )}
         </div>
       </div>
     </div>
