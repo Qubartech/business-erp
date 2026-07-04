@@ -73,6 +73,15 @@ export type DashboardSummary = {
   latestCommits: Commit[];
   activeAttendance: AttendanceEntry[];
   leavesToday: Leave[];
+  inProgressTasks: number;
+  activeProjectsList: Array<{
+    id: string;
+    name: string;
+    startDate: string | null;
+    createdAt: string;
+    commits: Array<{ committedAt: string }>;
+    tasks: Array<{ status: string }>;
+  }>;
 };
 
 export const dashboardApi = {
