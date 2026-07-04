@@ -223,11 +223,10 @@ export default function ProjectsListPage() {
   const [formModalOpen, setFormModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["projects", search, status],
+    queryKey: ["projects", search],
     queryFn: () =>
       projectsApi.list({
         search: search || undefined,
-        status: status || undefined,
         pageSize: 100,
       }),
   });
@@ -271,18 +270,23 @@ export default function ProjectsListPage() {
     });
   }, [data?.items, sortBy]);
 
+  const filteredProjects = useMemo(() => {
+    if (!status) return allProjects;
+    return allProjects.filter((p) => p.status === status);
+  }, [allProjects, status]);
+
   const totalProjects = allProjects.length;
   const activeProjects = allProjects.filter((p) => p.status === "active").length;
   const clientProjectsCount = allProjects.filter((p) => p.category === "client").length;
   const completedProjects = allProjects.filter((p) => p.status === "completed").length;
 
   const clientProjects = useMemo(
-    () => allProjects.filter((p) => p.category === "client"),
-    [allProjects]
+    () => filteredProjects.filter((p) => p.category === "client"),
+    [filteredProjects]
   );
   const internalProjects = useMemo(
-    () => allProjects.filter((p) => p.category !== "client"),
-    [allProjects]
+    () => filteredProjects.filter((p) => p.category !== "client"),
+    [filteredProjects]
   );
 
   return (
@@ -405,7 +409,7 @@ export default function ProjectsListPage() {
           )}
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-550">
@@ -417,25 +421,6 @@ export default function ProjectsListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-555">
-              <Folder className="h-4 w-4" />
-            </div>
-            <select
-              className="input pl-9 w-full appearance-none cursor-pointer"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as ProjectStatus | "")}
-            >
-              <option value="">All Statuses</option>
-              {(["draft", "active", "on_hold", "completed", "archived"] as ProjectStatus[]).map((s) => (
-                <option key={s} value={s}>
-                  {s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Sort Dropdown */}
@@ -457,6 +442,53 @@ export default function ProjectsListPage() {
               <option value="tasks-desc">Most Tasks</option>
             </select>
           </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100 dark:border-white/[0.04] select-none">
+          <button
+            onClick={() => setStatus("")}
+            className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+              status === ""
+                ? "bg-slate-900 dark:bg-white text-white dark:text-zinc-950 border-transparent shadow-xs"
+                : "bg-slate-50 dark:bg-zinc-800/80 text-slate-650 dark:text-slate-400 border-slate-200/50 dark:border-zinc-700/60 hover:bg-slate-100 dark:hover:bg-zinc-755/40"
+            }`}
+          >
+            <span>All</span>
+            <span className={`text-[9px] px-1.5 py-0.2 rounded-md ${
+              status === "" ? "bg-white/20 dark:bg-black/10 text-white dark:text-zinc-950" : "bg-slate-200/60 dark:bg-zinc-700 text-slate-500 dark:text-slate-400"
+            }`}>
+              {allProjects.length}
+            </span>
+          </button>
+          {[
+            { value: "draft", label: "Draft", color: "bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-zinc-700/60" },
+            { value: "active", label: "Active", color: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30" },
+            { value: "on_hold", label: "On Hold", color: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-900/30" },
+            { value: "completed", label: "Completed", color: "bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 border-blue-200/30" },
+            { value: "archived", label: "Archived", color: "bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/30" },
+          ].map((item) => {
+            const count = allProjects.filter((p) => p.status === item.value).length;
+            const isSelected = status === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => setStatus(item.value as any)}
+                className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-brand-600 text-white border-transparent shadow-xs"
+                    : `${item.color} hover:brightness-95`
+                }`}
+              >
+                <span>{item.label}</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-md ${
+                  isSelected ? "bg-white/20 text-white" : "bg-black/[0.04] dark:bg-white/[0.04] text-current/80"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -490,7 +522,7 @@ export default function ProjectsListPage() {
         </div>
 
         <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] px-3 py-1 rounded-lg">
-          Filtered <span className="text-brand-600 dark:text-brand-400 font-bold">{allProjects.length}</span> projects
+          Filtered <span className="text-brand-600 dark:text-brand-400 font-bold">{filteredProjects.length}</span> projects
         </div>
       </div>
 
@@ -565,14 +597,14 @@ export default function ProjectsListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04] bg-white dark:bg-zinc-900">
-              {allProjects.length === 0 ? (
+              {filteredProjects.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
                     No projects found
                   </td>
                 </tr>
               ) : (
-                allProjects.map((p) => (
+                filteredProjects.map((p) => (
                   <ProjectRow key={p.id} project={p} onClick={() => nav(`/projects/${p.id}`)} />
                 ))
               )}

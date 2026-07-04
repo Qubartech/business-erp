@@ -349,14 +349,13 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
         >
           {!isLoading && (
             <>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/30">
-                {data?.projectsByStatus?.active ?? 0} Active
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-405 border border-emerald-100 dark:border-emerald-900/30" title="Active Projects">
+                <Play className="w-2.5 h-2.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                <span>{data?.projectsByStatus?.active ?? 0}</span>
               </span>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455 border border-amber-100 dark:border-amber-900/30">
-                {data?.projectsByStatus?.on_hold ?? 0} Hold
-              </span>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-zinc-700">
-                {data?.projectsByStatus?.completed ?? 0} Done
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/30" title="Completed Projects">
+                <CheckCircle className="w-2.5 h-2.5 text-blue-500 shrink-0" />
+                <span>{data?.projectsByStatus?.completed ?? 0}</span>
               </span>
             </>
           )}
@@ -365,16 +364,18 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
           label="Total tasks" 
           value={isLoading ? "…" : data?.totalTasks ?? 0} 
           icon={<CheckSquare className="w-5 h-5" />} 
-          colorClass="text-sky-600 bg-sky-50 border-sky-100 dark:text-sky-400 dark:bg-sky-950/20 dark:border-sky-900/60"
+          colorClass="text-sky-650 bg-sky-50 border-sky-100 dark:text-sky-400 dark:bg-sky-950/20 dark:border-sky-900/60"
           gradientClass="from-sky-500/[0.02] to-blue-500/[0.02] dark:from-sky-500/[0.01] dark:to-blue-500/[0.01]"
         >
           {!isLoading && (
             <>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/30 text-sky-650 dark:text-sky-450 border border-sky-100 dark:border-sky-900/30">
-                {data?.inProgressTasks ?? 0} Active
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-450 border border-sky-100 dark:border-sky-900/40" title="Active Tasks">
+                <Play className="w-2.5 h-2.5 fill-sky-500 text-sky-500 shrink-0" />
+                <span>{data?.inProgressTasks ?? 0}</span>
               </span>
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/30">
-                {data?.completedTasks ?? 0} Completed
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40" title="Completed Tasks">
+                <CheckCircle className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                <span>{data?.completedTasks ?? 0}</span>
               </span>
             </>
           )}
