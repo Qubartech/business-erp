@@ -14,16 +14,18 @@ interface CardProps {
   icon: React.ReactNode;
   colorClass?: string;
   gradientClass?: string;
+  children?: React.ReactNode;
 }
 
-function Card({ label, value, icon, colorClass = "text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60", gradientClass = "from-brand-500/5 to-indigo-500/5" }: CardProps) {
+function Card({ label, value, icon, colorClass = "text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60", gradientClass = "from-brand-500/5 to-indigo-500/5", children }: CardProps) {
   return (
     <div className={`card-premium p-6 flex items-center justify-between bg-gradient-to-br ${gradientClass} border border-slate-200/50 dark:border-slate-800/60 hover:shadow-lg transition-all duration-300`}>
-      <div className="space-y-2">
+      <div className="space-y-2 min-w-0 flex-1 mr-4">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</span>
         <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{value}</div>
+        {children && <div className="pt-2 flex flex-wrap gap-1.5">{children}</div>}
       </div>
-      <div className={`p-3.5 rounded-2xl border ${colorClass} shadow-sm transition-transform duration-200 hover:scale-105 shrink-0`}>
+      <div className={`p-3.5 rounded-2xl border ${colorClass} shadow-sm transition-transform duration-200 hover:scale-105 shrink-0 self-start`}>
         {icon}
       </div>
     </div>
@@ -344,20 +346,45 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
           icon={<Folder className="w-5 h-5" />} 
           colorClass="text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60"
           gradientClass="from-brand-500/[0.02] to-indigo-500/[0.02] dark:from-brand-500/[0.01] dark:to-indigo-500/[0.01]"
-        />
+        >
+          {!isLoading && (
+            <>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/30">
+                {data?.projectsByStatus?.active ?? 0} Active
+              </span>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-455 border border-amber-100 dark:border-amber-900/30">
+                {data?.projectsByStatus?.on_hold ?? 0} Hold
+              </span>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-zinc-700">
+                {data?.projectsByStatus?.completed ?? 0} Done
+              </span>
+            </>
+          )}
+        </Card>
         <Card 
-          label="Active tasks" 
-          value={isLoading ? "…" : data?.inProgressTasks ?? 0} 
-          icon={<Play className="w-5 h-5" />} 
+          label="Total tasks" 
+          value={isLoading ? "…" : data?.totalTasks ?? 0} 
+          icon={<CheckSquare className="w-5 h-5" />} 
           colorClass="text-sky-600 bg-sky-50 border-sky-100 dark:text-sky-400 dark:bg-sky-950/20 dark:border-sky-900/60"
           gradientClass="from-sky-500/[0.02] to-blue-500/[0.02] dark:from-sky-500/[0.01] dark:to-blue-500/[0.01]"
-        />
+        >
+          {!isLoading && (
+            <>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/30 text-sky-650 dark:text-sky-450 border border-sky-100 dark:border-sky-900/30">
+                {data?.inProgressTasks ?? 0} Active
+              </span>
+              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/30">
+                {data?.completedTasks ?? 0} Completed
+              </span>
+            </>
+          )}
+        </Card>
         <Card 
-          label="Completed tasks" 
-          value={isLoading ? "…" : data?.completedTasks ?? 0} 
-          icon={<CheckCircle className="w-5 h-5" />} 
-          colorClass="text-emerald-600 bg-emerald-50 border-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/20 dark:border-emerald-900/60"
-          gradientClass="from-emerald-500/[0.02] to-teal-500/[0.02] dark:from-emerald-500/[0.01] dark:to-teal-500/[0.01]"
+          label="Team members" 
+          value={isLoading ? "…" : data?.teamMembers ?? 0} 
+          icon={<Users className="w-5 h-5" />} 
+          colorClass="text-violet-600 bg-violet-50 border-violet-100 dark:text-violet-400 dark:bg-violet-950/20 dark:border-violet-900/60"
+          gradientClass="from-violet-500/[0.02] to-purple-500/[0.02] dark:from-violet-500/[0.01] dark:to-purple-500/[0.01]"
         />
         <Card 
           label="Time tracked" 
@@ -420,22 +447,6 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
               <span className="text-[10px] font-extrabold uppercase tracking-wider bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-400 border border-brand-100/50 dark:border-brand-900/40 px-2.5 py-0.5 rounded-lg select-none">
                 {data?.activeProjectsList?.length || 0} active
               </span>
-            </div>
-
-            {/* Projects Status Distribution Row inside active projects card */}
-            <div className="grid grid-cols-5 gap-3.5 mb-6 bg-slate-50/50 dark:bg-zinc-800/40 border border-slate-100/80 dark:border-white/[0.04] p-4 rounded-2xl">
-              {(["active", "on_hold", "draft", "completed", "archived"] as const).map((status) => {
-                const count = data?.projectsByStatus?.[status] ?? 0;
-                const colors = statusColors[status] || statusColors.draft;
-                return (
-                  <div key={status} className="flex flex-col items-center justify-center">
-                    <span className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{isLoading ? "…" : count}</span>
-                    <span className={`text-[8px] font-extrabold uppercase tracking-wider mt-1 px-1.5 py-0.5 rounded-md ${colors.text} bg-white dark:bg-zinc-800 border border-current/10 select-none`}>
-                      {status.replace("_", " ")}
-                    </span>
-                  </div>
-                );
-              })}
             </div>
 
             {isLoading ? (
