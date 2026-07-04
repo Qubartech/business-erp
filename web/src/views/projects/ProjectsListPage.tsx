@@ -109,9 +109,14 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
 
           {/* Continuation & Commit details */}
           <div className="grid grid-cols-2 gap-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border-t border-b border-slate-100 dark:border-white/[0.04] py-2 mb-3 select-none">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-              <span className="truncate">{durationStr} active</span>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span className="truncate font-extrabold">{durationStr} active</span>
+              </div>
+              <div className="text-[9px] text-slate-400 dark:text-slate-500 pl-5 truncate">
+                {formatDate(project.startDate)} - {formatDate(project.endDate) || "Present"}
+              </div>
             </div>
             <div className="flex items-center gap-1.5 justify-end min-w-0">
               <Activity className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -205,7 +210,12 @@ function ProjectRow({ project, onClick }: { project: Project; onClick: () => voi
       <td className="px-4 py-3">
         <StatusBadge kind="project" status={project.status} />
       </td>
-      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-350 font-semibold">{durationStr}</td>
+      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-350 font-semibold">
+        <div className="font-extrabold">{durationStr}</div>
+        <div className="text-[10px] text-slate-400 dark:text-slate-550 mt-0.5">
+          {formatDate(project.startDate)} - {formatDate(project.endDate) || "Present"}
+        </div>
+      </td>
       <td className="px-4 py-3 text-xs font-semibold"><span className={statusColor}>{lastCommitStr}</span></td>
       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 font-semibold">{project.members?.length ?? 0}</td>
       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 font-semibold">{project._count?.tasks ?? 0}</td>
