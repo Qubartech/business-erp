@@ -33,7 +33,13 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   } else {
     const months = Math.floor(activeDays / 30);
     const remainingDays = activeDays % 30;
-    durationStr = `${months}m ${remainingDays}d`;
+    if (months >= 12) {
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      durationStr = `${years}y ${remainingMonths}m ${remainingDays}d`;
+    } else {
+      durationStr = `${months}m ${remainingDays}d`;
+    }
   }
 
   const lastCommit = project.commits?.[0];
@@ -159,7 +165,13 @@ function ProjectRow({ project, onClick }: { project: Project; onClick: () => voi
   } else {
     const months = Math.floor(activeDays / 30);
     const remainingDays = activeDays % 30;
-    durationStr = `${months}m ${remainingDays}d`;
+    if (months >= 12) {
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      durationStr = `${years}y ${remainingMonths}m ${remainingDays}d`;
+    } else {
+      durationStr = `${months}m ${remainingDays}d`;
+    }
   }
 
   const lastCommit = project.commits?.[0];

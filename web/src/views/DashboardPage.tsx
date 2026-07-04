@@ -467,9 +467,18 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
                   if (activeDays < 30) {
                     durationStr = `${activeDays} day${activeDays === 1 ? "" : "s"}`;
                   } else {
-                    const months = Math.floor(activeDays / 30);
+                    const totalMonths = Math.floor(activeDays / 30);
                     const remainingDays = activeDays % 30;
-                    durationStr = `${months} month${months === 1 ? "" : "s"}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : ""}`;
+                    const daysSuffix = remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : "";
+                    
+                    if (totalMonths >= 12) {
+                      const years = Math.floor(totalMonths / 12);
+                      const remainingMonths = totalMonths % 12;
+                      const monthsSuffix = remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths === 1 ? "" : "s"}` : "";
+                      durationStr = `${years} year${years === 1 ? "" : "s"}${monthsSuffix}${daysSuffix}`;
+                    } else {
+                      durationStr = `${totalMonths} month${totalMonths === 1 ? "" : "s"}${daysSuffix}`;
+                    }
                   }
 
                   const lastCommit = project.commits?.[0];
