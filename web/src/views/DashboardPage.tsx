@@ -456,127 +456,152 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
               <div className="text-xs text-slate-400 dark:text-slate-500 py-8 italic text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
                 No active projects found.
               </div>
-            ) : (
-              <div className="space-y-4">
-                {data.activeProjectsList.map((project) => {
-                  const projectStart = new Date(project.startDate || project.createdAt);
-                  const activeDays = Math.max(0, Math.floor((Date.now() - projectStart.getTime()) / (1000 * 60 * 60 * 24)));
-                  
-                  // Calculate active duration string
-                  let durationStr = "";
-                  if (activeDays < 30) {
-                    durationStr = `${activeDays} day${activeDays === 1 ? "" : "s"}`;
-                  } else {
-                    const totalMonths = Math.floor(activeDays / 30);
-                    const remainingDays = activeDays % 30;
-                    const daysSuffix = remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : "";
+            ) : (() => {
+              const sortedProjects = [...data.activeProjectsList].sort((a: any, b: any) => {
+                const aTime = a.commits?.[0]?.committedAt
+                  ? new Date(a.commits[0].committedAt).getTime()
+                  : new Date(a.startDate || a.createdAt).getTime();
+                const bTime = b.commits?.[0]?.committedAt
+                  ? new Date(b.commits[0].committedAt).getTime()
+                  : new Date(b.startDate || b.createdAt).getTime();
+                return bTime - aTime;
+              });
+
+              return (
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.04] border border-slate-200/60 dark:border-white/[0.06] rounded-2xl overflow-hidden bg-white dark:bg-zinc-950/40">
+                  {sortedProjects.map((project) => {
+                    const projectStart = new Date(project.startDate || project.createdAt);
+                    const activeDays = Math.max(0, Math.floor((Date.now() - projectStart.getTime()) / (1000 * 60 * 60 * 24)));
                     
-                    if (totalMonths >= 12) {
-                      const years = Math.floor(totalMonths / 12);
-                      const remainingMonths = totalMonths % 12;
-                      const monthsSuffix = remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths === 1 ? "" : "s"}` : "";
-                      durationStr = `${years} year${years === 1 ? "" : "s"}${monthsSuffix}${daysSuffix}`;
+                    // Calculate active duration string
+                    let durationStr = "";
+                    if (activeDays < 30) {
+                      durationStr = `${activeDays} day${activeDays === 1 ? "" : "s"}`;
                     } else {
-                      durationStr = `${totalMonths} month${totalMonths === 1 ? "" : "s"}${daysSuffix}`;
+                      const totalMonths = Math.floor(activeDays / 30);
+                      const remainingDays = activeDays % 30;
+                      const daysSuffix = remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : "";
+                      
+                      if (totalMonths >= 12) {
+                        const years = Math.floor(totalMonths / 12);
+                        const remainingMonths = totalMonths % 12;
+                        const monthsSuffix = remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths === 1 ? "" : "s"}` : "";
+                        durationStr = `${years} year${years === 1 ? "" : "s"}${monthsSuffix}${daysSuffix}`;
+                      } else {
+                        durationStr = `${totalMonths} month${totalMonths === 1 ? "" : "s"}${daysSuffix}`;
+                      }
                     }
-                  }
 
-                  const lastCommit = project.commits?.[0];
-                  let commitDaysAgo = -1;
-                  let lastCommitStr = "No commits yet";
-                  
-                  if (lastCommit) {
-                    const commitDate = new Date(lastCommit.committedAt);
-                    commitDaysAgo = Math.max(0, Math.floor((Date.now() - commitDate.getTime()) / (1000 * 60 * 60 * 24)));
-                    if (commitDaysAgo === 0) {
-                      lastCommitStr = "today";
-                    } else if (commitDaysAgo === 1) {
-                      lastCommitStr = "yesterday";
+                    const lastCommit = project.commits?.[0];
+                    let commitDaysAgo = -1;
+                    let lastCommitStr = "No commits yet";
+                    
+                    if (lastCommit) {
+                      const commitDate = new Date(lastCommit.committedAt);
+                      commitDaysAgo = Math.max(0, Math.floor((Date.now() - commitDate.getTime()) / (1000 * 60 * 60 * 24)));
+                      if (commitDaysAgo === 0) {
+                        lastCommitStr = "today";
+                      } else if (commitDaysAgo === 1) {
+                        lastCommitStr = "yesterday";
+                      } else {
+                        lastCommitStr = `${commitDaysAgo} days ago`;
+                      }
+                    }
+
+                    // Determine warning level
+                    let statusColor = "text-slate-505 dark:text-slate-450";
+                    let warningText = "";
+                    let isAlert = false;
+
+                    if (lastCommit) {
+                      if (commitDaysAgo >= 60) {
+                        statusColor = "text-rose-650 dark:text-rose-450 font-semibold";
+                        warningText = "Delayed / Inactive > 2 months";
+                        isAlert = true;
+                      } else if (commitDaysAgo >= 30) {
+                        statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
+                        warningText = "Delayed / Inactive > 1 month";
+                        isAlert = true;
+                      } else if (commitDaysAgo >= 7) {
+                        statusColor = "text-slate-655 dark:text-slate-350";
+                      } else {
+                        statusColor = "text-emerald-650 dark:text-emerald-450 font-semibold";
+                      }
                     } else {
-                      lastCommitStr = `${commitDaysAgo} days ago`;
+                      if (activeDays >= 60) {
+                        statusColor = "text-rose-655 dark:text-rose-450 font-semibold";
+                        warningText = "No commits & active > 2 months";
+                        isAlert = true;
+                      } else if (activeDays >= 30) {
+                        statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
+                        warningText = "No commits & active > 1 month";
+                        isAlert = true;
+                      }
                     }
-                  }
 
-                  // Determine warning level
-                  let statusColor = "text-slate-500 dark:text-slate-450";
-                  let warningText = "";
-                  let isAlert = false;
+                    // Task counts
+                    const projectInProgressTasks = project.tasks.filter((t) => t.status === "in_progress").length;
+                    const projectCompletedTasks = project.tasks.filter((t) => t.status === "done").length;
 
-                  if (lastCommit) {
-                    if (commitDaysAgo >= 60) {
-                      statusColor = "text-rose-650 dark:text-rose-400 font-semibold";
-                      warningText = "Delayed / Inactive > 2 months";
-                      isAlert = true;
-                    } else if (commitDaysAgo >= 30) {
-                      statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
-                      warningText = "Delayed / Inactive > 1 month";
-                      isAlert = true;
-                    } else if (commitDaysAgo >= 7) {
-                      statusColor = "text-slate-650 dark:text-slate-350";
-                    } else {
-                      statusColor = "text-emerald-650 dark:text-emerald-400 font-semibold";
-                    }
-                  } else {
-                    if (activeDays >= 60) {
-                      statusColor = "text-rose-650 dark:text-rose-400 font-semibold";
-                      warningText = "No commits & active > 2 months";
-                      isAlert = true;
-                    } else if (activeDays >= 30) {
-                      statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
-                      warningText = "No commits & active > 1 month";
-                      isAlert = true;
-                    }
-                  }
-
-                  // Task counts
-                  const projectInProgressTasks = project.tasks.filter((t) => t.status === "in_progress").length;
-                  const projectCompletedTasks = project.tasks.filter((t) => t.status === "done").length;
-
-                  return (
-                    <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs transition-all duration-200">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-snug">
-                            {project.name}
-                          </span>
-                          {isAlert && (
-                            <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 border border-rose-100 dark:border-rose-900/40 uppercase tracking-wider animate-pulse">
-                              Attention Needed
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-455 dark:text-slate-500 font-medium mt-1">
-                          Continuing for <span className="text-slate-650 dark:text-slate-350 font-bold">{durationStr}</span> (since {projectStart.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })})
-                        </div>
-                        
-                        {/* Tasks breakdown for project */}
-                        <div className="flex items-center gap-2.5 mt-2.5 text-[10px] font-bold select-none">
-                          <span className="flex items-center gap-1.5 bg-blue-50/60 dark:bg-blue-950/25 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-100/40 dark:border-blue-900/30">
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                            {projectInProgressTasks} in progress
-                          </span>
-                          <span className="flex items-center gap-1.5 bg-emerald-50/60 dark:bg-emerald-950/25 text-emerald-700 dark:text-emerald-450 px-2 py-0.5 rounded-lg border border-emerald-100/40 dark:border-emerald-900/30">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            {projectCompletedTasks} completed
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-left sm:text-right shrink-0">
-                        <div className="text-[11px] text-slate-455 dark:text-slate-500 font-medium">
-                          Last commit: <span className={statusColor}>{lastCommitStr}</span>
-                        </div>
-                        {warningText && (
-                          <div className="text-[9px] font-bold text-rose-500 dark:text-rose-400 mt-1">
-                            {warningText}
+                    return (
+                      <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-50/60 dark:hover:bg-zinc-900/20 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="p-2 bg-slate-100/80 dark:bg-zinc-800 rounded-xl text-slate-550 shrink-0">
+                            <Folder className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                           </div>
-                        )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">
+                                {project.name}
+                              </span>
+                              {isAlert && (
+                                <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-50 dark:bg-rose-955/30 text-rose-700 dark:text-rose-450 border border-rose-100 dark:border-rose-900/30 uppercase tracking-wider shrink-0 animate-pulse">
+                                  Attention Needed
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-455 dark:text-slate-500 font-medium mt-0.5">
+                              Active <span className="text-slate-655 dark:text-slate-350 font-bold">{durationStr}</span> (since {projectStart.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })})
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 sm:gap-6 shrink-0 self-end sm:self-auto">
+                          {/* Tasks breakdown for project */}
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold select-none font-mono">
+                            <span 
+                              className="flex items-center gap-1 bg-blue-50/50 dark:bg-blue-955/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-100/30 dark:border-blue-900/20"
+                              title={`${projectInProgressTasks} tasks in progress`}
+                            >
+                              <Clock className="w-3.5 h-3.5 text-blue-550 shrink-0" />
+                              <span>{projectInProgressTasks}</span>
+                            </span>
+                            <span 
+                              className="flex items-center gap-1 bg-emerald-50/50 dark:bg-emerald-955/10 text-emerald-700 dark:text-emerald-450 px-2 py-0.5 rounded-lg border border-emerald-100/30 dark:border-emerald-900/20"
+                              title={`${projectCompletedTasks} tasks completed`}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-550 shrink-0" />
+                              <span>{projectCompletedTasks}</span>
+                            </span>
+                          </div>
+
+                          <div className="text-left sm:text-right shrink-0 leading-tight min-w-[120px]">
+                            <div className="text-[11px] text-slate-450 dark:text-slate-500 font-medium">
+                              Commit: <span className={statusColor}>{lastCommitStr}</span>
+                            </div>
+                            {warningText && (
+                              <div className="text-[9px] font-bold text-rose-500 dark:text-rose-455 mt-0.5">
+                                {warningText}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
