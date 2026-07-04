@@ -97,6 +97,8 @@ export const attendanceApi = {
   checkOut: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-out")),
   list: (q?: { userId?: string; date?: string; month?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<AttendanceEntry>>(api.get<ApiEnvelope<Paged<AttendanceEntry>>>("/attendance", { params: q })),
+  update: (id: string, data: { checkIn: string; checkOut: string | null }) =>
+    unwrap<AttendanceEntry>(api.patch<ApiEnvelope<AttendanceEntry>>(`/attendance/${id}`, data)),
 };
 
 export const personalApiKeyApi = {

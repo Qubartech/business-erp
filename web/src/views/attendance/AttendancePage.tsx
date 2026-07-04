@@ -8,7 +8,7 @@ import { usersApi } from "@/services/api";
 import { attendanceApi, leavesApi, holidaysApi } from "@/services/featureApis";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { formatDateTime, formatDate } from "@/lib/format";
-import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2, Pencil } from "lucide-react";
 import type { User as UserType, AttendanceEntry, Leave, Holiday, LeaveType, LeaveStatus } from "@/types";
 import { AttendancePageSkeleton } from "@/components/Skeletons";
 
@@ -55,6 +55,18 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+const toLocalDatetimeInputString = (dateInput: string | Date | null | undefined): string => {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 type UserAttendanceRow = {
   user: UserType;
   entries: AttendanceEntry[];
@@ -85,6 +97,13 @@ export default function AttendancePage() {
   const [holidayDate, setHolidayDate] = useState<string>("");
   const [holidayName, setHolidayName] = useState<string>("");
   const [holidayDesc, setHolidayDesc] = useState<string>("");
+
+  // Edit Attendance Form states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<AttendanceEntry | null>(null);
+  const [editCheckIn, setEditCheckIn] = useState("");
+  const [editCheckOut, setEditCheckOut] = useState("");
+  const [hasCheckOut, setHasCheckOut] = useState(false);
 
   // Queries
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -183,6 +202,52 @@ export default function AttendancePage() {
       toast.error("Failed to delete holiday");
     },
   });
+
+  const updateAttendance = useMutation({
+    mutationFn: (variables: { id: string; checkIn: string; checkOut: string | null }) =>
+      attendanceApi.update(variables.id, { checkIn: variables.checkIn, checkOut: variables.checkOut }),
+    onSuccess: () => {
+      toast.success("Attendance times updated successfully");
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+      setEditModalOpen(false);
+      setSelectedEntry(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update attendance times");
+    },
+  });
+
+  const handleEditEntry = (entry: AttendanceEntry) => {
+    setSelectedEntry(entry);
+    setEditCheckIn(toLocalDatetimeInputString(entry.checkIn));
+    setEditCheckOut(toLocalDatetimeInputString(entry.checkOut));
+    setHasCheckOut(entry.checkOut !== null);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateAttendanceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEntry) return;
+
+    if (!editCheckIn) {
+      toast.error("Please provide check-in time");
+      return;
+    }
+
+    const checkInISO = new Date(editCheckIn).toISOString();
+    const checkOutISO = hasCheckOut && editCheckOut ? new Date(editCheckOut).toISOString() : null;
+
+    if (checkOutISO && new Date(checkInISO) > new Date(checkOutISO)) {
+      toast.error("Check-in time must be before check-out time");
+      return;
+    }
+
+    updateAttendance.mutate({
+      id: selectedEntry.id,
+      checkIn: checkInISO,
+      checkOut: checkOutISO,
+    });
+  };
 
   // Calendar navigations
   const shiftDay = (amount: number) => {
@@ -415,6 +480,15 @@ export default function AttendancePage() {
                 <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {entry.checkOut ? formatDateTime(entry.checkOut) : "Active Check-In"}
                 </span>
+                {currentUser?.role === "admin" && (
+                  <button
+                    onClick={() => handleEditEntry(entry)}
+                    className="p-1 rounded text-slate-400 hover:text-brand-600 dark:text-zinc-550 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer shrink-0 ml-1"
+                    title="Edit attendance times"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1343,6 +1417,101 @@ export default function AttendancePage() {
             >
               {createLeave.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               Submit Leave Request
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT ATTENDANCE MODAL */}
+      <Modal
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedEntry(null);
+        }}
+        title={
+          <>
+            <Pencil className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+            <span>Edit Attendance Log</span>
+          </>
+        }
+      >
+        <form onSubmit={handleUpdateAttendanceSubmit} className="space-y-4">
+          {selectedEntry && (
+            <div className="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-lg border border-slate-100 dark:border-white/[0.02] text-xs space-y-1">
+              <div>
+                <span className="font-bold text-slate-550 dark:text-zinc-400">Team Member:</span>{" "}
+                <span className="font-semibold text-slate-700 dark:text-zinc-300">{selectedEntry.user?.name}</span>
+              </div>
+              <div>
+                <span className="font-bold text-slate-550 dark:text-zinc-400">Email:</span>{" "}
+                <span className="font-semibold text-slate-700 dark:text-zinc-300">{selectedEntry.user?.email}</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="label">Check-In Time</label>
+            <input
+              type="datetime-local"
+              className="input cursor-pointer font-medium"
+              required
+              value={editCheckIn}
+              onChange={(e) => setEditCheckIn(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hasCheckOutCheckbox"
+                className="rounded border-slate-350 dark:border-white/[0.08] text-brand-600 focus:ring-brand-500 h-4 w-4 bg-transparent cursor-pointer"
+                checked={hasCheckOut}
+                onChange={(e) => {
+                  setHasCheckOut(e.target.checked);
+                  if (e.target.checked && !editCheckOut) {
+                    setEditCheckOut(toLocalDatetimeInputString(new Date()));
+                  }
+                }}
+              />
+              <label htmlFor="hasCheckOutCheckbox" className="text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer select-none">
+                Has Checked Out
+              </label>
+            </div>
+
+            {hasCheckOut && (
+              <div>
+                <label className="label">Check-Out Time</label>
+                <input
+                  type="datetime-local"
+                  className="input cursor-pointer font-medium"
+                  required={hasCheckOut}
+                  value={editCheckOut}
+                  onChange={(e) => setEditCheckOut(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEditModalOpen(false);
+                setSelectedEntry(null);
+              }}
+              className="btn-secondary text-xs px-4 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateAttendance.isPending}
+              className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
+            >
+              {updateAttendance.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Save Changes
             </button>
           </div>
         </form>

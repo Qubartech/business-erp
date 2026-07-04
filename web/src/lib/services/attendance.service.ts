@@ -149,5 +149,45 @@ export function createAttendanceService({ prisma }: Pick<Container, "prisma">) {
 
       return { items, total, page: q.page, pageSize: q.pageSize };
     },
+
+    async update(id: string, data: { checkIn?: string | Date; checkOut?: string | Date | null }) {
+      const entry = await prisma.attendance.findUnique({
+        where: { id },
+      });
+      if (!entry) {
+        throw NotFound("Attendance record not found");
+      }
+
+      const updateData: any = {};
+      if (data.checkIn !== undefined) {
+        updateData.checkIn = new Date(data.checkIn);
+      }
+      if (data.checkOut !== undefined) {
+        updateData.checkOut = data.checkOut ? new Date(data.checkOut) : null;
+      }
+
+      // Basic validation: checkIn should be before checkOut
+      const checkInDate = updateData.checkIn || entry.checkIn;
+      const checkOutDate = updateData.checkOut !== undefined ? updateData.checkOut : entry.checkOut;
+
+      if (checkInDate && checkOutDate && checkInDate > checkOutDate) {
+        throw Conflict("Check-in time must be before check-out time");
+      }
+
+      const res = await prisma.attendance.update({
+        where: { id },
+        data: updateData,
+        include,
+      });
+
+      await activityService.log({
+        type: "attendance",
+        action: "update",
+        userId: entry.userId,
+        description: `attendance log edited by admin: check-in ${res.checkIn.toISOString()}${res.checkOut ? `, check-out ${res.checkOut.toISOString()}` : ""}`,
+      });
+
+      return res;
+    },
   };
 }

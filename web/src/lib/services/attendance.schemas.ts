@@ -7,3 +7,9 @@ export const listAttendanceQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(2000).default(20),
 });
+
+export const updateAttendanceSchema = z.object({
+  checkIn: z.string(),
+  checkOut: z.string().nullable().optional(),
+});
+
