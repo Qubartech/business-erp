@@ -26,6 +26,14 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
       const listInclude = {
         members: { select: { id: true, userId: true } },
         creator: { select: { id: true, name: true, email: true } },
+        commits: {
+          orderBy: { committedAt: "desc" as const },
+          take: 1,
+          select: { committedAt: true, sha: true, message: true, authorName: true },
+        },
+        tasks: {
+          select: { status: true },
+        },
         _count: { select: { tasks: true } },
       };
       const [items, total] = await Promise.all([

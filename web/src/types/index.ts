@@ -55,6 +55,8 @@ export type Project = {
   createdAt: string; updatedAt: string;
   creator?: Pick<User, "id" | "name" | "email">;
   members?: ProjectMember[];
+  commits?: { committedAt: string; sha: string; message: string; authorName: string }[];
+  tasks?: { status: TaskStatus }[];
   _count?: { tasks: number };
 };
 
