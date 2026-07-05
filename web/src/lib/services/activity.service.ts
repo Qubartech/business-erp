@@ -1,4 +1,8 @@
 import type { Container } from "../container";
+import type { z } from "zod";
+import type { listActivitiesQuerySchema } from "./activities.schemas";
+
+type ListQuery = z.infer<typeof listActivitiesQuerySchema>;
 
 export function createActivityService({ prisma }: Pick<Container, "prisma">) {
   return {
@@ -29,15 +33,44 @@ export function createActivityService({ prisma }: Pick<Container, "prisma">) {
       }
     },
 
-    async list(limit = 20) {
-      return prisma.activity.findMany({
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-          project: { select: { id: true, name: true } },
-        },
-      });
+    async list(q: ListQuery) {
+      const where: any = {};
+      if (q.type) {
+        where.type = q.type;
+      }
+      if (q.userId) {
+        where.userId = q.userId;
+      }
+      if (q.projectId) {
+        where.projectId = q.projectId;
+      }
+      if (q.search) {
+        where.description = {
+          contains: q.search,
+          mode: "insensitive",
+        };
+      }
+
+      const [items, total] = await Promise.all([
+        prisma.activity.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: (q.page - 1) * q.pageSize,
+          take: q.pageSize,
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+            project: { select: { id: true, name: true } },
+          },
+        }),
+        prisma.activity.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        page: q.page,
+        pageSize: q.pageSize,
+      };
     },
 
     async countUnread(lastRead: Date) {

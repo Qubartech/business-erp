@@ -126,5 +126,6 @@ export const holidaysApi = {
 };
 
 export const activitiesApi = {
-  list: () => unwrap<Activity[]>(api.get<ApiEnvelope<Activity[]>>("/activities")),
+  list: (q?: { type?: string; userId?: string; projectId?: string; search?: string; page?: number; pageSize?: number }) =>
+    unwrap<Paged<Activity>>(api.get<ApiEnvelope<Paged<Activity>>>("/activities", { params: q })),
 };

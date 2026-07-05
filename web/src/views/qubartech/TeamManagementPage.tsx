@@ -385,8 +385,8 @@ export default function TeamManagementPage() {
                   className={clsx(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold select-none cursor-pointer transition-colors shadow-xs",
                     uploading
-                      ? "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-550 border-slate-250 dark:border-zinc-750 pointer-events-none"
-                      : "bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 border-slate-250 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-850"
+                      ? "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-555 border-slate-200 dark:border-zinc-750 pointer-events-none"
+                      : "bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-zinc-750 hover:bg-slate-50 dark:hover:bg-zinc-850"
                   )}
                 >
                   {uploading ? (

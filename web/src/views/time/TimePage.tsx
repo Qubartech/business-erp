@@ -475,7 +475,7 @@ export default function TimePage() {
                     <div
                       key={idx}
                       onClick={() => setSelectedUserId(log.id)}
-                      className="p-4 rounded-xl border border-slate-250/35 dark:border-white/[0.05] bg-slate-50/40 dark:bg-zinc-900/30 flex flex-col gap-3.5 hover:border-brand-400/50 dark:hover:border-brand-500/50 hover:bg-white dark:hover:bg-zinc-800/40 active:scale-[0.98] cursor-pointer transition-all duration-300 shadow-xs"
+                      className="p-4 rounded-xl border border-slate-200/35 dark:border-white/[0.05] bg-slate-50/40 dark:bg-zinc-900/30 flex flex-col gap-3.5 hover:border-brand-400/50 dark:hover:border-brand-500/50 hover:bg-white dark:hover:bg-zinc-800/40 active:scale-[0.98] cursor-pointer transition-all duration-300 shadow-xs"
                     >
                       <div className="flex items-center justify-between gap-3 min-w-0">
                         <div className="flex items-center gap-3 min-w-0">

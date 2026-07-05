@@ -34,6 +34,7 @@ const items: NavItem[] = [
   { to: "/time", label: "Time", icon: Clock },
   { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/activities", label: "Notifications", icon: Bell },
   {
     to: "/qubartech",
     label: "Manage Qubartech",
@@ -79,12 +80,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  const { data: activities, refetch: refetchActivities } = useQuery({
+  const { data: activitiesData, refetch: refetchActivities } = useQuery({
     queryKey: ["activities"],
-    queryFn: activitiesApi.list,
+    queryFn: () => activitiesApi.list({ pageSize: 20 }),
     enabled: !!user,
     staleTime: 60 * 1000,
   });
+
+  const activities = activitiesData?.items;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -227,6 +230,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       qc.prefetchQuery({
         queryKey: ["projects", "all"],
         queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+    } else if (to === "/activities") {
+      qc.prefetchQuery({
+        queryKey: ["activities", { page: 1 }],
+        queryFn: () => activitiesApi.list({ page: 1, pageSize: 20 }),
       });
     }
   };
@@ -376,7 +384,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className={clsx(
                     "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
                     user?.role === "admin"
-                      ? "bg-red-55 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
+                      ? "bg-red-50 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                       : user?.role === "manager"
                         ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
                         : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
@@ -604,6 +612,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         })
                       )}
                     </div>
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06] text-center">
+                      <Link
+                        href="/activities"
+                        onClick={() => setNotificationsOpen(false)}
+                        className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer block py-0.5"
+                      >
+                        View all activities
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -634,7 +651,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           <span className={clsx(
                             "inline-flex items-center rounded-md px-1.5 py-0.2 text-[8px] font-extrabold uppercase tracking-wider border shrink-0 select-none",
                             user.role === "admin"
-                              ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
+                              ? "bg-red-50 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                               : user.role === "manager"
                                 ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
                                 : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
@@ -642,7 +659,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             {user.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate leading-tight mt-0.5">{user.email}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-400 truncate leading-tight mt-0.5">{user.email}</p>
                       </div>
                     </div>
 
@@ -652,7 +669,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           setProfileOpen(false);
                           router.push("/profile");
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-zinc-800/60 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer"
                       >
                         <User className="h-4 w-4 text-brand-500" />
                         <span>Edit Profile</span>
@@ -672,7 +689,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             setLoggingOut(false);
                           }
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-650 dark:text-rose-405 hover:bg-rose-50 dark:hover:bg-rose-950/25 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/25 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                       >
                         {loggingOut ? (
                           <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
