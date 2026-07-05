@@ -10,8 +10,8 @@ export const GET = apiHandler(async (req, { params }) => {
 });
 
 export const PATCH = apiHandler(
-  async (req, { params, body }) => {
-    return service.update(params.id, body);
+  async (req, { params, body, user }) => {
+    return service.update(params.id, body, user.sub);
   },
   {
     schema: updateTaskSchema,
@@ -19,8 +19,8 @@ export const PATCH = apiHandler(
 );
 
 export const DELETE = apiHandler(
-  async (req, { params }) => {
-    return service.remove(params.id);
+  async (req, { params, user }) => {
+    return service.remove(params.id, user.sub);
   },
   {
     roles: ["admin", "manager"],

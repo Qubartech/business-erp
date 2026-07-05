@@ -14,7 +14,9 @@ export const GET = apiHandler(async () => {
     totalTimeResult,
     latestCommits,
     activeAttendance,
-    leavesToday
+    leavesToday,
+    activeProjectsList,
+    inProgressTasksCount
   ] = await Promise.all([
     prisma.user.count({ where: { isActive: true } }),
     prisma.project.groupBy({
@@ -89,24 +91,49 @@ export const GET = apiHandler(async () => {
         },
       },
     }),
+    prisma.project.findMany({
+      where: { status: "active" },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        createdAt: true,
+        commits: {
+          orderBy: { committedAt: "desc" },
+          take: 1,
+          select: {
+            committedAt: true,
+          },
+        },
+        tasks: {
+          select: {
+            status: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.task.count({
+      where: { status: "in_progress" }
+    })
   ]);
 
   // Aggregate project metrics from status counts
-  const projectsByStatus = projectStatusCounts.reduce((acc, curr) => {
+  const projectsByStatus = projectStatusCounts.reduce((acc: Record<string, number>, curr: any) => {
     acc[curr.status] = curr._count.id;
     return acc;
   }, {} as Record<string, number>);
 
-  const totalProjects = projectStatusCounts.reduce((sum, curr) => sum + curr._count.id, 0);
+  const totalProjects = projectStatusCounts.reduce((sum: number, curr: any) => sum + curr._count.id, 0);
   const activeProjects = projectsByStatus["active"] ?? 0;
 
   // Aggregate task metrics from status counts
-  const tasksByStatus = taskStatusCounts.reduce((acc, curr) => {
+  const tasksByStatus = taskStatusCounts.reduce((acc: Record<string, number>, curr: any) => {
     acc[curr.status] = curr._count.id;
     return acc;
   }, {} as Record<string, number>);
 
-  const totalTasks = taskStatusCounts.reduce((sum, curr) => sum + curr._count.id, 0);
+  const totalTasks = taskStatusCounts.reduce((sum: number, curr: any) => sum + curr._count.id, 0);
   const completedTasks = tasksByStatus["done"] ?? 0;
 
   return {
@@ -120,5 +147,7 @@ export const GET = apiHandler(async () => {
     latestCommits,
     activeAttendance,
     leavesToday,
+    activeProjectsList,
+    inProgressTasks: inProgressTasksCount,
   };
 });

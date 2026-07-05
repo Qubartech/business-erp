@@ -5,13 +5,13 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, FolderKanban, ListChecks, StickyNote,
   Clock, FileText, Settings as Cog, LogOut, Menu, Square, Loader2, Calendar, Building2,
-  Sun, Moon, User, ChevronLeft, ChevronRight, CircleDollarSign, ChevronDown, Globe
+  Sun, Moon, User, ChevronLeft, ChevronRight, CircleDollarSign, ChevronDown, Globe, Bell
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTimeTracker } from "@/features/time/TimeTrackerContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { attendanceApi, dashboardApi, tasksApi, documentsApi } from "@/services/featureApis";
+import { attendanceApi, dashboardApi, tasksApi, documentsApi, activitiesApi } from "@/services/featureApis";
 import { projectsApi, usersApi } from "@/services/api";
 import { toast } from "@/lib/toast";
 import { clsx } from "clsx";
@@ -34,6 +34,7 @@ const items: NavItem[] = [
   { to: "/time", label: "Time", icon: Clock },
   { to: "/attendance", label: "Attendance", icon: Calendar },
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/activities", label: "Notifications", icon: Bell },
   {
     to: "/qubartech",
     label: "Manage Qubartech",
@@ -49,6 +50,19 @@ const items: NavItem[] = [
   { to: "/settings", label: "Settings", icon: Cog },
 ];
 
+function formatRelativeTime(dateStr: string) {
+  const d = new Date(dateStr);
+  const diffMs = Date.now() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { currentTimer, stopTimer, sprintRemaining, isTimerActionPending } = useTimeTracker();
@@ -61,6 +75,44 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const profileRef = useRef<HTMLDivElement>(null);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  const [lastSeenNotification, setLastSeenNotification] = useState<number>(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const { data: activitiesData, refetch: refetchActivities } = useQuery({
+    queryKey: ["activities"],
+    queryFn: () => activitiesApi.list({ pageSize: 20 }),
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
+
+  const activities = activitiesData?.items;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("qubar_last_seen_notification");
+      if (saved) {
+        setLastSeenNotification(Number(saved));
+      }
+    }
+  }, []);
+
+  const unreadCount = activities
+    ? activities.filter((a) => new Date(a.createdAt).getTime() > lastSeenNotification).length
+    : 0;
+
+  const handleToggleNotifications = () => {
+    if (!notificationsOpen) {
+      refetchActivities();
+      const now = Date.now();
+      setLastSeenNotification(now);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("qubar_last_seen_notification", String(now));
+      }
+    }
+    setNotificationsOpen(!notificationsOpen);
+  };
 
   const toggleMenu = (label: string) => {
     if (desktopCollapsed) {
@@ -98,6 +150,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -175,6 +230,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       qc.prefetchQuery({
         queryKey: ["projects", "all"],
         queryFn: () => projectsApi.list({ pageSize: 100 }),
+      });
+    } else if (to === "/activities") {
+      qc.prefetchQuery({
+        queryKey: ["activities", { page: 1 }],
+        queryFn: () => activitiesApi.list({ page: 1, pageSize: 20 }),
       });
     }
   };
@@ -324,7 +384,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className={clsx(
                     "inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider border shrink-0 select-none",
                     user?.role === "admin"
-                      ? "bg-red-55 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
+                      ? "bg-red-50 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                       : user?.role === "manager"
                         ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
                         : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
@@ -451,6 +511,121 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
 
+            {/* Notifications Bell Button */}
+            {user && (
+              <div className="relative flex items-center" ref={notificationsRef}>
+                <button
+                  onClick={handleToggleNotifications}
+                  className="h-9 w-9 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800/80 rounded-xl transition-all duration-200 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-zinc-900/50 shadow-sm flex items-center justify-center cursor-pointer relative"
+                  title="Notifications"
+                >
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-900 animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 top-12 mt-2 w-80 origin-top-right rounded-2xl bg-white/90 dark:bg-zinc-900/95 backdrop-blur-lg border border-slate-200/50 dark:border-white/[0.08] shadow-[0_10px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.35)] focus:outline-none z-50 p-3 transition-all animate-dropdown-in">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-white/[0.06]">
+                      <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200">Recent Activity</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => {
+                            const now = Date.now();
+                            setLastSeenNotification(now);
+                            if (typeof window !== "undefined") {
+                              localStorage.setItem("qubar_last_seen_notification", String(now));
+                            }
+                          }}
+                          className="text-[9px] font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto space-y-2.5 pr-0.5">
+                      {!activities || activities.length === 0 ? (
+                        <div className="py-6 text-center text-[11px] text-slate-400 dark:text-slate-500 italic select-none">
+                          No recent activities.
+                        </div>
+                      ) : (
+                        activities.map((activity) => {
+                          const isUnread = new Date(activity.createdAt).getTime() > lastSeenNotification;
+                          
+                          // Determine icon based on activity type
+                          let ActivityIcon = Clock;
+                          let iconColor = "text-slate-400 bg-slate-50 dark:bg-zinc-800/60";
+                          
+                          if (activity.type === "attendance") {
+                            ActivityIcon = Calendar;
+                            iconColor = "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20";
+                          } else if (activity.type === "project") {
+                            ActivityIcon = FolderKanban;
+                            iconColor = "text-brand-500 bg-brand-50 dark:bg-brand-950/20";
+                          } else if (activity.type === "task") {
+                            ActivityIcon = ListChecks;
+                            iconColor = "text-blue-500 bg-blue-50 dark:bg-blue-950/20";
+                          } else if (activity.type === "note") {
+                            ActivityIcon = StickyNote;
+                            iconColor = "text-violet-500 bg-violet-50 dark:bg-violet-950/20";
+                          } else if (activity.type === "document") {
+                            ActivityIcon = FileText;
+                            iconColor = "text-sky-500 bg-sky-50 dark:bg-sky-950/20";
+                          } else if (activity.type === "commit") {
+                            ActivityIcon = Clock;
+                            iconColor = "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20";
+                          } else if (activity.type === "transaction") {
+                            ActivityIcon = CircleDollarSign;
+                            iconColor = "text-amber-500 bg-amber-50 dark:bg-amber-950/20";
+                          }
+
+                          return (
+                            <div
+                              key={activity.id}
+                              className={clsx(
+                                "flex items-start gap-2.5 p-2 rounded-xl border transition-colors duration-150 text-left",
+                                isUnread
+                                  ? "bg-slate-50/50 dark:bg-zinc-800/40 border-slate-100 dark:border-white/[0.04]"
+                                  : "bg-transparent border-transparent"
+                              )}
+                            >
+                              <div className={clsx("h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border border-current/10", iconColor)}>
+                                <ActivityIcon className="h-3.5 w-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1 space-y-0.5">
+                                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 leading-snug break-words">
+                                  {activity.description}
+                                </p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
+                                  {formatRelativeTime(activity.createdAt)}
+                                </p>
+                              </div>
+                              {isUnread && (
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-2 animate-pulse" />
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06] text-center">
+                      <Link
+                        href="/activities"
+                        onClick={() => setNotificationsOpen(false)}
+                        className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer block py-0.5"
+                      >
+                        View all activities
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Profile Avatar icon in Topbar dropdown */}
             {user && (
               <div className="relative border-l border-slate-200 dark:border-white/[0.08] pl-3 flex items-center" ref={profileRef}>
@@ -476,7 +651,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           <span className={clsx(
                             "inline-flex items-center rounded-md px-1.5 py-0.2 text-[8px] font-extrabold uppercase tracking-wider border shrink-0 select-none",
                             user.role === "admin"
-                              ? "bg-red-50 text-red-650 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
+                              ? "bg-red-50 text-red-600 border-red-100/60 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40"
                               : user.role === "manager"
                                 ? "bg-amber-50 text-amber-700 border-amber-100/60 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/40"
                                 : "bg-blue-50 text-blue-600 border-blue-100/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
@@ -484,7 +659,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             {user.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 truncate leading-tight mt-0.5">{user.email}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-400 truncate leading-tight mt-0.5">{user.email}</p>
                       </div>
                     </div>
 
@@ -494,7 +669,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           setProfileOpen(false);
                           router.push("/profile");
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-355 hover:bg-slate-50 dark:hover:bg-zinc-800/60 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer"
                       >
                         <User className="h-4 w-4 text-brand-500" />
                         <span>Edit Profile</span>
@@ -514,7 +689,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             setLoggingOut(false);
                           }
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-650 dark:text-rose-405 hover:bg-rose-50 dark:hover:bg-rose-950/25 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/25 hover:translate-x-1 transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                       >
                         {loggingOut ? (
                           <Loader2 className="h-4 w-4 animate-spin text-rose-500" />

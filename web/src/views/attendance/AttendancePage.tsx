@@ -7,8 +7,8 @@ import { Modal } from "@/components/Modal";
 import { usersApi } from "@/services/api";
 import { attendanceApi, leavesApi, holidaysApi } from "@/services/featureApis";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { formatDateTime, formatDate } from "@/lib/format";
-import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { formatDateTime, formatDate, formatMinutes } from "@/lib/format";
+import { Calendar, ChevronLeft, ChevronRight, Clock, User, UserCheck, XCircle, Plus, Trash2, Check, X, Plane, Palmtree, AlertCircle, FileText, CheckCircle2, Loader2, Pencil } from "lucide-react";
 import type { User as UserType, AttendanceEntry, Leave, Holiday, LeaveType, LeaveStatus } from "@/types";
 import { AttendancePageSkeleton } from "@/components/Skeletons";
 
@@ -55,6 +55,18 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+const toLocalDatetimeInputString = (dateInput: string | Date | null | undefined): string => {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 type UserAttendanceRow = {
   user: UserType;
   entries: AttendanceEntry[];
@@ -85,6 +97,13 @@ export default function AttendancePage() {
   const [holidayDate, setHolidayDate] = useState<string>("");
   const [holidayName, setHolidayName] = useState<string>("");
   const [holidayDesc, setHolidayDesc] = useState<string>("");
+
+  // Edit Attendance Form states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<AttendanceEntry | null>(null);
+  const [editCheckIn, setEditCheckIn] = useState("");
+  const [editCheckOut, setEditCheckOut] = useState("");
+  const [hasCheckOut, setHasCheckOut] = useState(false);
 
   // Queries
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -184,6 +203,52 @@ export default function AttendancePage() {
     },
   });
 
+  const updateAttendance = useMutation({
+    mutationFn: (variables: { id: string; checkIn: string; checkOut: string | null }) =>
+      attendanceApi.update(variables.id, { checkIn: variables.checkIn, checkOut: variables.checkOut }),
+    onSuccess: () => {
+      toast.success("Attendance times updated successfully");
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+      setEditModalOpen(false);
+      setSelectedEntry(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update attendance times");
+    },
+  });
+
+  const handleEditEntry = (entry: AttendanceEntry) => {
+    setSelectedEntry(entry);
+    setEditCheckIn(toLocalDatetimeInputString(entry.checkIn));
+    setEditCheckOut(toLocalDatetimeInputString(entry.checkOut));
+    setHasCheckOut(entry.checkOut !== null);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateAttendanceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEntry) return;
+
+    if (!editCheckIn) {
+      toast.error("Please provide check-in time");
+      return;
+    }
+
+    const checkInISO = new Date(editCheckIn).toISOString();
+    const checkOutISO = hasCheckOut && editCheckOut ? new Date(editCheckOut).toISOString() : null;
+
+    if (checkOutISO && new Date(checkInISO) > new Date(checkOutISO)) {
+      toast.error("Check-in time must be before check-out time");
+      return;
+    }
+
+    updateAttendance.mutate({
+      id: selectedEntry.id,
+      checkIn: checkInISO,
+      checkOut: checkOutISO,
+    });
+  };
+
   // Calendar navigations
   const shiftDay = (amount: number) => {
     const d = new Date(selectedDate + "T00:00:00");
@@ -228,12 +293,14 @@ export default function AttendancePage() {
       entries,
     };
   });
-
   // Monthly statistics calculations with Holiday & Leave overrides
   const getMonthlyStats = (userId: string, userEntries: AttendanceEntry[]) => {
     let present = 0;
     let absent = 0;
     let totalMins = 0;
+    let overtimeMins = 0;
+    let deficitMins = 0;
+    let expectedWorkdays = 0;
 
     const todayAtMidnight = new Date();
     todayAtMidnight.setHours(0, 0, 0, 0);
@@ -269,28 +336,49 @@ export default function AttendancePage() {
         return checkDate >= sDate && checkDate <= eDate;
       });
 
+      const isWorkday = !isWeekend && !isDayHoliday && !isDayLeave;
+      if (isWorkday && !isFuture) {
+        expectedWorkdays++;
+      }
+
+      let dayMins = 0;
       if (dayEntries.length > 0) {
         present++;
         dayEntries.forEach((entry) => {
           if (!entry.checkOut) {
             const diffMs = new Date().getTime() - new Date(entry.checkIn).getTime();
-            totalMins += Math.max(0, Math.round(diffMs / 60000));
+            dayMins += Math.max(0, Math.round(diffMs / 60000));
           } else {
             const diffMs = new Date(entry.checkOut).getTime() - new Date(entry.checkIn).getTime();
-            totalMins += Math.max(0, Math.round(diffMs / 60000));
+            dayMins += Math.max(0, Math.round(diffMs / 60000));
           }
         });
+        totalMins += dayMins;
+
+        const targetMins = !isWorkday ? 0 : 480; // 8 hours on workdays, 0 hours on non-workdays
+        
+        if (dayMins > targetMins) {
+          overtimeMins += (dayMins - targetMins);
+        } else if (dayMins < targetMins) {
+          deficitMins += (targetMins - dayMins);
+        }
       } else {
         // Do not mark as absent if it is a weekend, holiday, or approved leave day
         if (!isFuture && !isWeekend && !isDayHoliday && !isDayLeave) {
           absent++;
+          // For absent standard workdays, it counts as 8 hours deficit
+          deficitMins += 480;
         }
       }
     }
 
     const hours = parseFloat((totalMins / 60).toFixed(1));
-    return { present, absent, hours };
+    const overtimeHours = parseFloat((overtimeMins / 60).toFixed(1));
+    const deficitHours = parseFloat((deficitMins / 60).toFixed(1));
+    const targetHours = expectedWorkdays * 8;
+    return { present, absent, hours, overtimeHours, deficitHours, targetHours };
   };
+
 
   // Public Holiday check on selected date
   const holidayToday = (holidaysData?.items ?? []).find((h) => {
@@ -415,6 +503,15 @@ export default function AttendancePage() {
                 <span className="font-mono text-xs text-slate-500 dark:text-slate-400 bg-slate-100/80 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">
                   {entry.checkOut ? formatDateTime(entry.checkOut) : "Active Check-In"}
                 </span>
+                {currentUser?.role === "admin" && (
+                  <button
+                    onClick={() => handleEditEntry(entry)}
+                    className="p-1 rounded text-slate-400 hover:text-brand-600 dark:text-zinc-550 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer shrink-0 ml-1"
+                    title="Edit attendance times"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -444,6 +541,104 @@ export default function AttendancePage() {
         );
       },
     },
+    {
+      key: "targetProgress",
+      header: "Daily Target (8h) & Overtime",
+      render: (r) => {
+        if (r.entries.length === 0) return <span className="text-slate-400 dark:text-zinc-500 font-medium">—</span>;
+        
+        let totalMins = 0;
+        let hasActive = false;
+        r.entries.forEach((e) => {
+          if (!e.checkOut) {
+            hasActive = true;
+            const diffMs = new Date().getTime() - new Date(e.checkIn).getTime();
+            totalMins += Math.max(0, Math.round(diffMs / 60000));
+          } else {
+            const diffMs = new Date(e.checkOut).getTime() - new Date(e.checkIn).getTime();
+            totalMins += Math.max(0, Math.round(diffMs / 60000));
+          }
+        });
+
+        const isLeaveToday = (leavesData?.items ?? []).some((l) => {
+          if (l.status !== "approved" || l.userId !== r.user.id) return false;
+          const sDate = new Date(l.startDate);
+          const eDate = new Date(l.endDate);
+          const checkDate = new Date(selectedDate + "T00:00:00");
+          checkDate.setHours(0, 0, 0, 0);
+          sDate.setHours(0, 0, 0, 0);
+          eDate.setHours(0, 0, 0, 0);
+          return checkDate >= sDate && checkDate <= eDate;
+        });
+
+        const checkDate = new Date(selectedDate + "T00:00:00");
+        const dayOfWeek = checkDate.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isHoliday = !!holidayToday;
+        const isNonWorkday = isWeekend || isHoliday || isLeaveToday;
+
+        const targetMins = isNonWorkday ? 0 : 480; // 8 hours
+        const isOverTarget = totalMins > targetMins;
+        const isDeficit = !isNonWorkday && totalMins < 480;
+
+        const diffMins = isOverTarget 
+          ? totalMins - targetMins 
+          : (isDeficit ? 480 - totalMins : 0);
+
+        const progressPercent = isNonWorkday 
+          ? (totalMins > 0 ? 100 : 0) 
+          : Math.min(100, (totalMins / 480) * 100);
+
+        return (
+          <div className="flex flex-col gap-1.5 w-44">
+            <div className="flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-655 dark:text-zinc-350">
+                {formatMinutes(totalMins)} {hasActive && <span className="text-amber-500 animate-pulse text-[9px]">(Active)</span>}
+              </span>
+              {isOverTarget && (
+                <span className="text-emerald-600 dark:text-emerald-450 font-extrabold">
+                  +{formatMinutes(diffMins)} OT
+                </span>
+              )}
+              {isDeficit && (
+                <span className="text-rose-600 dark:text-rose-450">
+                  -{formatMinutes(diffMins)} Deficit
+                </span>
+              )}
+              {!isOverTarget && !isDeficit && (
+                <span className="text-slate-400 dark:text-zinc-550">
+                  Met
+                </span>
+              )}
+            </div>
+            
+            <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+              <div 
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  isOverTarget 
+                    ? "bg-emerald-500 dark:bg-emerald-400" 
+                    : isDeficit 
+                      ? "bg-amber-500 dark:bg-amber-450" 
+                      : "bg-emerald-500 dark:bg-emerald-400"
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {!isNonWorkday && (
+              <div className="text-[9px] text-slate-400 dark:text-zinc-500 font-semibold flex justify-between">
+                <span>Target: 8h</span>
+                <span>{progressPercent.toFixed(0)}%</span>
+              </div>
+            )}
+            {isNonWorkday && totalMins > 0 && (
+              <div className="text-[9px] text-emerald-600 dark:text-emerald-450 font-bold">
+                Non-workday OT
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 
   // Monthly View Columns with holiday and leave cell renderers
@@ -468,19 +663,44 @@ export default function AttendancePage() {
       header: "Monthly Stats",
       render: (r) => {
         const stats = getMonthlyStats(r.user.id, r.entries);
+        const targetHours = stats.targetHours;
+
         return (
-          <div className="flex flex-col gap-1 text-[11px] pr-3">
-            <div className="flex items-center gap-1.5 whitespace-nowrap">
-              <span className="font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-450 px-1.5 py-0.2 rounded">
-                {stats.present}d present
-              </span>
-              <span className="font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/20 dark:text-rose-400 px-1.5 py-0.2 rounded">
-                {stats.absent}d absent
-              </span>
+          <div className="flex flex-col gap-1 py-1 pr-2 min-w-[140px] leading-tight select-none">
+            {/* Top line: Worked / Target hours */}
+            <div className="text-xs font-bold text-slate-800 dark:text-zinc-100 whitespace-nowrap">
+              {stats.hours}h / {targetHours}h
             </div>
-            <span className="font-bold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.2 rounded w-fit font-mono text-[10px]">
-              {stats.hours} hrs worked
-            </span>
+            
+            {/* Middle line: Attended & Absent */}
+            <div className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+              {stats.present}d Attended • {stats.absent}d Absent
+            </div>
+
+            {/* Bottom line: Overtime & Deficit chips */}
+            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+              {stats.overtimeHours > 0 && (
+                <span 
+                  className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:text-emerald-450 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 px-1.5 py-0.2 rounded font-mono" 
+                  title={`Monthly Overtime: +${stats.overtimeHours} hours`}
+                >
+                  +{stats.overtimeHours}h
+                </span>
+              )}
+              {stats.deficitHours > 0 && (
+                <span 
+                  className="text-[10px] font-bold text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 px-1.5 py-0.2 rounded font-mono" 
+                  title={`Monthly Deficit: -${stats.deficitHours} hours`}
+                >
+                  -{stats.deficitHours}h
+                </span>
+              )}
+              {stats.overtimeHours === 0 && stats.deficitHours === 0 && (
+                <span className="text-[10px] font-semibold text-slate-450 bg-slate-50 border border-slate-200 dark:text-zinc-500 dark:bg-zinc-900 dark:border-zinc-800 px-1.5 py-0.2 rounded">
+                  Balanced
+                </span>
+              )}
+            </div>
           </div>
         );
       },
@@ -633,10 +853,31 @@ export default function AttendancePage() {
             );
           }
 
+          const targetMins = isWeekend ? 0 : 480;
+          const isOverTarget = totalMins >= targetMins;
+          const isDeficit = !isWeekend && totalMins < 480;
+          const diffMins = isOverTarget ? totalMins - targetMins : 480 - totalMins;
+          const formattedDiff = formatMinutes(diffMins);
+
+          const tooltipLines = [
+            ...dayEntries.map((e, idx) => `Check-in #${idx+1}: ${new Date(e.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${e.checkOut ? new Date(e.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Active'}`),
+            "",
+            `Daily Total: ${formattedTime}`,
+            isWeekend 
+              ? `Weekend Overtime: +${formattedTime}` 
+              : (isOverTarget 
+                  ? (diffMins > 0 ? `Target: 8h (Met) | Overtime: +${formattedDiff}` : `Target: 8h (Met)`) 
+                  : `Target: 8h (Unmet) | Deficit: -${formattedDiff}`)
+          ];
+
           return (
             <span
-              className="text-[10px] font-semibold text-emerald-700 bg-emerald-50/70 dark:text-emerald-450 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 px-1 py-0.5 rounded cursor-pointer"
-              title={dayEntries.map((e, idx) => `Check-in #${idx+1}: ${new Date(e.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${e.checkOut ? new Date(e.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Active'}`).join('\n')}
+              className={`text-[10px] font-semibold border px-1 py-0.5 rounded cursor-pointer ${
+                isDeficit
+                  ? "text-amber-700 bg-amber-50/70 border-amber-100 dark:text-amber-450 dark:bg-amber-950/20 dark:border-amber-900/30"
+                  : "text-emerald-700 bg-emerald-50/70 border-emerald-100 dark:text-emerald-450 dark:bg-emerald-950/20 dark:border-emerald-900/30"
+              }`}
+              title={tooltipLines.join('\n')}
             >
               {formattedTime}
             </span>
@@ -1343,6 +1584,101 @@ export default function AttendancePage() {
             >
               {createLeave.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               Submit Leave Request
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT ATTENDANCE MODAL */}
+      <Modal
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedEntry(null);
+        }}
+        title={
+          <>
+            <Pencil className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+            <span>Edit Attendance Log</span>
+          </>
+        }
+      >
+        <form onSubmit={handleUpdateAttendanceSubmit} className="space-y-4">
+          {selectedEntry && (
+            <div className="bg-slate-50 dark:bg-zinc-950/40 p-3 rounded-lg border border-slate-100 dark:border-white/[0.02] text-xs space-y-1">
+              <div>
+                <span className="font-bold text-slate-550 dark:text-zinc-400">Team Member:</span>{" "}
+                <span className="font-semibold text-slate-700 dark:text-zinc-300">{selectedEntry.user?.name}</span>
+              </div>
+              <div>
+                <span className="font-bold text-slate-550 dark:text-zinc-400">Email:</span>{" "}
+                <span className="font-semibold text-slate-700 dark:text-zinc-300">{selectedEntry.user?.email}</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="label">Check-In Time</label>
+            <input
+              type="datetime-local"
+              className="input cursor-pointer font-medium"
+              required
+              value={editCheckIn}
+              onChange={(e) => setEditCheckIn(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hasCheckOutCheckbox"
+                className="rounded border-slate-350 dark:border-white/[0.08] text-brand-600 focus:ring-brand-500 h-4 w-4 bg-transparent cursor-pointer"
+                checked={hasCheckOut}
+                onChange={(e) => {
+                  setHasCheckOut(e.target.checked);
+                  if (e.target.checked && !editCheckOut) {
+                    setEditCheckOut(toLocalDatetimeInputString(new Date()));
+                  }
+                }}
+              />
+              <label htmlFor="hasCheckOutCheckbox" className="text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer select-none">
+                Has Checked Out
+              </label>
+            </div>
+
+            {hasCheckOut && (
+              <div>
+                <label className="label">Check-Out Time</label>
+                <input
+                  type="datetime-local"
+                  className="input cursor-pointer font-medium"
+                  required={hasCheckOut}
+                  value={editCheckOut}
+                  onChange={(e) => setEditCheckOut(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.06] pt-4 mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEditModalOpen(false);
+                setSelectedEntry(null);
+              }}
+              className="btn-secondary text-xs px-4 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateAttendance.isPending}
+              className="btn-primary text-xs px-4 flex items-center gap-1.5 shadow-glow-brand hover:-translate-y-0.5 active:translate-y-0 transform transition-all duration-200 cursor-pointer"
+            >
+              {updateAttendance.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Save Changes
             </button>
           </div>
         </form>

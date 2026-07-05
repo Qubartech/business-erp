@@ -55,6 +55,8 @@ export type Project = {
   createdAt: string; updatedAt: string;
   creator?: Pick<User, "id" | "name" | "email">;
   members?: ProjectMember[];
+  commits?: { committedAt: string; sha: string; message: string; authorName: string }[];
+  tasks?: { status: TaskStatus }[];
   _count?: { tasks: number };
 };
 
@@ -175,5 +177,18 @@ export type QubartechProduct = {
   hasPrivacy: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Activity = {
+  id: string;
+  type: "attendance" | "project" | "task" | "note" | "document" | "commit" | "transaction";
+  action: string;
+  userId: string | null;
+  projectId: string | null;
+  description: string;
+  metadata?: any;
+  createdAt: string;
+  user?: Pick<User, "id" | "name" | "email"> | null;
+  project?: Pick<Project, "id" | "name"> | null;
 };
 

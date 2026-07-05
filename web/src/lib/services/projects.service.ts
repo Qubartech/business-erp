@@ -2,12 +2,14 @@ import { NotFound } from "../errors";
 import type { Container } from "../container";
 import type { z } from "zod";
 import type { createProjectSchema, listProjectsQuerySchema, updateProjectSchema } from "./projects.schemas.js";
+import { createActivityService } from "./activity.service";
 
 type CreateInput = z.infer<typeof createProjectSchema>;
 type UpdateInput = z.infer<typeof updateProjectSchema>;
 type ListQuery = z.infer<typeof listProjectsQuerySchema>;
 
 export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
+  const activityService = createActivityService({ prisma });
   const include = {
     members: { include: { user: { select: { id: true, name: true, email: true, role: true } } } },
     creator: { select: { id: true, name: true, email: true } },
@@ -24,6 +26,14 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
       const listInclude = {
         members: { select: { id: true, userId: true } },
         creator: { select: { id: true, name: true, email: true } },
+        commits: {
+          orderBy: { committedAt: "desc" as const },
+          take: 1,
+          select: { committedAt: true, sha: true, message: true, authorName: true },
+        },
+        tasks: {
+          select: { status: true },
+        },
         _count: { select: { tasks: true } },
       };
       const [items, total] = await Promise.all([
@@ -43,7 +53,7 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
     },
 
     async create(input: CreateInput, createdBy: string) {
-      return prisma.$transaction(async (tx) => {
+      const res = await prisma.$transaction(async (tx) => {
         const project = await tx.project.create({
           data: {
             name: input.name, description: input.description ?? null,
@@ -61,12 +71,22 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
         }
         return tx.project.findUniqueOrThrow({ where: { id: project.id }, include });
       });
+
+      await activityService.log({
+        type: "project",
+        action: "create",
+        userId: createdBy,
+        projectId: res.id,
+        description: `created project '${res.name}'`,
+      });
+
+      return res;
     },
 
-    async update(id: string, input: UpdateInput) {
+    async update(id: string, input: UpdateInput, userId?: string) {
       const exists = await prisma.project.findUnique({ where: { id } });
       if (!exists) throw NotFound("Project not found");
-      return prisma.$transaction(async (tx) => {
+      const res = await prisma.$transaction(async (tx) => {
         await tx.project.update({
           where: { id },
           data: {
@@ -87,12 +107,46 @@ export function createProjectsService({ prisma }: Pick<Container, "prisma">) {
         }
         return tx.project.findUniqueOrThrow({ where: { id }, include });
       });
+
+      if (userId) {
+        if (input.status && input.status !== exists.status) {
+          await activityService.log({
+            type: "project",
+            action: "status_change",
+            userId,
+            projectId: id,
+            description: `changed status of project '${res.name}' to '${input.status}'`,
+          });
+        } else {
+          await activityService.log({
+            type: "project",
+            action: "update",
+            userId,
+            projectId: id,
+            description: `updated project '${res.name}'`,
+          });
+        }
+      }
+
+      return res;
     },
 
-    async archive(id: string) {
+    async archive(id: string, userId?: string) {
       const exists = await prisma.project.findUnique({ where: { id } });
       if (!exists) throw NotFound("Project not found");
-      return prisma.project.update({ where: { id }, data: { status: "archived" }, include });
+      const res = await prisma.project.update({ where: { id }, data: { status: "archived" }, include });
+
+      if (userId) {
+        await activityService.log({
+          type: "project",
+          action: "status_change",
+          userId,
+          projectId: id,
+          description: `archived project '${res.name}'`,
+        });
+      }
+
+      return res;
     },
 
     async addMembers(id: string, userIds: string[]) {

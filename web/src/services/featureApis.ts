@@ -1,5 +1,5 @@
 import { api, unwrap, type ApiEnvelope } from "@/lib/api";
-import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry, Leave, LeaveType, LeaveStatus, Holiday } from "@/types";
+import type { Commit, Document, Note, Paged, Setting, Task, TaskPriority, TaskStatus, TimeEntry, AttendanceEntry, Leave, LeaveType, LeaveStatus, Holiday, Activity } from "@/types";
 
 export type ListTasksQuery = {
   projectId?: string; status?: TaskStatus; priority?: TaskPriority;
@@ -73,6 +73,15 @@ export type DashboardSummary = {
   latestCommits: Commit[];
   activeAttendance: AttendanceEntry[];
   leavesToday: Leave[];
+  inProgressTasks: number;
+  activeProjectsList: Array<{
+    id: string;
+    name: string;
+    startDate: string | null;
+    createdAt: string;
+    commits: Array<{ committedAt: string }>;
+    tasks: Array<{ status: string }>;
+  }>;
 };
 
 export const dashboardApi = {
@@ -88,6 +97,8 @@ export const attendanceApi = {
   checkOut: () => unwrap<AttendanceEntry>(api.post<ApiEnvelope<AttendanceEntry>>("/attendance/check-out")),
   list: (q?: { userId?: string; date?: string; month?: string; page?: number; pageSize?: number }) =>
     unwrap<Paged<AttendanceEntry>>(api.get<ApiEnvelope<Paged<AttendanceEntry>>>("/attendance", { params: q })),
+  update: (id: string, data: { checkIn: string; checkOut: string | null }) =>
+    unwrap<AttendanceEntry>(api.patch<ApiEnvelope<AttendanceEntry>>(`/attendance/${id}`, data)),
 };
 
 export const personalApiKeyApi = {
@@ -112,4 +123,9 @@ export const holidaysApi = {
   create: (data: { date: string; name: string; description?: string | null }) =>
     unwrap<Holiday>(api.post<ApiEnvelope<Holiday>>("/holidays", data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/holidays/${id}`)),
+};
+
+export const activitiesApi = {
+  list: (q?: { type?: string; userId?: string; projectId?: string; search?: string; page?: number; pageSize?: number }) =>
+    unwrap<Paged<Activity>>(api.get<ApiEnvelope<Paged<Activity>>>("/activities", { params: q })),
 };

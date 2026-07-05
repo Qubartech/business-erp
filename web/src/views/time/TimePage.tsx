@@ -455,32 +455,87 @@ export default function TimePage() {
               <p className="text-sm text-slate-400 dark:text-slate-500 italic py-2">No developer sessions logged for this day.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {dailyUsersLog.map((log, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedUserId(log.id)}
-                    className="p-4 rounded-xl border border-slate-250/35 dark:border-white/[0.05] bg-slate-50/40 dark:bg-zinc-900/30 flex items-center justify-between hover:border-brand-400/50 dark:hover:border-brand-500/50 hover:bg-white dark:hover:bg-zinc-800/40 active:scale-[0.98] cursor-pointer transition-all duration-300 shadow-xs"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${getAvatarColor(log.name)}`}>
-                        {getInitials(log.name)}
+                {dailyUsersLog.map((log, idx) => {
+                  const totalMins = log.minutes;
+                  const isWeekendSelected = new Date(selectedDate + "T00:00:00").getDay() === 0 || new Date(selectedDate + "T00:00:00").getDay() === 6;
+                  
+                  const targetMins = isWeekendSelected ? 0 : 480; // 8h
+                  const isOverTarget = totalMins > targetMins;
+                  const isDeficit = !isWeekendSelected && totalMins < 480;
+                  
+                  const diffMins = isOverTarget 
+                    ? totalMins - targetMins 
+                    : (isDeficit ? 480 - totalMins : 0);
+                    
+                  const progressPercent = isWeekendSelected 
+                    ? (totalMins > 0 ? 100 : 0) 
+                    : Math.min(100, (totalMins / 480) * 100);
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedUserId(log.id)}
+                      className="p-4 rounded-xl border border-slate-200/35 dark:border-white/[0.05] bg-slate-50/40 dark:bg-zinc-900/30 flex flex-col gap-3.5 hover:border-brand-400/50 dark:hover:border-brand-500/50 hover:bg-white dark:hover:bg-zinc-800/40 active:scale-[0.98] cursor-pointer transition-all duration-300 shadow-xs"
+                    >
+                      <div className="flex items-center justify-between gap-3 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${getAvatarColor(log.name)}`}>
+                            {getInitials(log.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">{log.name}</div>
+                            <div className="text-[11px] text-slate-455 dark:text-slate-500 font-semibold">Logged today</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="badge bg-brand-55/60 dark:bg-brand-950/40 text-brand-700 dark:text-brand-400 ring-brand-100 dark:ring-brand-900/30 font-bold text-[10px]">
+                            {log.sessions} {log.sessions === 1 ? "sprint" : "sprints"}
+                          </span>
+                          <span className="text-[11px] font-semibold text-slate-550 dark:text-slate-400 flex items-center gap-1 font-mono">
+                            <Clock className="h-3 w-3 text-slate-400" />
+                            {formatMinutesDuration(totalMins)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">{log.name}</div>
-                        <div className="text-[11px] text-slate-455 dark:text-slate-500 font-medium font-semibold">Logged today</div>
+
+                      {/* Progress Bar & Overtime/Deficit */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span className="text-slate-450 dark:text-slate-500">
+                            {isWeekendSelected ? "Weekend Work" : `Target: 8h (${progressPercent.toFixed(0)}%)`}
+                          </span>
+                          {isOverTarget && (
+                            <span className="text-emerald-600 dark:text-emerald-450 font-extrabold">
+                              +{formatMinutesDuration(diffMins)} OT
+                            </span>
+                          )}
+                          {isDeficit && (
+                            <span className="text-amber-600 dark:text-amber-500">
+                              {formatMinutesDuration(diffMins)} left
+                            </span>
+                          )}
+                          {!isOverTarget && !isDeficit && (
+                            <span className="text-slate-400 dark:text-zinc-550">
+                              Met
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-full bg-slate-150 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                          <div 
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              isOverTarget 
+                                ? "bg-emerald-500 dark:bg-emerald-400" 
+                                : isDeficit 
+                                  ? "bg-amber-500 dark:bg-amber-450" 
+                                  : "bg-emerald-500 dark:bg-emerald-400"
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span className="badge bg-brand-55/60 dark:bg-brand-950/40 text-brand-700 dark:text-brand-400 ring-brand-100 dark:ring-brand-900/30">
-                        {log.sessions} {log.sessions === 1 ? "sprint" : "sprints"}
-                      </span>
-                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
-                        <Clock className="h-3 w-3 text-slate-400" />
-                        {formatMinutesDuration(log.minutes)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

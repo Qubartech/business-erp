@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { dashboardApi } from "@/services/featureApis";
-import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play, Calendar, Palmtree } from "lucide-react";
+import { Folder, CheckSquare, Users, Clock, GitCommit, GitBranch, Play, Calendar, Palmtree, CheckCircle } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -14,16 +14,18 @@ interface CardProps {
   icon: React.ReactNode;
   colorClass?: string;
   gradientClass?: string;
+  children?: React.ReactNode;
 }
 
-function Card({ label, value, icon, colorClass = "text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60", gradientClass = "from-brand-500/5 to-indigo-500/5" }: CardProps) {
+function Card({ label, value, icon, colorClass = "text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60", gradientClass = "from-brand-500/5 to-indigo-500/5", children }: CardProps) {
   return (
-    <div className={`card-premium p-6 flex items-center justify-between bg-gradient-to-br ${gradientClass} border border-slate-200/50 dark:border-slate-800/60 hover:shadow-lg transition-all duration-300`}>
-      <div className="space-y-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</span>
-        <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{value}</div>
+    <div className={`card-premium p-4 sm:p-4.5 flex items-start justify-between bg-gradient-to-br ${gradientClass} border border-slate-200/50 dark:border-slate-800/60 hover:shadow-lg transition-all duration-300`}>
+      <div className="space-y-1 min-w-0 flex-1 mr-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</span>
+        <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{value}</div>
+        {children && <div className="pt-1.5 flex flex-wrap gap-1.5">{children}</div>}
       </div>
-      <div className={`p-3.5 rounded-2xl border ${colorClass} shadow-sm transition-transform duration-200 hover:scale-105 shrink-0`}>
+      <div className={`p-2.5 rounded-xl border ${colorClass} shadow-xs transition-transform duration-200 hover:scale-105 shrink-0`}>
         {icon}
       </div>
     </div>
@@ -100,11 +102,10 @@ function UserAttendanceCard({ group, type, now }: UserAttendanceCardProps) {
                 {group.user?.name}
               </span>
               {totalSessions > 1 && (
-                <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border shrink-0 select-none ${
-                  type === "active" 
-                    ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
-                    : "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-400 border-brand-100 dark:border-brand-900/40"
-                }`}>
+                <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-md border shrink-0 select-none ${type === "active"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
+                  : "bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-400 border-brand-100 dark:border-brand-900/40"
+                  }`}>
                   {totalSessions} sessions
                 </span>
               )}
@@ -158,7 +159,7 @@ function UserAttendanceCard({ group, type, now }: UserAttendanceCardProps) {
               <div key={entry.id} className="relative pl-[42px] flex flex-col gap-1.5">
                 {/* Timeline node dot */}
                 <div className="absolute left-[27px] top-[7px] w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-750 border border-slate-50 dark:border-slate-900 shadow-sm shrink-0" />
-                
+
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                     {type === "active" ? (
@@ -299,7 +300,7 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
       })}
     </div>
   );
-}export default function DashboardPage() {
+} export default function DashboardPage() {
   const { user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: dashboardApi.summary });
   const [webhookModalOpen, setWebhookModalOpen] = useState(false);
@@ -338,31 +339,57 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <Card 
-          label="Total projects" 
-          value={isLoading ? "…" : data?.totalProjects ?? 0} 
-          icon={<Folder className="w-5 h-5" />} 
+        <Card
+          label="Total projects"
+          value={isLoading ? "…" : data?.totalProjects ?? 0}
+          icon={<Folder className="w-5 h-5" />}
           colorClass="text-brand-600 bg-brand-50 border-brand-100 dark:text-brand-400 dark:bg-brand-900/20 dark:border-brand-900/60"
           gradientClass="from-brand-500/[0.02] to-indigo-500/[0.02] dark:from-brand-500/[0.01] dark:to-indigo-500/[0.01]"
-        />
-        <Card 
-          label="Total tasks" 
-          value={isLoading ? "…" : data?.totalTasks ?? 0} 
-          icon={<CheckSquare className="w-5 h-5" />} 
-          colorClass="text-emerald-600 bg-emerald-50 border-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/20 dark:border-emerald-900/60"
-          gradientClass="from-emerald-500/[0.02] to-teal-500/[0.02] dark:from-emerald-500/[0.01] dark:to-teal-500/[0.01]"
-        />
-        <Card 
-          label="Team members" 
-          value={isLoading ? "…" : data?.teamMembers ?? 0} 
-          icon={<Users className="w-5 h-5" />} 
+        >
+          {!isLoading && (
+            <>
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-405 border border-emerald-100 dark:border-emerald-900/30" title="Active Projects">
+                <Play className="w-2.5 h-2.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                <span>{data?.projectsByStatus?.active ?? 0}</span>
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/30" title="Completed Projects">
+                <CheckCircle className="w-2.5 h-2.5 text-blue-500 shrink-0" />
+                <span>{data?.projectsByStatus?.completed ?? 0}</span>
+              </span>
+            </>
+          )}
+        </Card>
+        <Card
+          label="Total tasks"
+          value={isLoading ? "…" : data?.totalTasks ?? 0}
+          icon={<CheckSquare className="w-5 h-5" />}
+          colorClass="text-sky-650 bg-sky-50 border-sky-100 dark:text-sky-400 dark:bg-sky-950/20 dark:border-sky-900/60"
+          gradientClass="from-sky-500/[0.02] to-blue-500/[0.02] dark:from-sky-500/[0.01] dark:to-blue-500/[0.01]"
+        >
+          {!isLoading && (
+            <>
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-450 border border-sky-100 dark:border-sky-900/40" title="Active Tasks">
+                <Play className="w-2.5 h-2.5 fill-sky-500 text-sky-500 shrink-0" />
+                <span>{data?.inProgressTasks ?? 0}</span>
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-450 border border-emerald-100 dark:border-emerald-900/40" title="Completed Tasks">
+                <CheckCircle className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                <span>{data?.completedTasks ?? 0}</span>
+              </span>
+            </>
+          )}
+        </Card>
+        <Card
+          label="Team members"
+          value={isLoading ? "…" : data?.teamMembers ?? 0}
+          icon={<Users className="w-5 h-5" />}
           colorClass="text-violet-600 bg-violet-50 border-violet-100 dark:text-violet-400 dark:bg-violet-950/20 dark:border-violet-900/60"
           gradientClass="from-violet-500/[0.02] to-purple-500/[0.02] dark:from-violet-500/[0.01] dark:to-purple-500/[0.01]"
         />
-        <Card 
-          label="Time tracked" 
-          value={isLoading ? "…" : formatDuration(data?.totalMinutes ?? 0)} 
-          icon={<Clock className="w-5 h-5" />} 
+        <Card
+          label="Time tracked"
+          value={isLoading ? "…" : formatDuration(data?.totalMinutes ?? 0)}
+          icon={<Clock className="w-5 h-5" />}
           colorClass="text-amber-600 bg-amber-50 border-amber-100 dark:text-amber-400 dark:bg-amber-950/20 dark:border-amber-900/60"
           gradientClass="from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-500/[0.01] dark:to-orange-500/[0.01]"
         />
@@ -372,7 +399,7 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Projects & Rates */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Who is checked in */}
           <div className="card-premium p-6 flex flex-col h-fit">
             <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
@@ -383,85 +410,194 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
               <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-zinc-800/60 p-0.5 rounded-xl border border-slate-200/50 dark:border-white/[0.05]">
                 <button
                   onClick={() => setOfficeTab("active")}
-                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${
-                    officeTab === "active"
-                      ? "bg-white dark:bg-zinc-700 text-emerald-700 dark:text-emerald-450 shadow-xs"
-                      : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
-                  }`}
+                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${officeTab === "active"
+                    ? "bg-white dark:bg-zinc-700 text-emerald-700 dark:text-emerald-450 shadow-xs"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
+                    }`}
                 >
                   Active
                 </button>
                 <button
                   onClick={() => setOfficeTab("checked-out")}
-                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${
-                    officeTab === "checked-out"
-                      ? "bg-white dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 shadow-xs"
-                      : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
-                  }`}
+                  className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-all cursor-pointer select-none ${officeTab === "checked-out"
+                    ? "bg-white dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 shadow-xs"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-zinc-350"
+                    }`}
                 >
                   Checked Out Today
                 </button>
               </div>
             </div>
-            <ActiveUsersList 
-              activeAttendance={officeTab === "active" ? activeAttendance : checkedOutAttendance} 
-              isLoading={isLoading} 
+            <ActiveUsersList
+              activeAttendance={officeTab === "active" ? activeAttendance : checkedOutAttendance}
+              isLoading={isLoading}
               type={officeTab}
             />
           </div>
 
-          {/* Projects Status Distribution */}
+          {/* Active Projects Activity */}
           <div className="card-premium p-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-5">Projects Status Distribution</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-              {(["active", "on_hold", "draft", "completed", "archived"] as const).map((status) => {
-                const count = data?.projectsByStatus?.[status] ?? 0;
-                const colors = statusColors[status] || statusColors.draft;
-                return (
-                  <div key={status} className={`p-4 rounded-2xl border ${colors.bg} ${colors.border} flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.03] hover:shadow-xs`}>
-                    <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{isLoading ? "…" : count}</span>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider mt-2 px-2.5 py-0.5 rounded-lg ${colors.text} bg-white dark:bg-zinc-800/80 border border-current/10 dark:border-white/[0.05] select-none`}>
-                      {status.replace("_", " ")}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <Folder className="w-4 h-4 text-brand-600" />
+                Active Projects Activity & Commits
+              </h3>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider bg-brand-50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-400 border border-brand-100/50 dark:border-brand-900/40 px-2.5 py-0.5 rounded-lg select-none">
+                {data?.activeProjectsList?.length || 0} active
+              </span>
             </div>
-          </div>
 
-          {/* Time & Task Completion Overview */}
-          <div className="card-premium p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Total Hours Tracked</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500">All registered developer hours for the current cycle.</p>
-              <div className="text-4xl font-black text-brand-600 dark:text-brand-400 font-mono flex items-baseline gap-1 mt-3">
-                {isLoading ? "…" : `${Math.floor((data?.totalMinutes ?? 0) / 60)}`}
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider ml-1 select-none">hours</span>
-                <span className="text-4xl font-black text-indigo-500 dark:text-indigo-400 font-mono ml-2">{(data?.totalMinutes ?? 0) % 60}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider ml-1 select-none">mins</span>
+            {isLoading ? (
+              <div className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center animate-pulse">Loading active projects...</div>
+            ) : !data?.activeProjectsList || data.activeProjectsList.length === 0 ? (
+              <div className="text-xs text-slate-400 dark:text-slate-500 py-8 italic text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                No active projects found.
               </div>
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Task Completion Rate</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Successful completions over total assigned workflow tasks.</p>
-              {isLoading ? (
-                <div className="text-4xl font-extrabold text-slate-350 dark:text-slate-700">…</div>
-              ) : (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">{data?.completedTasks} of {data?.totalTasks} tasks done</span>
-                    <span className="text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 border border-brand-100/50 dark:border-brand-900/40 px-2 py-0.5 rounded-lg font-extrabold">
-                      {data?.totalTasks ? Math.round((data.completedTasks / data.totalTasks) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-zinc-850/50 h-2.5 rounded-full overflow-hidden border border-slate-200/30 dark:border-white/[0.05]">
-                    <div className="bg-gradient-to-r from-brand-500 to-indigo-500 h-full rounded-full transition-all duration-500 shadow-xs"
-                      style={{ width: `${data?.totalTasks ? (data.completedTasks / data.totalTasks) * 100 : 0}%` }}
-                    />
-                  </div>
+            ) : (() => {
+              const sortedProjects = [...data.activeProjectsList].sort((a: any, b: any) => {
+                const aTime = a.commits?.[0]?.committedAt
+                  ? new Date(a.commits[0].committedAt).getTime()
+                  : new Date(a.startDate || a.createdAt).getTime();
+                const bTime = b.commits?.[0]?.committedAt
+                  ? new Date(b.commits[0].committedAt).getTime()
+                  : new Date(b.startDate || b.createdAt).getTime();
+                return bTime - aTime;
+              });
+
+              return (
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.04] border border-slate-200/60 dark:border-white/[0.06] rounded-2xl overflow-hidden bg-white dark:bg-zinc-950/40">
+                  {sortedProjects.map((project) => {
+                    const projectStart = new Date(project.startDate || project.createdAt);
+                    const activeDays = Math.max(0, Math.floor((Date.now() - projectStart.getTime()) / (1000 * 60 * 60 * 24)));
+
+                    // Calculate active duration string
+                    let durationStr = "";
+                    if (activeDays < 30) {
+                      durationStr = `${activeDays} day${activeDays === 1 ? "" : "s"}`;
+                    } else {
+                      const totalMonths = Math.floor(activeDays / 30);
+                      const remainingDays = activeDays % 30;
+                      const daysSuffix = remainingDays > 0 ? ` ${remainingDays} day${remainingDays === 1 ? "" : "s"}` : "";
+
+                      if (totalMonths >= 12) {
+                        const years = Math.floor(totalMonths / 12);
+                        const remainingMonths = totalMonths % 12;
+                        const monthsSuffix = remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths === 1 ? "" : "s"}` : "";
+                        durationStr = `${years} year${years === 1 ? "" : "s"}${monthsSuffix}${daysSuffix}`;
+                      } else {
+                        durationStr = `${totalMonths} month${totalMonths === 1 ? "" : "s"}${daysSuffix}`;
+                      }
+                    }
+
+                    const lastCommit = project.commits?.[0];
+                    let commitDaysAgo = -1;
+                    let lastCommitStr = "No commits yet";
+
+                    if (lastCommit) {
+                      const commitDate = new Date(lastCommit.committedAt);
+                      commitDaysAgo = Math.max(0, Math.floor((Date.now() - commitDate.getTime()) / (1000 * 60 * 60 * 24)));
+                      if (commitDaysAgo === 0) {
+                        lastCommitStr = "today";
+                      } else if (commitDaysAgo === 1) {
+                        lastCommitStr = "yesterday";
+                      } else {
+                        lastCommitStr = `${commitDaysAgo} days ago`;
+                      }
+                    }
+
+                    // Determine warning level
+                    let statusColor = "text-slate-500 dark:text-slate-400";
+                    let warningText = "";
+                    let isAlert = false;
+
+                    if (lastCommit) {
+                      if (commitDaysAgo >= 60) {
+                        statusColor = "text-rose-600 dark:text-rose-400 font-semibold";
+                        warningText = "Delayed / Inactive > 2 months";
+                        isAlert = true;
+                      } else if (commitDaysAgo >= 30) {
+                        statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
+                        warningText = "Delayed / Inactive > 1 month";
+                        isAlert = true;
+                      } else if (commitDaysAgo >= 7) {
+                        statusColor = "text-slate-500 dark:text-slate-300";
+                      } else {
+                        statusColor = "text-emerald-600 dark:text-emerald-450 font-semibold";
+                      }
+                    } else {
+                      if (activeDays >= 60) {
+                        statusColor = "text-rose-600 dark:text-rose-450 font-semibold";
+                        warningText = "No commits & active > 2 months";
+                        isAlert = true;
+                      } else if (activeDays >= 30) {
+                        statusColor = "text-amber-600 dark:text-amber-400 font-semibold";
+                        warningText = "No commits & active > 1 month";
+                        isAlert = true;
+                      }
+                    }
+
+                    // Task counts
+                    const projectInProgressTasks = project.tasks.filter((t) => t.status === "in_progress").length;
+                    const projectCompletedTasks = project.tasks.filter((t) => t.status === "done").length;
+
+                    return (
+                      <div key={project.id} className="grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-3 px-4 py-3.5 hover:bg-slate-50/60 dark:hover:bg-zinc-900 transition-colors">
+                        <div className="sm:col-span-6 lg:col-span-7 flex items-center gap-3 min-w-0">
+                          <div className="p-2 bg-slate-100/80 dark:bg-zinc-800 rounded-xl text-slate-500 shrink-0">
+                            <Folder className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight">
+                                {project.name}
+                              </span>
+                              {isAlert && (
+                                <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-rose-50 dark:bg-rose-955/30 text-rose-700 dark:text-rose-450 border border-rose-100 dark:border-rose-900/30 uppercase tracking-wider shrink-0 animate-pulse">
+                                  Attention Needed
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                              Active <span className="text-slate-600 dark:text-slate-300 font-bold">{durationStr}</span> (since {projectStart.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })})
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tasks breakdown for project */}
+                        <div className="sm:col-span-3 lg:col-span-2 flex items-center justify-center gap-1.5 text-[10px] font-bold select-none font-mono">
+                          <span
+                            className="inline-flex items-center gap-1 bg-blue-50/50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-100/30 dark:border-blue-900/40"
+                            title={`${projectInProgressTasks} tasks in progress`}
+                          >
+                            <Clock className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                            <span className="pt-0.5">{projectInProgressTasks}</span>
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-100/30 dark:border-emerald-900/40"
+                            title={`${projectCompletedTasks} tasks completed`}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                            <span className="pt-0.5">{projectCompletedTasks}</span>
+                          </span>
+                        </div>
+
+                        {/* Commit status */}
+                        <div className="sm:col-span-3 lg:col-span-3 text-left sm:text-right shrink-0 leading-tight">
+                          <div className="text-[11px] text-slate-400 dark:text-slate-400 font-medium">
+                            Commit: <span className={statusColor}>{lastCommitStr}</span>
+                          </div>
+                          {warningText && (
+                            <div className="text-[9px] font-bold text-rose-500 dark:text-rose-400 mt-0.5">
+                              {warningText}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -482,10 +618,10 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
             </div>
           )}
 
-          {/* Commits timeline card */}
-          <div className="card-premium p-6 flex flex-col h-fit">
-            <div className="flex items-center justify-between mb-5 border-b border-slate-100 dark:border-white/[0.06] pb-3">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          {/* Commits timeline card (more compact and clear dark mode) */}
+          <div className="card-premium p-4 sm:p-5 flex flex-col h-fit">
+            <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-white/[0.06] pb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <GitCommit className="w-4 h-4 text-blue-600" />
                 Latest Commits
               </h3>
@@ -498,29 +634,29 @@ function LeavesTodayList({ leavesToday, isLoading }: { leavesToday: any[]; isLoa
             </div>
 
             {isLoading ? (
-              <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 py-12 text-xs font-semibold animate-pulse">Loading commits feed…</div>
+              <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 py-8 text-xs font-semibold animate-pulse">Loading commits feed…</div>
             ) : !data?.latestCommits || data.latestCommits.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-550 py-12 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-555 py-8 text-center">
                 <GitBranch className="w-8 h-8 mb-2 text-slate-350" />
-                <p className="text-xs font-bold text-slate-450">No commits received yet.</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 px-4 mt-1.5 leading-normal max-w-xs mx-auto font-normal">Configure your GitHub webhooks to POST to `/api/webhooks/github` to see pushes here.</p>
+                <p className="text-xs font-bold text-slate-500">No commits received yet.</p>
+                <p className="text-[10px] text-slate-455 dark:text-slate-500 px-4 mt-1.5 leading-normal max-w-xs mx-auto font-normal">Configure your GitHub webhooks to POST to `/api/webhooks/github` to see pushes here.</p>
               </div>
             ) : (
-              <div className="flex-1 relative border-l border-slate-100 dark:border-white/[0.06] pl-4 ml-2.5 space-y-5">
+              <div className="flex-1 relative border-l border-slate-100 dark:border-white/[0.06] pl-3 ml-2 space-y-3.5">
                 {data.latestCommits.map((commit) => (
                   <div key={commit.id} className="relative group">
                     {/* Timeline Node dot */}
-                    <div className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-zinc-900 group-hover:scale-120 group-hover:bg-indigo-650 transition-all" />
-                    
+                    <div className="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-white dark:border-zinc-900 group-hover:scale-120 group-hover:bg-indigo-650 transition-all" />
+
                     <div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-550 mb-1">
-                        <span className="font-bold text-slate-650 dark:text-slate-350">{commit.authorName}</span>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-0.5">
+                        <span className="font-bold text-slate-500 dark:text-slate-400">{commit.authorName}</span>
                         <span className="font-medium">{formatRelativeTime(commit.committedAt)}</span>
                       </div>
-                      <div className="text-xs text-slate-800 dark:text-slate-205 font-semibold break-words leading-relaxed group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                      <div className="text-xs text-slate-800 dark:text-slate-300 font-semibold break-words leading-snug group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                         {commit.message}
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {commit.project && (
                           <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 border border-slate-200/40 dark:border-white/[0.06] px-1.5 py-0.5 rounded-md">
                             {commit.project.name}

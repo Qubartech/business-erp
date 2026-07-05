@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Folder, Activity, Briefcase, CheckCircle, Search, 
   SlidersHorizontal, Users, CheckSquare, Calendar, 
-  LayoutGrid, List, Loader2, ArrowUpDown
+  LayoutGrid, List, Loader2, ArrowUpDown, Clock
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/Badges";
@@ -22,59 +22,132 @@ type ViewMode = "board" | "list";
 function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   const isClient = project.category === "client";
   const categoryColorClass = isClient ? "bg-blue-500" : "bg-purple-500";
+
+  const projectStart = new Date(project.startDate || project.createdAt);
+  const activeDays = Math.max(0, Math.floor((Date.now() - projectStart.getTime()) / (1000 * 60 * 60 * 24)));
+  
+  // Calculate active duration string
+  let durationStr = "";
+  if (activeDays < 30) {
+    durationStr = `${activeDays}d`;
+  } else {
+    const months = Math.floor(activeDays / 30);
+    const remainingDays = activeDays % 30;
+    if (months >= 12) {
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      durationStr = `${years}y ${remainingMonths}m ${remainingDays}d`;
+    } else {
+      durationStr = `${months}m ${remainingDays}d`;
+    }
+  }
+
+  const lastCommit = project.commits?.[0];
+  let commitDaysAgo = -1;
+  let lastCommitStr = "No commits";
+  
+  if (lastCommit) {
+    const commitDate = new Date(lastCommit.committedAt);
+    commitDaysAgo = Math.max(0, Math.floor((Date.now() - commitDate.getTime()) / (1000 * 60 * 60 * 24)));
+    if (commitDaysAgo === 0) {
+      lastCommitStr = "today";
+    } else if (commitDaysAgo === 1) {
+      lastCommitStr = "yesterday";
+    } else {
+      lastCommitStr = `${commitDaysAgo}d ago`;
+    }
+  }
+
+  // Determine warning level
+  let statusColor = "text-slate-500 dark:text-slate-400";
+  let isAlert = false;
+
+  if (lastCommit) {
+    if (commitDaysAgo >= 60) {
+      statusColor = "text-rose-600 dark:text-rose-455 font-bold";
+      isAlert = true;
+    } else if (commitDaysAgo >= 30) {
+      statusColor = "text-amber-600 dark:text-amber-455 font-bold";
+      isAlert = true;
+    } else if (commitDaysAgo < 7) {
+      statusColor = "text-emerald-600 dark:text-emerald-450 font-bold";
+    }
+  } else {
+    if (activeDays >= 60) {
+      statusColor = "text-rose-600 dark:text-rose-455 font-bold";
+      isAlert = true;
+    } else if (activeDays >= 30) {
+      statusColor = "text-amber-600 dark:text-amber-455 font-bold";
+      isAlert = true;
+    }
+  }
+
   return (
     <div
       onClick={onClick}
-      className="relative flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 cursor-pointer hover:-translate-y-0.5 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.015)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)] group overflow-hidden"
+      className="relative flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-white/[0.06] p-4 cursor-pointer hover:-translate-y-0.5 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.015)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] group overflow-hidden"
     >
       {/* Category accent line on left */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${categoryColorClass}`} />
 
-      <div className="pl-1.5">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2 leading-snug">
-            {project.name}
-          </span>
-          <span
-            className={`badge shrink-0 text-[10px] font-bold ${
-              isClient
-                ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30"
-                : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200/50 dark:border-purple-900/30"
-            }`}
-          >
-            {isClient ? "Client" : "Internal"}
-          </span>
+      <div className="pl-1.5 flex flex-col h-full justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-1 leading-snug">
+              {project.name}
+            </span>
+            <span
+              className={`badge shrink-0 text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.2 rounded-md ${
+                isClient
+                  ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/30"
+                  : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border border-purple-200/30"
+              }`}
+            >
+              {isClient ? "Client" : "Internal"}
+            </span>
+          </div>
+          
+          {project.description && (
+            <p className="text-xs text-slate-450 dark:text-slate-400 line-clamp-1 mb-3 leading-relaxed">
+              {project.description}
+            </p>
+          )}
+
+          {/* Continuation & Commit details */}
+          <div className="grid grid-cols-2 gap-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border-t border-b border-slate-100 dark:border-white/[0.04] py-2 mb-3 select-none">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span className="truncate font-extrabold">{durationStr} active</span>
+              </div>
+              <div className="text-[9px] text-slate-400 dark:text-slate-500 pl-5 truncate">
+                {formatDate(project.startDate)} - {formatDate(project.endDate) || "Present"}
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 justify-end min-w-0">
+              <Activity className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className={`truncate flex items-center gap-1 ${statusColor}`}>
+                {isAlert && <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
+                {lastCommitStr}
+              </span>
+            </div>
+          </div>
         </div>
         
-        {project.description && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3 leading-relaxed">
-            {project.description}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between mt-1 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between mt-0.5">
           <StatusBadge kind="project" status={project.status} />
           
-          <div className="flex items-center gap-3 text-xs text-slate-450 dark:text-slate-500 font-semibold">
+          <div className="flex items-center gap-3 text-xs text-slate-450 dark:text-slate-500 font-bold">
             <span className="flex items-center gap-1" title="Members">
-              <Users className="h-3.5 w-3.5" />
+              <Users className="h-3.5 w-3.5 text-slate-400" />
               <span>{project.members?.length ?? 0}</span>
             </span>
             <span className="flex items-center gap-1" title="Tasks">
-              <CheckSquare className="h-3.5 w-3.5" />
+              <CheckSquare className="h-3.5 w-3.5 text-slate-400" />
               <span>{project._count?.tasks ?? 0}</span>
             </span>
           </div>
         </div>
-
-        {(project.startDate || project.endDate) && (
-          <div className="mt-2.5 pt-2 border-t border-dashed border-slate-100 dark:border-white/[0.04] text-[10px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-            <Calendar className="h-3 w-3 shrink-0" />
-            <span>{formatDate(project.startDate)}</span>
-            {project.startDate && project.endDate && <span className="text-slate-350 dark:text-slate-700">→</span>}
-            <span>{formatDate(project.endDate)}</span>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -82,6 +155,53 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
 
 function ProjectRow({ project, onClick }: { project: Project; onClick: () => void }) {
   const isClient = project.category === "client";
+
+  const projectStart = new Date(project.startDate || project.createdAt);
+  const activeDays = Math.max(0, Math.floor((Date.now() - projectStart.getTime()) / (1000 * 60 * 60 * 24)));
+  
+  let durationStr = "";
+  if (activeDays < 30) {
+    durationStr = `${activeDays}d`;
+  } else {
+    const months = Math.floor(activeDays / 30);
+    const remainingDays = activeDays % 30;
+    if (months >= 12) {
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      durationStr = `${years}y ${remainingMonths}m ${remainingDays}d`;
+    } else {
+      durationStr = `${months}m ${remainingDays}d`;
+    }
+  }
+
+  const lastCommit = project.commits?.[0];
+  let commitDaysAgo = -1;
+  let lastCommitStr = "—";
+  
+  if (lastCommit) {
+    const commitDate = new Date(lastCommit.committedAt);
+    commitDaysAgo = Math.max(0, Math.floor((Date.now() - commitDate.getTime()) / (1000 * 60 * 60 * 24)));
+    if (commitDaysAgo === 0) {
+      lastCommitStr = "today";
+    } else if (commitDaysAgo === 1) {
+      lastCommitStr = "yesterday";
+    } else {
+      lastCommitStr = `${commitDaysAgo}d ago`;
+    }
+  }
+
+  // Determine warning level
+  let statusColor = "text-slate-500 dark:text-slate-400";
+  if (lastCommit) {
+    if (commitDaysAgo >= 60) {
+      statusColor = "text-rose-600 dark:text-rose-450 font-bold";
+    } else if (commitDaysAgo >= 30) {
+      statusColor = "text-amber-600 dark:text-amber-455 font-bold";
+    } else if (commitDaysAgo < 7) {
+      statusColor = "text-emerald-600 dark:text-emerald-450 font-semibold";
+    }
+  }
+
   return (
     <tr
       onClick={onClick}
@@ -102,10 +222,15 @@ function ProjectRow({ project, onClick }: { project: Project; onClick: () => voi
       <td className="px-4 py-3">
         <StatusBadge kind="project" status={project.status} />
       </td>
+      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-350 font-semibold">
+        <div className="font-extrabold">{durationStr}</div>
+        <div className="text-[10px] text-slate-400 dark:text-slate-550 mt-0.5">
+          {formatDate(project.startDate)} - {formatDate(project.endDate) || "Present"}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-xs font-semibold"><span className={statusColor}>{lastCommitStr}</span></td>
       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 font-semibold">{project.members?.length ?? 0}</td>
       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 font-semibold">{project._count?.tasks ?? 0}</td>
-      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-450">{formatDate(project.startDate)}</td>
-      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-450">{formatDate(project.endDate)}</td>
     </tr>
   );
 }
@@ -120,11 +245,10 @@ export default function ProjectsListPage() {
   const [formModalOpen, setFormModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["projects", search, status],
+    queryKey: ["projects", search],
     queryFn: () =>
       projectsApi.list({
         search: search || undefined,
-        status: status || undefined,
         pageSize: 100,
       }),
   });
@@ -168,18 +292,23 @@ export default function ProjectsListPage() {
     });
   }, [data?.items, sortBy]);
 
+  const filteredProjects = useMemo(() => {
+    if (!status) return allProjects;
+    return allProjects.filter((p) => p.status === status);
+  }, [allProjects, status]);
+
   const totalProjects = allProjects.length;
   const activeProjects = allProjects.filter((p) => p.status === "active").length;
   const clientProjectsCount = allProjects.filter((p) => p.category === "client").length;
   const completedProjects = allProjects.filter((p) => p.status === "completed").length;
 
   const clientProjects = useMemo(
-    () => allProjects.filter((p) => p.category === "client"),
-    [allProjects]
+    () => filteredProjects.filter((p) => p.category === "client"),
+    [filteredProjects]
   );
   const internalProjects = useMemo(
-    () => allProjects.filter((p) => p.category !== "client"),
-    [allProjects]
+    () => filteredProjects.filter((p) => p.category !== "client"),
+    [filteredProjects]
   );
 
   return (
@@ -302,7 +431,7 @@ export default function ProjectsListPage() {
           )}
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-550">
@@ -314,25 +443,6 @@ export default function ProjectsListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-555">
-              <Folder className="h-4 w-4" />
-            </div>
-            <select
-              className="input pl-9 w-full appearance-none cursor-pointer"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as ProjectStatus | "")}
-            >
-              <option value="">All Statuses</option>
-              {(["draft", "active", "on_hold", "completed", "archived"] as ProjectStatus[]).map((s) => (
-                <option key={s} value={s}>
-                  {s.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Sort Dropdown */}
@@ -354,6 +464,53 @@ export default function ProjectsListPage() {
               <option value="tasks-desc">Most Tasks</option>
             </select>
           </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100 dark:border-white/[0.04] select-none">
+          <button
+            onClick={() => setStatus("")}
+            className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+              status === ""
+                ? "bg-slate-900 dark:bg-white text-white dark:text-zinc-950 border-transparent shadow-xs"
+                : "bg-slate-50 dark:bg-zinc-800/80 text-slate-650 dark:text-slate-400 border-slate-200/50 dark:border-zinc-700/60 hover:bg-slate-100 dark:hover:bg-zinc-755/40"
+            }`}
+          >
+            <span>All</span>
+            <span className={`text-[9px] px-1.5 py-0.2 rounded-md ${
+              status === "" ? "bg-white/20 dark:bg-black/10 text-white dark:text-zinc-950" : "bg-slate-200/60 dark:bg-zinc-700 text-slate-500 dark:text-slate-400"
+            }`}>
+              {allProjects.length}
+            </span>
+          </button>
+          {[
+            { value: "draft", label: "Draft", color: "bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border-slate-200/50 dark:border-zinc-700/60" },
+            { value: "active", label: "Active", color: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30" },
+            { value: "on_hold", label: "On Hold", color: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-900/30" },
+            { value: "completed", label: "Completed", color: "bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 border-blue-200/30" },
+            { value: "archived", label: "Archived", color: "bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/30" },
+          ].map((item) => {
+            const count = allProjects.filter((p) => p.status === item.value).length;
+            const isSelected = status === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => setStatus(item.value as any)}
+                className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-brand-600 text-white border-transparent shadow-xs"
+                    : `${item.color} hover:brightness-95`
+                }`}
+              >
+                <span>{item.label}</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-md ${
+                  isSelected ? "bg-white/20 text-white" : "bg-black/[0.04] dark:bg-white/[0.04] text-current/80"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -387,7 +544,7 @@ export default function ProjectsListPage() {
         </div>
 
         <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-zinc-900 border border-slate-200/50 dark:border-white/[0.06] px-3 py-1 rounded-lg">
-          Filtered <span className="text-brand-600 dark:text-brand-400 font-bold">{allProjects.length}</span> projects
+          Filtered <span className="text-brand-600 dark:text-brand-400 font-bold">{filteredProjects.length}</span> projects
         </div>
       </div>
 
@@ -454,7 +611,7 @@ export default function ProjectsListPage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 dark:bg-zinc-855 text-slate-600 dark:text-slate-350 border-b border-slate-200/50 dark:border-white/[0.04]">
               <tr>
-                {["Name", "Category", "Status", "Members", "Tasks", "Start Date", "End Date"].map((h) => (
+                {["Name", "Category", "Status", "Duration", "Last Commit", "Members", "Tasks"].map((h) => (
                   <th key={h} className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
                     {h}
                   </th>
@@ -462,14 +619,14 @@ export default function ProjectsListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04] bg-white dark:bg-zinc-900">
-              {allProjects.length === 0 ? (
+              {filteredProjects.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-slate-400 dark:text-slate-500 text-sm">
                     No projects found
                   </td>
                 </tr>
               ) : (
-                allProjects.map((p) => (
+                filteredProjects.map((p) => (
                   <ProjectRow key={p.id} project={p} onClick={() => nav(`/projects/${p.id}`)} />
                 ))
               )}
