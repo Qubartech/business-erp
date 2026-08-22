@@ -357,24 +357,35 @@ model QubartechTeamMember {
 }
 
 model QubartechProduct {
-  id            String   @id @default(uuid()) @db.Uuid
-  name          String
-  slug          String   @unique
-  category      String?
-  description   String?
-  features      String?
-  icon          String?
-  color         String?
-  tags          String?
-  image         String?
-  link          String?
-  status        String   @default("live")
-  privacyPolicy String?  @map("privacy_policy") @db.Text
-  isActive      Boolean  @default(true) @map("is_active")
+  id                   String   @id @default(uuid()) @db.Uuid
+  name                 String
+  slug                 String   @unique
+  shortName            String?  @map("short_name")
+  tagline              String?
+  badge                String?
+  isNonProfit          Boolean  @default(false) @map("is_non_profit")
+  category             String?
+  description          String?
+  features             String?  @db.Text
+  icon                 String?
+  color                String?
+  coverGradient        String?  @map("cover_gradient")
+  tags                 String?
+  image                String?
+  link                 String?
+  githubUrl            String?  @map("github_url")
+  techStack            String?  @map("tech_stack")
+  mission              String?  @db.Text
+  stats                String?  @db.Text
+  detailsContent       String?  @map("details_content") @db.Text
+  status               String   @default("live")
+  privacyPolicy        String?  @map("privacy_policy") @db.Text
+  isActive             Boolean  @default(true) @map("is_active")
   hasProjectManagement Boolean  @default(true) @map("has_project_management")
-  hasPrivacy            Boolean  @default(true) @map("has_privacy")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt      @map("updated_at")
+  hasDetails           Boolean  @default(true) @map("has_details")
+  hasPrivacy           Boolean  @default(true) @map("has_privacy")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt      @map("updated_at")
 
   @@map("qubartech_products")
 }

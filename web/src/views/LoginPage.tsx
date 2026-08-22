@@ -25,7 +25,7 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       const to = searchParams?.get("from") ?? "/";
       router.replace(to);
     } catch (err) {

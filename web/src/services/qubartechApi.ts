@@ -17,18 +17,29 @@ export type QubartechTeamMemberInput = {
 export type QubartechProductInput = {
   name: string;
   slug: string;
+  shortName?: string | null;
+  tagline?: string | null;
+  badge?: string | null;
+  isNonProfit?: boolean;
   category?: string | null;
   description?: string | null;
   features?: string | null;
   icon?: string | null;
   color?: string | null;
+  coverGradient?: string | null;
   tags?: string | null;
   image?: string | null;
   link?: string | null;
+  githubUrl?: string | null;
+  techStack?: string | null;
+  mission?: string | null;
+  stats?: string | null;
+  detailsContent?: string | null;
   status?: string;
   privacyPolicy?: string | null;
   isActive?: boolean;
   hasProjectManagement?: boolean;
+  hasDetails?: boolean;
   hasPrivacy?: boolean;
 };
 
@@ -51,6 +62,7 @@ export const qubartechTeamApi = {
 
 export const qubartechProductsApi = {
   list: () => unwrap<QubartechProduct[]>(api.get<ApiEnvelope<QubartechProduct[]>>("/qubartech/products")),
+  getByIdOrSlug: (idOrSlug: string) => unwrap<QubartechProduct>(api.get<ApiEnvelope<QubartechProduct>>(`/qubartech/products/${idOrSlug}`)),
   create: (data: QubartechProductInput) => unwrap<QubartechProduct>(api.post<ApiEnvelope<QubartechProduct>>("/qubartech/products", data)),
   update: (id: string, data: Partial<QubartechProductInput>) => unwrap<QubartechProduct>(api.patch<ApiEnvelope<QubartechProduct>>(`/qubartech/products/${id}`, data)),
   remove: (id: string) => unwrap<{ id: string }>(api.delete<ApiEnvelope<{ id: string }>>(`/qubartech/products/${id}`)),

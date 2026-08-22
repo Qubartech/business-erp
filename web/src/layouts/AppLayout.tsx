@@ -42,7 +42,7 @@ const items: NavItem[] = [
     roles: ["admin", "manager"],
     children: [
       { to: "/qubartech/team", label: "Our Team" },
-      { to: "/qubartech/privacy", label: "Project Privacy" },
+      { to: "/qubartech/privacy", label: "Products & Details" },
     ],
   },
   { to: "/accounts", label: "Accounts", icon: CircleDollarSign, roles: ["admin", "account"] },
