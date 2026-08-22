@@ -17,6 +17,7 @@ import {
   Plus,
   Trash2,
   Edit2,
+  Edit3,
   FileText,
   ShieldAlert,
   CheckCircle,
@@ -24,6 +25,7 @@ import {
   Sparkles,
   Heart
 } from "lucide-react";
+import Link from "next/link";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -351,6 +353,13 @@ export default function PrivacyManagementPage() {
         const baseUrl = getWebsiteBaseUrl();
         return (
           <div className="flex justify-end gap-1.5">
+            <Link
+              href={`/qubartech/products/${p.slug || p.id}`}
+              className="btn-secondary p-2 flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 bg-brand-50/60 dark:bg-brand-950/30 border-brand-200/60 dark:border-brand-800/40"
+              title="Full Markdown Description & Details Writer"
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+            </Link>
             {p.isActive && p.hasDetails && (
               <a
                 href={`${baseUrl}/products/${p.slug}`}
@@ -373,7 +382,7 @@ export default function PrivacyManagementPage() {
                 <FileText className="h-3.5 w-3.5" />
               </a>
             )}
-            <button className="btn-secondary p-2" onClick={() => openEditModal(p)} title="Edit Product & Details">
+            <button className="btn-secondary p-2" onClick={() => openEditModal(p)} title="Quick Edit (Modal)">
               <Edit2 className="h-3.5 w-3.5" />
             </button>
             <button
@@ -400,9 +409,14 @@ export default function PrivacyManagementPage() {
         title="QubarTech Products & Details Management"
         description="Manage software products, rich detail pages, specifications, and live Privacy Policies across the QubarTech ecosystem."
         actions={
-          <button className="btn-primary flex items-center gap-2 shadow-lg" onClick={openAddModal}>
-            <Plus className="h-4 w-4" /> Add New Product
-          </button>
+          <div className="flex items-center gap-2">
+            <Link href="/qubartech/products/new" className="btn-secondary flex items-center gap-2 text-xs font-bold">
+              <Edit3 className="h-4 w-4 text-brand-600" /> Full Description Writer
+            </Link>
+            <button className="btn-primary flex items-center gap-2 shadow-lg" onClick={openAddModal}>
+              <Plus className="h-4 w-4" /> Quick Add Product
+            </button>
+          </div>
         }
       />
 

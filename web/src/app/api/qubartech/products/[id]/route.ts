@@ -57,8 +57,11 @@ export const GET = apiHandler(
 export const PATCH = apiHandler(
   async (req, { params, body }) => {
     const { id } = params;
-    const exists = await prisma.qubartechProduct.findUnique({
-      where: { id },
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const exists = await prisma.qubartechProduct.findFirst({
+      where: isUuid
+        ? { OR: [{ id }, { slug: id.toLowerCase().trim() }] }
+        : { slug: id.toLowerCase().trim() },
     });
     if (!exists) throw NotFound("Product not found");
 
@@ -67,7 +70,7 @@ export const PATCH = apiHandler(
     }
 
     return prisma.qubartechProduct.update({
-      where: { id },
+      where: { id: exists.id },
       data: body,
     });
   },
@@ -80,15 +83,18 @@ export const PATCH = apiHandler(
 export const DELETE = apiHandler(
   async (req, { params }) => {
     const { id } = params;
-    const exists = await prisma.qubartechProduct.findUnique({
-      where: { id },
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const exists = await prisma.qubartechProduct.findFirst({
+      where: isUuid
+        ? { OR: [{ id }, { slug: id.toLowerCase().trim() }] }
+        : { slug: id.toLowerCase().trim() },
     });
     if (!exists) throw NotFound("Product not found");
 
     await prisma.qubartechProduct.delete({
-      where: { id },
+      where: { id: exists.id },
     });
-    return { id };
+    return { id: exists.id };
   },
   {
     roles: ["admin", "manager"],

@@ -28,8 +28,9 @@ export default function LoginPage() {
       await login(email.trim(), password);
       const to = searchParams?.get("from") ?? "/";
       router.replace(to);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Login failed";
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -123,7 +124,7 @@ export default function LoginPage() {
 
           {/* Submit button */}
           <button
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:from-brand-500 hover:to-indigo-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-lg shadow-brand-600/10 disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:from-brand-500 hover:to-indigo-500 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 shadow-lg shadow-brand-600/10 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             disabled={busy}
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin text-white" />}
