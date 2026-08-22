@@ -38,48 +38,50 @@ import Link from "next/link";
 function parseInline(text: string): React.ReactNode {
   if (!text) return "";
 
-  const regex = /(\*\*.*?\*\*|\*[^*]+?\*|\`.*?\`|\[.*?\]\(.*?\))/g;
+  // Split by bold (**), italic (*), inline code (`), and markdown links ([text](url))
+  const regex = /(\*\*.*?\*\*|\*[^*]+?\*|`.*?`|\[.*?\]\(.*?\))/g;
   const parts = text.split(regex);
 
   return parts.map((part, idx) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      const innerText = part.slice(2, -2);
+    if (!part) return null;
+
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
       return (
         <strong key={idx} className="font-bold text-slate-900 dark:text-white">
-          {parseInline(innerText)}
+          {parseInline(part.slice(2, -2))}
         </strong>
       );
     }
-    if (part.startsWith("*") && part.endsWith("*")) {
-      const innerText = part.slice(1, -1);
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
       return (
         <em key={idx} className="italic text-slate-700 dark:text-slate-300">
-          {parseInline(innerText)}
+          {parseInline(part.slice(1, -1))}
         </em>
       );
     }
-    if (part.startsWith("`") && part.endsWith("`")) {
-      const innerText = part.slice(1, -1);
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
       return (
-        <code key={idx} className="text-xs font-mono bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-brand-600 dark:text-brand-400">
-          {innerText}
+        <code
+          key={idx}
+          className="text-xs font-mono bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-brand-600 dark:text-brand-400 font-semibold border border-slate-200/60 dark:border-zinc-700/60"
+        >
+          {part.slice(1, -1)}
         </code>
       );
     }
     if (part.startsWith("[") && part.includes("](")) {
       const match = part.match(/\[(.*?)\]\((.*?)\)/);
       if (match) {
-        const linkText = match[1];
-        const url = match[2];
         return (
           <a
             key={idx}
-            href={url}
-            className="text-brand-600 hover:underline dark:text-brand-400 font-semibold"
+            href={match[2]}
+            className="text-brand-600 hover:underline dark:text-brand-400 font-semibold inline-flex items-center gap-0.5"
             target="_blank"
             rel="noreferrer"
           >
-            {parseInline(linkText)}
+            <span>{parseInline(match[1])}</span>
+            <span className="text-[10px]">↗</span>
           </a>
         );
       }
@@ -88,26 +90,233 @@ function parseInline(text: string): React.ReactNode {
   });
 }
 
+type MarkdownBlock =
+  | { type: "h1"; content: string }
+  | { type: "h2"; content: string }
+  | { type: "h3"; content: string; isFaq?: boolean }
+  | { type: "h4"; content: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] }
+  | { type: "code"; lang: string; content: string }
+  | { type: "callout"; calloutType: string; content: string }
+  | { type: "blockquote"; content: string }
+  | { type: "hr" }
+  | { type: "p"; content: string };
+
+function parseMarkdownToBlocks(text: string): MarkdownBlock[] {
+  if (!text || !text.trim()) return [];
+
+  const lines = text.split("\n");
+  const blocks: MarkdownBlock[] = [];
+  let i = 0;
+  let inFaqSection = false;
+
+  while (i < lines.length) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // 1. Empty lines
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // 2. Fenced Code Block: ```lang ... ```
+    if (trimmed.startsWith("```")) {
+      const lang = trimmed.slice(3).trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // skip closing ```
+      blocks.push({ type: "code", lang, content: codeLines.join("\n") });
+      continue;
+    }
+
+    // 3. Callout / Alert: > [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING]
+    if (/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING)\]/i.test(trimmed)) {
+      const match = trimmed.match(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING)\]/i);
+      const calloutType = match ? match[1].toUpperCase() : "NOTE";
+      const calloutLines: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim().startsWith(">")) {
+        calloutLines.push(lines[i].trim().replace(/^>\s?/, ""));
+        i++;
+      }
+      blocks.push({ type: "callout", calloutType, content: calloutLines.join("\n") });
+      continue;
+    }
+
+    // 4. Blockquotes: > quote
+    if (trimmed.startsWith("> ")) {
+      const quoteLines: string[] = [trimmed.replace(/^>\s+/, "")];
+      i++;
+      while (i < lines.length && lines[i].trim().startsWith(">")) {
+        quoteLines.push(lines[i].trim().replace(/^>\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "blockquote", content: quoteLines.join("\n") });
+      continue;
+    }
+
+    // 5. Headings
+    if (trimmed.startsWith("# ")) {
+      inFaqSection = false;
+      blocks.push({ type: "h1", content: trimmed.replace(/^#\s+/, "") });
+      i++;
+      continue;
+    }
+    if (trimmed.startsWith("## ")) {
+      const headingText = trimmed.replace(/^##\s+/, "");
+      inFaqSection = /faq|frequently asked questions/i.test(headingText);
+      blocks.push({ type: "h2", content: headingText });
+      i++;
+      continue;
+    }
+    if (trimmed.startsWith("### ")) {
+      const headingText = trimmed.replace(/^###\s+/, "");
+      const isFaq = inFaqSection || headingText.endsWith("?");
+      blocks.push({ type: "h3", content: headingText, isFaq });
+      i++;
+      continue;
+    }
+    if (trimmed.startsWith("#### ")) {
+      blocks.push({ type: "h4", content: trimmed.replace(/^####\s+/, "") });
+      i++;
+      continue;
+    }
+
+    // 6. Horizontal Rule: --- or ***
+    if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      blocks.push({ type: "hr" });
+      i++;
+      continue;
+    }
+
+    // 7. Bullet Lists (- or *)
+    if (/^[-*]\s+/.test(trimmed)) {
+      const items: string[] = [trimmed.replace(/^[-*]\s+/, "")];
+      i++;
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*]\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "ul", items });
+      continue;
+    }
+
+    // 8. Numbered Lists (1. )
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const items: string[] = [trimmed.replace(/^\d+\.\s+/, "")];
+      i++;
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^\d+\.\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "ol", items });
+      continue;
+    }
+
+    // 9. Standard Paragraph (collect contiguous lines until next block element or blank line)
+    const pLines: string[] = [rawLine];
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !lines[i].trim().startsWith("#") &&
+      !lines[i].trim().startsWith("```") &&
+      !lines[i].trim().startsWith(">") &&
+      !/^[-*]\s+/.test(lines[i].trim()) &&
+      !/^\d+\.\s+/.test(lines[i].trim()) &&
+      !/^(\-{3,}|\*{3,}|_{3,})$/.test(lines[i].trim())
+    ) {
+      pLines.push(lines[i]);
+      i++;
+    }
+    blocks.push({ type: "p", content: pLines.join("\n") });
+  }
+
+  return blocks;
+}
+
 function renderMarkdown(text: string) {
   if (!text || !text.trim()) {
     return (
       <div className="py-12 text-center text-slate-400 dark:text-zinc-500 italic text-sm">
-        No Markdown description written yet. Type on the editor to preview your live documentation.
+        No Markdown description written yet. Type in the editor to preview live documentation.
       </div>
     );
   }
 
-  const blocks = text.split(/\n\s*\n/);
-  return blocks.map((block, idx) => {
-    const trimmed = block.trim();
-    if (!trimmed) return null;
+  const blocks = parseMarkdownToBlocks(text);
 
-    // Callouts / Alerts
-    if (trimmed.startsWith("> [!NOTE]") || trimmed.startsWith("> [!TIP]") || trimmed.startsWith("> [!IMPORTANT]") || trimmed.startsWith("> [!WARNING]")) {
-      const isTip = trimmed.startsWith("> [!TIP]");
-      const isWarn = trimmed.startsWith("> [!WARNING]");
-      const isImp = trimmed.startsWith("> [!IMPORTANT]");
-      const content = trimmed.replace(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING)\]\s*\n?>?\s*/i, "");
+  return blocks.map((block, idx) => {
+    // 1. Headings
+    if (block.type === "h1") {
+      return (
+        <h2
+          key={idx}
+          className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 dark:text-white mt-8 mb-4 border-b pb-2.5 border-slate-200/80 dark:border-zinc-800"
+        >
+          {parseInline(block.content)}
+        </h2>
+      );
+    }
+
+    if (block.type === "h2") {
+      return (
+        <h3
+          key={idx}
+          className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white mt-8 mb-3 flex items-center gap-2"
+        >
+          <span className="w-2 h-2 rounded-full bg-brand-500 shrink-0"></span>
+          <span>{parseInline(block.content)}</span>
+        </h3>
+      );
+    }
+
+    if (block.type === "h3") {
+      if (block.isFaq) {
+        return (
+          <div
+            key={idx}
+            className="flex items-start gap-2.5 mt-6 mb-2 text-base sm:text-lg font-bold text-slate-900 dark:text-white"
+          >
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30 shrink-0 mt-0.5">
+              FAQ
+            </span>
+            <span>{parseInline(block.content)}</span>
+          </div>
+        );
+      }
+      return (
+        <h4
+          key={idx}
+          className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200 mt-6 mb-2"
+        >
+          {parseInline(block.content)}
+        </h4>
+      );
+    }
+
+    if (block.type === "h4") {
+      return (
+        <h5
+          key={idx}
+          className="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300 mt-4 mb-2"
+        >
+          {parseInline(block.content)}
+        </h5>
+      );
+    }
+
+    // 2. Callout / Alert
+    if (block.type === "callout") {
+      const isTip = block.calloutType === "TIP";
+      const isWarn = block.calloutType === "WARNING";
+      const isImp = block.calloutType === "IMPORTANT";
 
       return (
         <div
@@ -122,99 +331,108 @@ function renderMarkdown(text: string) {
               : "bg-blue-50/80 dark:bg-blue-950/20 border-blue-500/30 text-blue-800 dark:text-blue-300"
           }`}
         >
-          <div className="font-bold mb-1 flex items-center gap-1.5 uppercase tracking-wider text-xs">
+          <div className="font-bold mb-1.5 flex items-center gap-1.5 uppercase tracking-wider text-xs">
             {isTip ? "💡 Pro Tip" : isWarn ? "⚠️ Caution" : isImp ? "⚡ Important" : "ℹ️ Note"}
           </div>
-          <div className="whitespace-pre-line leading-relaxed">{parseInline(content)}</div>
+          <div className="leading-relaxed">
+            {block.content.split("\n").map((line, lIdx, arr) => (
+              <React.Fragment key={lIdx}>
+                {parseInline(line)}
+                {lIdx < arr.length - 1 && <br />}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       );
     }
 
-    // Blockquote
-    if (trimmed.startsWith("> ")) {
-      const quoteText = trimmed.replace(/^>\s+/gm, "");
+    // 3. Blockquote
+    if (block.type === "blockquote") {
       return (
         <blockquote
           key={idx}
-          className="border-l-4 border-brand-500/60 pl-4 py-1.5 my-4 italic text-slate-600 dark:text-zinc-400 bg-slate-50/50 dark:bg-zinc-900/30 rounded-r-xl"
+          className="border-l-4 border-brand-500/60 pl-4 py-2 my-4 italic text-slate-600 dark:text-zinc-400 bg-slate-50/50 dark:bg-zinc-900/30 rounded-r-xl"
         >
-          {parseInline(quoteText)}
+          {block.content.split("\n").map((line, lIdx, arr) => (
+            <React.Fragment key={lIdx}>
+              {parseInline(line)}
+              {lIdx < arr.length - 1 && <br />}
+            </React.Fragment>
+          ))}
         </blockquote>
       );
     }
 
-    // Headings
-    if (trimmed.startsWith("### ")) {
+    // 4. Code Block
+    if (block.type === "code") {
       return (
-        <h4 key={idx} className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 mt-6 mb-2">
-          {parseInline(trimmed.replace(/^###\s+/, ""))}
-        </h4>
-      );
-    }
-    if (trimmed.startsWith("## ")) {
-      return (
-        <h3 key={idx} className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-1 border-b border-slate-200/60 dark:border-zinc-800">
-          {parseInline(trimmed.replace(/^##\s+/, ""))}
-        </h3>
-      );
-    }
-    if (trimmed.startsWith("# ")) {
-      return (
-        <h2 key={idx} className="text-xl sm:text-2xl font-black tracking-tight text-slate-950 dark:text-white mt-8 mb-4">
-          {parseInline(trimmed.replace(/^#\s+/, ""))}
-        </h2>
-      );
-    }
-
-    // Code Block
-    if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
-      const codeLines = trimmed.slice(3, -3).split("\n");
-      const lang = codeLines[0].trim();
-      const codeContent = lang ? codeLines.slice(1).join("\n") : codeLines.join("\n");
-
-      return (
-        <div key={idx} className="rounded-xl overflow-hidden my-4 border border-slate-800 bg-slate-950 text-slate-100">
-          {lang && (
+        <div
+          key={idx}
+          className="rounded-xl overflow-hidden my-4 border border-slate-800 bg-slate-950 text-slate-100"
+        >
+          {block.lang && (
             <div className="bg-slate-900/90 px-4 py-1.5 text-[11px] font-mono text-slate-400 border-b border-slate-800 flex justify-between items-center">
-              <span>{lang}</span>
+              <span>{block.lang}</span>
               <span className="text-[10px] uppercase tracking-wider">code</span>
             </div>
           )}
           <pre className="p-4 overflow-x-auto text-xs font-mono leading-relaxed text-slate-200">
-            <code>{codeContent}</code>
+            <code>{block.content}</code>
           </pre>
         </div>
       );
     }
 
-    // Bullet List
-    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      const items = trimmed.split(/\n[-*]\s+/).map((item) => item.replace(/^[-*]\s+/, ""));
+    // 5. Bullet List
+    if (block.type === "ul") {
       return (
-        <ul key={idx} className="list-disc pl-5 space-y-1.5 text-slate-700 dark:text-zinc-300 my-3 text-sm leading-relaxed">
-          {items.map((item, itemIdx) => (
-            <li key={itemIdx}>{parseInline(item)}</li>
+        <ul key={idx} className="space-y-2 my-3 pl-1">
+          {block.items.map((item, itemIdx) => (
+            <li
+              key={itemIdx}
+              className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-zinc-300 leading-relaxed"
+            >
+              <span className="text-brand-500 dark:text-brand-400 mt-1 shrink-0 font-black">•</span>
+              <div className="flex-1">{parseInline(item)}</div>
+            </li>
           ))}
         </ul>
       );
     }
 
-    // Numbered List
-    if (/^\d+\.\s+/.test(trimmed)) {
-      const items = trimmed.split(/\n\d+\.\s+/).map((item) => item.replace(/^\d+\.\s+/, ""));
+    // 6. Numbered List
+    if (block.type === "ol") {
       return (
-        <ol key={idx} className="list-decimal pl-5 space-y-1.5 text-slate-700 dark:text-zinc-300 my-3 text-sm leading-relaxed">
-          {items.map((item, itemIdx) => (
-            <li key={itemIdx}>{parseInline(item)}</li>
+        <ol key={idx} className="space-y-2 my-3 pl-1">
+          {block.items.map((item, itemIdx) => (
+            <li
+              key={itemIdx}
+              className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-zinc-300 leading-relaxed"
+            >
+              <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center justify-center text-[10px] font-mono font-bold shrink-0 mt-0.5 border border-slate-200 dark:border-zinc-700">
+                {itemIdx + 1}
+              </span>
+              <div className="flex-1">{parseInline(item)}</div>
+            </li>
           ))}
         </ol>
       );
     }
 
-    // Standard Paragraph
+    // 7. Horizontal Rule
+    if (block.type === "hr") {
+      return <hr key={idx} className="my-6 border-slate-200/80 dark:border-zinc-800" />;
+    }
+
+    // 8. Standard Paragraph with line breaks
     return (
-      <p key={idx} className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300 mb-3.5 whitespace-pre-line">
-        {parseInline(trimmed)}
+      <p key={idx} className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300 mb-3.5">
+        {block.content.split("\n").map((line, lIdx, arr) => (
+          <React.Fragment key={lIdx}>
+            {parseInline(line)}
+            {lIdx < arr.length - 1 && <br />}
+          </React.Fragment>
+        ))}
       </p>
     );
   });
