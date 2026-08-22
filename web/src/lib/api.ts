@@ -78,6 +78,9 @@ api.interceptors.response.use(
       }
     }
     const data = err.response?.data;
+    if (data && data.message) {
+      err.message = data.message;
+    }
     if (data && data.success === false && err.response?.status !== 401) {
       if (data.errors && Object.keys(data.errors).length > 0) {
         const detailMsg = Object.entries(data.errors as Record<string, string[]>)

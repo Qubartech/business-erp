@@ -211,7 +211,12 @@ For any inquiries or administrative requests, contact hello@qubartech.com.`,
         { label: "Monetization", value: "100% Free & Ad-Free" },
       ]),
       detailsContent: `# Al-Quran Kareem — Digital Sanctuary
-A continuous charity (Sadaqah Jariyah) initiative designed to make reading and understanding the Holy Quran seamless, beautiful, and distraction-free on all modern devices.`,
+A continuous charity (Sadaqah Jariyah) initiative designed to make reading and understanding the Holy Quran seamless, beautiful, and distraction-free on all modern devices.
+
+## Core Highlights
+- **100% Free & Ad-Free**: No subscriptions, banners, or tracking.
+- **Crystal Audio Streams**: 15+ world-class Qaris with real-time active line highlighting.
+- **Multiple Translations & Tafseer**: Instant switching between English, Bengali, Urdu, and Turkish translations.`,
       status: "live",
       privacyPolicy: `# Privacy Policy for Al-Quran Kareem
 Last updated: June 2026.
@@ -235,8 +240,8 @@ For feedback or bug reports, please contact hello@qubartech.com.`,
       shortName: "PlayQue",
       category: "Productivity",
       tagline: "Track, Organize, and Conquer Educational Video Playlists with Streak Counters & Notes",
-      description: "A productivity app to track your long list of favorite playlists. Get motivated to watch/complete educational and tech playlists while tracking your progress.",
-      features: "Add playlists via URL or search, Track completed videos, Daily and custom reminders, Progress monitoring, Multi-platform support",
+      description: "A smart playlist organizer and milestone tracking application tailored for self-learners and developers. Transform unstructured YouTube tutorial playlists into interactive courses with time-stamped note-taking, daily progress streaks, and completion meters.",
+      features: "Add playlists via URL or search, Track completed videos, Daily and custom reminders, Timestamped markdown notes, Progress monitoring and analytics HUD, Multi-platform support",
       icon: "📺",
       color: "from-purple-600 via-pink-600 to-rose-600",
       coverGradient: "from-purple-950 via-pink-950 to-gray-950",
@@ -255,7 +260,12 @@ For feedback or bug reports, please contact hello@qubartech.com.`,
         { label: "Progress", value: "Analytics HUD" },
       ]),
       detailsContent: `# PlayQue — Smart Learning Playlist Tracker
-Stay accountable and conquer your YouTube educational playlists with synchronized notes and streak tracking.`,
+Stay accountable and conquer your YouTube educational playlists with synchronized notes and streak tracking.
+
+## Core Capabilities
+- **1-Click Import**: Paste any public or unlisted YouTube playlist URL to generate an interactive course.
+- **Milestone Progress**: Visual completion percentage and projected finish dates.
+- **Timestamped Notes**: Create and export markdown study notes directly tied to video seconds.`,
       status: "live",
       privacyPolicy: `# Privacy Policy for PlayQue
 Last updated: June 2026.
@@ -264,7 +274,7 @@ Last updated: June 2026.
 We do not collect personal information unless you explicitly provide it. Playlists tracked are stored locally or via your account sync.
 
 ## 2. Contact Us
-For any questions regarding this policy, contact us.`,
+For any questions regarding this policy, contact us at hello@qubartech.com.`,
       isActive: true,
       hasProjectManagement: true,
       hasDetails: true,
@@ -276,8 +286,8 @@ For any questions regarding this policy, contact us.`,
       shortName: "DIU Results",
       category: "Education",
       tagline: "Real-Time Semester Result Analytics, GPA Forecasting, and Academic Performance Tracking",
-      description: "A comprehensive result tracking system for DIU students. Easily access and monitor academic performance.",
-      features: "Real-time result tracking, GPA calculation, Course analytics, Performance insights, Grade history",
+      description: "A comprehensive academic intelligence platform engineered for university students. Retrieve semester results in sub-seconds, analyze credit distributions, simulate upcoming term scores with the target GPA forecaster, and view historical CGPA progression trajectories.",
+      features: "Instant grade ingestion with credit breakdowns, Target GPA simulator and honors forecaster, Multi-semester historical CGPA trajectory graphs, Downloadable clean PDF academic transcripts",
       icon: "🎓",
       color: "from-blue-600 via-cyan-600 to-teal-600",
       coverGradient: "from-blue-950 via-cyan-950 to-gray-950",
@@ -296,7 +306,12 @@ For any questions regarding this policy, contact us.`,
         { label: "Reports", value: "PDF Export" },
       ]),
       detailsContent: `# DIU Academic Result Analytics
-Real-time grade ingestion, CGPA trajectories, and GPA forecasting for university students.`,
+Real-time grade ingestion, CGPA trajectories, and GPA forecasting for university students.
+
+## Core Capabilities
+- **Sub-Second Lookup**: Instant transcript generation by student ID.
+- **Target Honors Simulator**: Model future scores needed for Dean's List or graduation milestones.
+- **Visual Analytics**: Interactive credit and CGPA trend charts.`,
       status: "live",
       privacyPolicy: `# Privacy Policy for DIU Results
 Last updated: June 2026.
@@ -305,7 +320,7 @@ Last updated: June 2026.
 DIU Results reads and presents academic results. All calculations are performed on the device.
 
 ## 2. Contact Us
-For support or inquiries, contact us.`,
+For support or inquiries, contact hello@qubartech.com.`,
       isActive: true,
       hasProjectManagement: true,
       hasDetails: true,
@@ -337,7 +352,12 @@ For support or inquiries, contact us.`,
         { label: "Security", value: "Google Verified" },
       ]),
       detailsContent: `# CV / Resume Version Manager for Google Docs
-Effortlessly maintain role-specific revisions of your resume right inside Google Docs.`,
+Effortlessly maintain role-specific revisions of your resume right inside Google Docs.
+
+## Key Capabilities
+- **Named Snapshots**: Save distinct iterations tailored for specific job applications.
+- **1-Click Checkout**: Switch between versions seamlessly without formatting loss.
+- **Direct Drive Storage**: All files stay secure within your own Google Drive.`,
       status: "live",
       privacyPolicy: `# Privacy Policy for CV/Resume Version Manager
 Last updated: June 2026.
@@ -349,7 +369,53 @@ This Google Docs add-on stores snapshots in your personal Google Drive and index
 We request access to read/write specific Google Sheets/Docs to manage snapshots.
 
 ## 3. Contact Us
-If you have questions about the add-on's data practices, please contact Tahir Ahmad.`,
+If you have questions about the add-on's data practices, please contact hello@qubartech.com.`,
+      isActive: true,
+      hasProjectManagement: true,
+      hasDetails: true,
+      hasPrivacy: true,
+    },
+    {
+      name: "Pickosh: English Vocab Builder",
+      slug: "pickosh",
+      shortName: "Pickosh",
+      category: "Education",
+      tagline: "Master English Vocabulary with Smart Spaced Repetition, Contextual Sentences & Interactive Quizzes",
+      description: "An intelligent vocabulary learning tool designed to expand and retain English language vocabulary using spaced repetition algorithms, contextual usage examples, and gamified daily practice.",
+      features: "Spaced repetition flashcards, Contextual sample sentences, Pronunciation audio, Daily review reminders, Progress statistics",
+      icon: "🧠",
+      color: "from-amber-600 via-orange-600 to-red-600",
+      coverGradient: "from-amber-950 via-orange-950 to-gray-950",
+      badge: "📚 Language & EdTech",
+      isNonProfit: false,
+      tags: "Education, Vocabulary, English, Flashcards, Spaced Repetition",
+      image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1200&q=80",
+      link: "https://pickosh.qubartech.com",
+      githubUrl: "",
+      techStack: "Next.js, React, TailwindCSS, PostgreSQL, Web Speech API",
+      mission: "Empowering language learners worldwide to build robust, fluent vocabularies effortlessly with science-backed retention methods.",
+      stats: JSON.stringify([
+        { label: "Learning Method", value: "Spaced Repetition" },
+        { label: "Audio Support", value: "Native Speech" },
+        { label: "Retention Rate", value: "85%+" },
+        { label: "Access", value: "Web & Mobile" },
+      ]),
+      detailsContent: `# Pickosh — Smart English Vocabulary Builder
+Expand your English vocabulary with science-backed spaced repetition and contextual practice.
+
+## Key Capabilities
+- **Spaced Repetition Algorithm**: Review words at optimal intervals to maximize long-term retention.
+- **Contextual Sentences**: Learn words in real-world contexts and idioms.
+- **Audio Pronunciation**: High-clarity native pronunciation audio.`,
+      status: "live",
+      privacyPolicy: `# Privacy Policy for Pickosh
+Last updated: June 2026.
+
+## 1. Information Collection
+We store learning progress, saved word lists, and review intervals locally and associated with your registered profile.
+
+## 2. Contact Us
+For support or inquiries, contact hello@qubartech.com.`,
       isActive: true,
       hasProjectManagement: true,
       hasDetails: true,
