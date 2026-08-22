@@ -32,8 +32,17 @@ const createProductSchema = z.object({
 });
 
 export const GET = apiHandler(
-  async () => {
+  async (req) => {
+    const { searchParams } = new URL(req.url);
+    const activeOnly = searchParams.get("active") === "true";
+
+    const where: any = {};
+    if (activeOnly) {
+      where.isActive = true;
+    }
+
     return prisma.qubartechProduct.findMany({
+      where,
       orderBy: { createdAt: "desc" },
     });
   },
