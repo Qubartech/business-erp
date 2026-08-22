@@ -5,39 +5,47 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = "admin@example.com";
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash("admin1234", 10);
-    await prisma.user.create({
-      data: { name: "Administrator", email: adminEmail, passwordHash, role: "admin", isActive: true },
-    });
-    // eslint-disable-next-line no-console
-    console.log(`[seed] created admin: ${adminEmail} / admin1234 (CHANGE IMMEDIATELY)`);
-  } else {
-    // eslint-disable-next-line no-console
-    console.log(`[seed] admin already exists: ${adminEmail}`);
+  console.log("[seed] Ensuring database columns exist...");
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "short_name" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "tagline" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "badge" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "is_non_profit" BOOLEAN NOT NULL DEFAULT false;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "cover_gradient" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "github_url" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "tech_stack" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "mission" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "stats" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "details_content" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "qubartech_products" ADD COLUMN IF NOT EXISTS "has_details" BOOLEAN NOT NULL DEFAULT true;`);
+    console.log("[seed] Database columns verified / created successfully.");
+  } catch (err) {
+    console.warn("[seed] Notice executing alter table:", err);
   }
 
+  const adminEmail = "admin@example.com";
+  const defaultAdminHash = await bcrypt.hash("admin1234", 10);
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { passwordHash: defaultAdminHash, role: "admin", isActive: true },
+    create: { name: "Administrator", email: adminEmail, passwordHash: defaultAdminHash, role: "admin", isActive: true },
+  });
+  console.log(`[seed] admin ensured: ${adminEmail} / admin1234`);
+
   const teamMembers = [
-    { name: "Tahir Ahmad", email: "tahir@qubartech.com", role: "member" as const },
+    { name: "Tahir Ahmad", email: "tahir@qubartech.com", role: "admin" as const },
     { name: "Rafiul Islam", email: "rafi@qubartech.com", role: "member" as const },
     { name: "Rakibul Islam", email: "rakib@qubartech.com", role: "member" as const },
   ];
 
+  const defaultUserHash = await bcrypt.hash("password1234", 10);
   for (const u of teamMembers) {
-    const existingUser = await prisma.user.findUnique({ where: { email: u.email } });
-    if (!existingUser) {
-      const passwordHash = await bcrypt.hash("password1234", 10);
-      await prisma.user.create({
-        data: { name: u.name, email: u.email, passwordHash, role: u.role, isActive: true },
-      });
-      // eslint-disable-next-line no-console
-      console.log(`[seed] created user: ${u.name} (${u.email}) / password1234`);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(`[seed] user already exists: ${u.email}`);
-    }
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: { role: u.role, isActive: true },
+      create: { name: u.name, email: u.email, passwordHash: defaultUserHash, role: u.role, isActive: true },
+    });
+    console.log(`[seed] user ensured: ${u.name} (${u.email}) [role: ${u.role}]`);
   }
 
   const websiteTeam = [
